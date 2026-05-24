@@ -1869,8 +1869,9 @@ const Dashboard = () => {
       const isAuthenticatedToken = localStorage.getItem('isAuthenticated') === 'true';
       const userToken = localStorage.getItem('userToken');
       const token = localStorage.getItem('token'); // Added to match AuthenticatedNavbar
+      const accessToken = localStorage.getItem('accessToken');
       
-      const authStatus = mockAuth || isAuthenticatedToken || !!userToken || !!token;
+      const authStatus = mockAuth || isAuthenticatedToken || !!userToken || !!token || !!accessToken;
       setIsAuthenticated(authStatus);
       
       if (!authStatus) {
@@ -1881,23 +1882,24 @@ const Dashboard = () => {
       setError(null);
 
       // Try all possible user data sources
-      const mockUser = localStorage.getItem('mockUser');
       const userData = localStorage.getItem('userData');
+      const mockUser = localStorage.getItem('mockUser');
       
-      if (mockUser || userData) {
+      if (userData || mockUser) {
         try {
-          const parsedUser = JSON.parse(mockUser || userData || '{}');
+          // Prefer userData because it is the canonical source after signup/signin
+          const parsedUser = JSON.parse(userData || mockUser || '{}');
           setUserProfile({
-            name: parsedUser.name || parsedUser.username || 'Rahul Singh',
-            email: parsedUser.email || 'RahulSingh05@gmail.com',
-            role: parsedUser.role || 'Premium User'
+            name: parsedUser.name || parsedUser.username || 'User',
+            email: parsedUser.email || '',
+            role: parsedUser.role || 'Free User'
           });
           
           // Update user state as well
           setUser(prev => ({
             ...prev,
-            name: parsedUser.name || parsedUser.username || 'Rahul Singh',
-            email: parsedUser.email || 'RahulSingh05@gmail.com',
+            name: parsedUser.name || parsedUser.username || 'User',
+            email: parsedUser.email || '',
           }));
         } catch (e) {
           console.error('Failed to parse user data:', e);
@@ -2048,8 +2050,9 @@ const Dashboard = () => {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     const userToken = localStorage.getItem('userToken');
     const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
     
-    if (!mockAuth && !isAuthenticated && !userToken && !token) {
+    if (!mockAuth && !isAuthenticated && !userToken && !token && !accessToken) {
       navigate('/signin', { replace: true });
       return;
     }
@@ -2063,7 +2066,13 @@ const Dashboard = () => {
     
     // Listen for changes in authentication status
     const handleStorageChange = () => {
-      const authStatus = localStorage.getItem('mockAuth') === 'true';
+      const authStatus =
+        localStorage.getItem('mockAuth') === 'true' ||
+        localStorage.getItem('isAuthenticated') === 'true' ||
+        !!localStorage.getItem('userToken') ||
+        !!localStorage.getItem('token') ||
+        !!localStorage.getItem('accessToken');
+
       setIsAuthenticated(authStatus);
       if (!authStatus) {
         navigate('/signin', { replace: true });

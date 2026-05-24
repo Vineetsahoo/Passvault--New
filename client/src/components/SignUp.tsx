@@ -134,7 +134,13 @@ const SignUp: React.FC = () => {
       if (response.data.success && response.data.data) {
         // Store authentication data
         localStorage.setItem('accessToken', response.data.data.accessToken);
+        localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userData', JSON.stringify(response.data.data.user));
+
+        // Keep legacy keys in sync so older auth checks don't use stale users
+        localStorage.setItem('mockAuth', 'true');
+        localStorage.setItem('userToken', response.data.data.accessToken);
+        localStorage.setItem('mockUser', JSON.stringify(response.data.data.user));
         
         // Dispatch storage event for other components
         window.dispatchEvent(new Event('storage'));
