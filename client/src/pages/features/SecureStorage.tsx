@@ -6,6 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar'; // Import Navbar
 import Footer from '../../components/Footer'; // Import Footer
+import ScrollButton from '../../components/ScrollButton';
 import storageService from '../../services/storageService';
 import backupService from '../../services/backupService';
 
@@ -595,6 +596,7 @@ const SecureStorage = () => {
         )}
       </FeatureTemplate>
       <Footer />
+      <ScrollButton />
     </>
   );
 };

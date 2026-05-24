@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import ScrollButton from '../../components/ScrollButton';
 import TerminalQrScanner from '../../components/TerminalQrScanner';
 import qrcodeService, { QRCode as QRCodeType, QRCodeType as QRType, CreateQRCodeData } from '../../services/qrcodeService';
 
@@ -1984,6 +1985,7 @@ const QrScan = () => {
         </div>
       </FeatureTemplate>
       <Footer />
+      <ScrollButton />
     </>
   );
 };

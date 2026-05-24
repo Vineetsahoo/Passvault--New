@@ -9,6 +9,7 @@ import {
 // Import Navbar and Footer
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ScrollButton from '../components/ScrollButton';
 
 const Features = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -368,6 +369,7 @@ const Features = () => {
       
       {/* Add Footer at the bottom */}
       <Footer />
+      <ScrollButton />
     </>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ScrollButton from '../components/ScrollButton';
 
 const Terms: React.FC = () => {
   return (
@@ -55,6 +56,7 @@ const Terms: React.FC = () => {
       </div>
       
       <Footer />
+      <ScrollButton />
     </div>
   );
 };

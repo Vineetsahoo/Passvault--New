@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ScrollButton from '../components/ScrollButton';
 
 const Privacy: React.FC = () => {
   return (
@@ -69,6 +70,7 @@ const Privacy: React.FC = () => {
       </div>
       
       <Footer />
+      <ScrollButton />
     </div>
   );
 };

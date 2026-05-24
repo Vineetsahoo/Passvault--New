@@ -7,6 +7,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import ScrollButton from '../../components/ScrollButton';
 import { sharingAPI, qrCodesAPI, isLoggedIn, getStoredUser } from '../../services/api';
 import { validationUtils, getValidationClassName } from '../../utils/validation';
 
@@ -1493,6 +1494,7 @@ const Sharing: React.FC = () => {
         )}
       </FeatureTemplate>
       <Footer />
+      <ScrollButton />
     </>
   );
 };

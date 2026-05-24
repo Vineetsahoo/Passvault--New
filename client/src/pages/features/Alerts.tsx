@@ -6,6 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import ScrollButton from '../../components/ScrollButton';
 import alertService, { Alert as AlertType } from '../../services/alertService';
 import qrcodeService from '../../services/qrcodeService';
 
@@ -775,6 +776,7 @@ const Alerts = () => {
         )}
       </FeatureTemplate>
       <Footer />
+      <ScrollButton />
     </>
   );
 };

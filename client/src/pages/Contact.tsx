@@ -4,6 +4,7 @@ import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaPaperPlane, FaCheck, FaComments,
 // Import Navbar and Footer
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ScrollButton from '../components/ScrollButton';
 
 const Contact = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -623,6 +624,7 @@ const Contact = () => {
       
       {/* Add Footer at the bottom */}
       <Footer />
+      <ScrollButton />
     </>
   );
 };

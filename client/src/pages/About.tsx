@@ -11,6 +11,7 @@ import { MdWorkOutline, MdTimeline } from 'react-icons/md';
 // Import Navbar and Footer
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ScrollButton from '../components/ScrollButton';
 
 // Add interface for team member type
 interface TeamMember {
@@ -578,6 +579,7 @@ const About = () => {
       
       {/* Add Footer at the bottom */}
       <Footer />
+      <ScrollButton />
     </>
   );
 };

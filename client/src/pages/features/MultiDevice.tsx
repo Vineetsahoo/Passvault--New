@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import ScrollButton from '../../components/ScrollButton';
 import deviceService from '../../services/deviceService';
 import syncService from '../../services/syncService';
 
@@ -1099,6 +1100,7 @@ const MultiDevice = () => {
         )}
       </FeatureTemplate>
       <Footer />
+      <ScrollButton />
     </>
   );
 };

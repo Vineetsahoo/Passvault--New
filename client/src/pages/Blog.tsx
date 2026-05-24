@@ -8,6 +8,7 @@ import {
 // Import Navbar and Footer
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ScrollButton from '../components/ScrollButton';
 import { useNavigate } from 'react-router-dom';
 
 // Define blog post interface for better type safety
@@ -643,6 +644,7 @@ const Blog = () => {
       
       {/* Add Footer at the bottom */}
       <Footer />
+      <ScrollButton />
     </>
   );
 };

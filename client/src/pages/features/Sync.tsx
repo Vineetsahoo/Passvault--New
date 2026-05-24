@@ -6,6 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import ScrollButton from '../../components/ScrollButton';
 import syncService from '../../services/syncService';
 import deviceService from '../../services/deviceService';
 
@@ -612,6 +613,7 @@ const Sync = () => {
         )}
       </FeatureTemplate>
       <Footer />
+      <ScrollButton />
     </>
   );
 };

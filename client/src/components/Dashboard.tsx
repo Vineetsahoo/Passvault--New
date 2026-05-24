@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 // Import components that are still needed
 import Navbar from './Navbar';
 import Footer from './Footer';
+import ScrollButton from './ScrollButton';
 import Passwords from './dashboard/Passwords'; // Import actual Passwords component
 import History from './dashboard/History'; // Import actual History component
 import Notifications from './dashboard/Notifications'; // Import actual Notifications component
@@ -2229,6 +2230,7 @@ const Dashboard = () => {
 
       <div className={`mt-auto transition-all duration-300 ${isExpanded ? 'lg:ml-[280px]' : 'ml-0'}`}>
         <Footer />
+        <ScrollButton />
       </div>
     </div>
   );

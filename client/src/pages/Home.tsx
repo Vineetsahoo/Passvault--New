@@ -6,6 +6,7 @@ import { Shield, Smartphone, QrCode, Clock, RefreshCw, Users, ArrowRight, Check,
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Pattern from '../components/ui/Pattern';
+import ScrollButton from '../components/ScrollButton';
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -891,6 +892,7 @@ const Home = () => {
       
       {/* Add Footer */}
       <Footer />
+      <ScrollButton />
     </div>
   );
 };

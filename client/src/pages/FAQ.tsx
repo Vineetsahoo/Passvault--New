@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 // Import Navbar and Footer
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import ScrollButton from '../components/ScrollButton';
 
 const FAQ = () => {
   const navigate = useNavigate();
@@ -513,6 +514,7 @@ const FAQ = () => {
       
       {/* Add Footer at the bottom */}
       <Footer />
+      <ScrollButton />
     </>
   );
 };
