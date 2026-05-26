@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaSignOutAlt, FaCog, FaTachometerAlt, FaLock } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn } from 'lucide-react';
+import { LogOut, Settings, BarChart3, Lock, User } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 
 interface UserData {
   name?: string;
@@ -57,84 +56,83 @@ const AuthenticatedNavbar = () => {
   };
 
   return (
-    <nav className="bg-white/80 backdrop-blur-lg shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/dashboard" className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              PassVault
+    <nav className="fixed w-full z-50 bg-[#F9F9F7] border-b-2 border-[#111111]" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          <div className="flex items-center gap-3">
+            <Link to="/dashboard" className="flex items-center gap-3 hover:bg-[#E5E5E0] px-3 py-2 transition-colors">
+              <div className="border border-[#111111] p-2">
+                <Wallet className="h-6 w-6 text-[#111111]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  PASSVAULT
+                </span>
+                <span className="text-[0.65rem] uppercase tracking-widest font-mono text-[#525252]">
+                  DASHBOARD
+                </span>
+              </div>
             </Link>
-            <div className="hidden md:flex ml-10 space-x-8">
-              <Link to="/dashboard" className="text-gray-700 hover:text-indigo-600 flex items-center">
-                <FaTachometerAlt className="mr-2" /> Dashboard
-              </Link>
-              <Link to="/dashboard/passwords" className="text-gray-700 hover:text-indigo-600 flex items-center">
-                <FaLock className="mr-2" /> Passwords
-              </Link>
-            </div>
+          </div>
+
+          <div className="hidden md:flex md:items-center md:gap-0">
+            {isAuthenticated && (
+              <>
+                <Link to="/dashboard" className="px-4 py-2.5 text-xs font-bold tracking-widest uppercase text-[#111111] border-r border-[#111111] hover:bg-[#E5E5E0] transition-all flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" /> Dashboard
+                </Link>
+                <Link to="/dashboard/passwords" className="px-4 py-2.5 text-xs font-bold tracking-widest uppercase text-[#111111] border-r border-[#111111] hover:bg-[#E5E5E0] transition-all flex items-center gap-2">
+                  <Lock className="h-4 w-4" /> Passwords
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="flex items-center">
             {isAuthenticated ? (
               <div className="relative">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center space-x-2"
+                  className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-widest uppercase border-l border-[#111111] hover:bg-[#E5E5E0] transition-all"
                 >
-                  <span className="hidden md:block text-gray-700 mr-2">{displayName}</span>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white">
+                  <div className="w-8 h-8 border border-[#111111] flex items-center justify-center text-[#111111] font-black">
                     {initial}
                   </div>
-                </motion.button>
+                  <span className="hidden md:inline text-[#111111]">{displayName}</span>
+                </button>
 
-                <AnimatePresence>
-                  {isProfileOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-48 rounded-xl bg-white shadow-lg"
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-0 w-56 bg-[#F9F9F7] border-2 border-[#111111] shadow-lg z-50">
+                    <div className="px-4 py-4 border-b-2 border-[#111111]">
+                      <p className="text-xs font-black uppercase tracking-widest text-[#111111]">{displayName}</p>
+                      <p className="text-xs text-[#525252] truncate mt-1" style={{ fontFamily: "'Lora', serif" }}>{userData.email}</p>
+                    </div>
+                    
+                    <Link to="/dashboard" className="flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-widest uppercase text-[#111111] hover:bg-[#E5E5E0] border-b border-[#E5E5E0] transition-colors">
+                      <BarChart3 className="h-4 w-4" /> Dashboard
+                    </Link>
+                    <Link to="/dashboard/user-profile" className="flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-widest uppercase text-[#111111] hover:bg-[#E5E5E0] border-b border-[#E5E5E0] transition-colors">
+                      <User className="h-4 w-4" /> Profile
+                    </Link>
+                    <Link to="/dashboard/settings" className="flex items-center gap-2 px-4 py-3 text-xs font-bold tracking-widest uppercase text-[#111111] hover:bg-[#E5E5E0] border-b border-[#E5E5E0] transition-colors">
+                      <Settings className="h-4 w-4" /> Settings
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-3 text-xs font-bold tracking-widest uppercase text-[#CC0000] hover:bg-[#FFE5E5] transition-colors flex items-center gap-2"
                     >
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-700">{displayName}</p>
-                        <p className="text-xs text-gray-500 truncate">{userData.email}</p>
-                      </div>
-                      
-                      <Link to="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50">
-                        <FaTachometerAlt className="mr-2" /> Dashboard
-                      </Link>
-                      <Link to="/dashboard/user-profile" className="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50">
-                        <FaUser className="mr-2" /> Profile
-                      </Link>
-                      <Link to="/dashboard/settings" className="flex items-center px-4 py-2 text-gray-700 hover:bg-indigo-50">
-                        <FaCog className="mr-2" /> Settings
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-b-xl flex items-center"
-                      >
-                        <FaSignOutAlt className="mr-2" /> Logout
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <LogOut className="h-4 w-4" /> Logout
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <motion.div 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
+                onClick={handleSignIn}
+                className="px-6 py-2.5 border-2 border-[#111111] text-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all flex items-center gap-2"
               >
-                <div
-                  onClick={handleSignIn}
-                  className="relative flex items-center gap-1.5 border-2 border-indigo-500 text-indigo-600 px-5 py-2 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-all duration-300 cursor-pointer group overflow-hidden"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span className="relative z-10">Sign In</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                </div>
-              </motion.div>
+                SIGN IN
+              </button>
             )}
           </div>
         </div>

@@ -11,96 +11,94 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={`bg-gradient-to-br from-indigo-950 via-blue-950/95 to-slate-900 text-white relative overflow-hidden backdrop-blur-xl font-inter ${className}`}>
-      {/* Enhanced decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 opacity-80"></div>
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-700/20 rounded-full blur-[120px] animate-pulse"></div>
-      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-700/20 rounded-full blur-[120px] animate-pulse"></div>
-
-      <div className="container mx-auto px-6 py-6 relative z-10">
-        {/* Modernized top section */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 pb-4 border-b border-indigo-800/30">
-          <div className="flex items-center mb-4 md:mb-0 transform hover:scale-105 transition-transform duration-300">
-            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-3.5 rounded-2xl shadow-lg shadow-indigo-700/30 mr-4 backdrop-blur-xl">
-              <Wallet className="text-white w-7 h-7" />
+    <footer className={`bg-[#111111] text-[#F9F9F7] border-t-4 border-[#CC0000] ${className}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Header Section */}
+        <div className="border-b-2 border-[#E5E5E0] pb-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            {/* Brand */}
+            <div className="flex items-center gap-4">
+              <div className="border border-[#F9F9F7] p-2">
+                <Wallet className="h-6 w-6 text-[#F9F9F7]" />
+              </div>
+              <div>
+                <div className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  PASSVAULT
+                </div>
+                <div className="text-xs uppercase tracking-widest font-mono text-[#A3A3A3]">
+                  FAST | SECURE
+                </div>
+              </div>
             </div>
-            <h2 className="font-bold text-3xl bg-gradient-to-r from-indigo-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">
-              PassVault
-            </h2>
-          </div>
 
-          <div className="flex flex-col sm:flex-row gap-6 items-center">
-            <span className="text-gray-300 font-medium">Stay updated with PassVault</span>
-            <form className="flex group">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="bg-indigo-900/40 backdrop-blur-xl border border-indigo-700/50 rounded-l-xl px-6 py-3 w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium transition-all duration-300"
-              />
-              <button className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 transition-all px-6 py-3 rounded-r-xl font-semibold text-white text-sm shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40">
-                Subscribe
-              </button>
-            </form>
+            {/* Edition Info */}
+            <div className="text-center">
+              <div className="text-xs uppercase tracking-widest font-mono text-[#A3A3A3] mb-2">
+                EDITION {currentYear}
+              </div>
+              <div className="text-sm" style={{ fontFamily: "'Lora', serif" }}>
+                "All the Security That's Fit to Trust"
+              </div>
+            </div>
+
+            {/* Newsletter */}
+            <div>
+              <p className="text-xs uppercase tracking-widest font-mono text-[#A3A3A3] mb-3">
+                SUBSCRIBE FOR UPDATES
+              </p>
+              <form className="flex gap-0">
+                <input
+                  type="email"
+                  placeholder="your email"
+                  className="flex-1 bg-[#F9F9F7] text-[#111111] px-4 py-2 text-sm border border-[#111111] focus:outline-none"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                />
+                <button className="bg-[#CC0000] text-[#F9F9F7] px-6 py-2 font-bold text-xs uppercase tracking-widest hover:bg-[#990000] transition-colors">
+                  GO
+                </button>
+              </form>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Company Information */}
-          <div className="flex flex-col items-center md:items-start">
-            <h3 className="font-bold text-xl mb-4 relative inline-flex items-center">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400">About Us</span>
-              <span className="ml-2 h-1.5 w-8 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full"></span>
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          {/* About */}
+          <div className="border-r-2 border-[#E5E5E0] pr-8">
+            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+              ABOUT
             </h3>
-            <p className="text-gray-300 text-base mb-4 text-center md:text-left leading-relaxed">
-              Secure your digital life with our advanced pass management solution.
-              Never worry about lost digital passes again.
+            <p className="text-sm leading-relaxed mb-4" style={{ fontFamily: "'Lora', serif" }}>
+              PassVault secures your digital life with military-grade encryption and trusted security practices.
             </p>
-            <div className="flex space-x-4 mt-2">
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-300 hover:text-indigo-400 p-2.5 bg-indigo-900/40 rounded-lg hover:bg-indigo-800/50 transition-all duration-300"
-                aria-label="GitHub"
-              >
-                <FaGithub size={20} />
+            <div className="flex gap-3">
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="border border-[#F9F9F7] p-2 hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors">
+                <FaGithub size={18} />
               </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-300 hover:text-indigo-400 p-2.5 bg-indigo-900/40 rounded-lg hover:bg-indigo-800/50 transition-all duration-300"
-                aria-label="Twitter"
-              >
-                <FaTwitter size={20} />
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="border border-[#F9F9F7] p-2 hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors">
+                <FaTwitter size={18} />
               </a>
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-300 hover:text-indigo-400 p-2.5 bg-indigo-900/40 rounded-lg hover:bg-indigo-800/50 transition-all duration-300"
-                aria-label="LinkedIn"
-              >
-                <FaLinkedin size={20} />
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="border border-[#F9F9F7] p-2 hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors">
+                <FaLinkedin size={18} />
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="flex flex-col items-center md:items-start">
-            <h3 className="font-bold text-xl mb-4 relative inline-flex items-center">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400">Quick Links</span>
-              <span className="ml-2 h-1.5 w-8 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full"></span>
+          <div className="border-r-2 border-[#E5E5E0] pr-8">
+            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+              LINKS
             </h3>
-            <ul className="space-y-3 text-center md:text-left">
-              {['Features', 'Pricing', 'FAQ', 'Blog'].map((item) => (
-                <li key={item}>
-                  <Link
-                    to={`/${item.toLowerCase()}`}
-                    className="text-gray-300 hover:text-indigo-400 transition-colors flex items-center text-base group"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-100 mr-2 transition-all duration-300"></span>
-                    <span className="group-hover:translate-x-1 transition-transform inline-block">{item}</span>
+            <ul className="space-y-3">
+              {[
+                { name: 'Features', path: '/features' },
+                { name: 'Pricing', path: '/pricing' },
+                { name: 'FAQ', path: '/faq' },
+                { name: 'Blog', path: '/blog' },
+              ].map((item) => (
+                <li key={item.name}>
+                  <Link to={item.path} className="text-sm hover:text-[#CC0000] transition-colors underline-offset-2 hover:underline">
+                    {item.name}
                   </Link>
                 </li>
               ))}
@@ -108,25 +106,20 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
           </div>
 
           {/* Legal */}
-          <div className="flex flex-col items-center md:items-start">
-            <h3 className="font-bold text-xl mb-4 relative inline-flex items-center">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400">Legal</span>
-              <span className="ml-2 h-1.5 w-8 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full"></span>
+          <div className="border-r-2 border-[#E5E5E0] pr-8">
+            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+              LEGAL
             </h3>
-            <ul className="space-y-3 text-center md:text-left">
+            <ul className="space-y-3">
               {[
-                { name: 'Privacy Policy', path: '/privacy' },
-                { name: 'Terms of Service', path: '/terms' },
-                { name: 'Security', path: '/security' },
-                { name: 'Compliance', path: '/compliance' },
+                { name: 'Privacy', path: '/privacy' },
+                { name: 'Terms', path: '/terms' },
+                { name: 'Security', path: '/' },
+                { name: 'Compliance', path: '/' },
               ].map((item) => (
                 <li key={item.name}>
-                  <Link
-                    to={item.path}
-                    className="text-gray-300 hover:text-indigo-400 transition-colors flex items-center text-base group"
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 opacity-0 group-hover:opacity-100 mr-2 transition-all duration-300"></span>
-                    <span className="group-hover:translate-x-1 transition-transform inline-block">{item.name}</span>
+                  <Link to={item.path} className="text-sm hover:text-[#CC0000] transition-colors underline-offset-2 hover:underline">
+                    {item.name}
                   </Link>
                 </li>
               ))}
@@ -134,40 +127,39 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
           </div>
 
           {/* Contact */}
-          <div className="flex flex-col items-center md:items-start">
-            <h3 className="font-bold text-xl mb-4 relative inline-flex items-center">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400">Contact Us</span>
-              <span className="ml-2 h-1.5 w-8 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full"></span>
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+              CONTACT
             </h3>
-            <div className="mb-4">
-              <Link
-                to="/contact"
-                className="inline-flex items-center justify-center px-5 py-3 bg-gradient-to-r from-indigo-600 to-blue-700 rounded-lg shadow-md hover:shadow-lg hover:from-indigo-700 hover:to-blue-800 transition-all duration-300 text-white font-medium"
+            <div className="space-y-4">
+              <button
+                onClick={() => window.location.href = '/contact'}
+                className="w-full bg-[#CC0000] text-[#F9F9F7] px-4 py-2 font-bold text-xs uppercase tracking-widest hover:bg-[#990000] transition-colors"
               >
-                Contact Support
-              </Link>
-            </div>
-            <div className="flex items-center justify-center md:justify-start mt-3 group bg-indigo-900/40 px-4 py-3 rounded-lg">
-              <FaEnvelope className="mr-2 text-indigo-400 text-lg" />
-              <a href="mailto:support@passvault.com" className="text-gray-300 hover:text-indigo-400 transition-colors text-base">
-                support@passvault.com
-              </a>
+                GET SUPPORT
+              </button>
+              <div className="border border-[#F9F9F7] p-3 bg-[#1a1a1a]">
+                <div className="flex items-center gap-2 mb-2">
+                  <FaEnvelope className="text-[#CC0000]" />
+                  <span className="text-xs uppercase tracking-widest font-mono">Email</span>
+                </div>
+                <a href="mailto:support@passvault.com" className="text-sm hover:text-[#CC0000] transition-colors">
+                  support@passvault.com
+                </a>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Enhanced copyright section */}
-        <div className="mt-8 pt-4 text-center relative">
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
-            <div className="w-32 h-px bg-gradient-to-r from-transparent via-indigo-500 to-transparent"></div>
-          </div>
-          <p className="flex flex-col sm:flex-row items-center justify-center gap-2 text-gray-400 font-medium">
-            <span>© {currentYear} PassVault.</span>
-            <span className="hidden sm:inline">|</span>
-            <span>All rights reserved.</span>
-          </p>
-          <div className="mt-4 text-sm text-gray-500 font-medium">
-            Crafted by the PassVault Team
+        {/* Footer Bottom */}
+        <div className="border-t-2 border-[#E5E5E0] pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center md:text-left">
+            <div className="text-xs font-mono tracking-widest text-[#A3A3A3]">
+              © {currentYear} PASSVAULT. ALL RIGHTS RESERVED.
+            </div>
+            <div className="text-xs font-mono tracking-widest text-[#A3A3A3] md:text-right">
+              CRAFTED BY THE PASSVAULT TEAM | PRINTED DIGITALLY
+            </div>
           </div>
         </div>
       </div>
