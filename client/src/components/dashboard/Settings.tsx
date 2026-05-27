@@ -105,19 +105,16 @@ const SettingCard: React.FC<{
   <motion.div
     whileHover={{ y: -2 }}
     transition={{ duration: 0.2 }}
-    className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+    className="bg-[#F9F9F7] border-4 border-[#111111] overflow-hidden"
   >
-    <div className="relative overflow-hidden border-b border-gray-50">
-      <div className="absolute top-0 right-0 w-32 h-32 opacity-5 rounded-full -translate-y-1/2 translate-x-1/2" 
-           style={{ background: color.replace('bg-', '').replace('-50', '-400') }}></div>
-      
+    <div className="relative border-b-4 border-[#111111]">
       <div className="p-6 relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className={`p-3.5 ${color} rounded-xl shadow-sm flex items-center justify-center`}>
+        <div className="p-3.5 border-2 border-[#111111] bg-[#E5E5E0] flex items-center justify-center text-[#111111]">
           {icon}
         </div>
         <div>
-          <h3 className="text-xl font-semibold text-gray-800">{title}</h3>
-          <p className="text-gray-600">{description}</p>
+          <h3 className="text-xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</h3>
+          <p className="text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>{description}</p>
         </div>
       </div>
     </div>
@@ -261,69 +258,62 @@ const Settings: React.FC = () => {
   return (
     <div className="space-y-6 -mt-4">
       {/* Redesigned header with sophisticated gradient and visual elements */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 rounded-2xl shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-indigo-300 opacity-10 rounded-full translate-y-1/3"></div>
-        
+      <div className="relative border-4 border-[#111111] bg-[#111111]">
         <div className="relative z-10 p-7">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="inline-flex items-center gap-3 mb-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <HiSparkles className="text-indigo-200" />
-                <span className="text-xs font-medium text-blue-50">Personalize Your Experience</span>
+              <div className="inline-flex items-center gap-3 mb-2 border border-[#F9F9F7] px-3 py-1.5">
+                <HiSparkles className="text-[#CC0000]" />
+                <span className="text-xs font-black uppercase tracking-widest text-[#F9F9F7]">Personalize Your Experience</span>
               </div>
               
-              <h2 className="text-3xl font-bold text-white flex flex-wrap items-center gap-3">
+              <h2 className="text-4xl font-black text-[#F9F9F7] flex flex-wrap items-center gap-3 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
                 <HiCog6Tooth className="h-8 w-8" /> 
                 <span>PassVault Settings</span>
               </h2>
               
-              <p className="text-indigo-100 mt-1.5 max-w-lg">
+              <p className="text-[#E5E5E0] mt-2 max-w-lg" style={{ fontFamily: "'Lora', serif" }}>
                 Configure security preferences and customize your vault experience
               </p>
             </div>
             
             <div className="flex items-center gap-3 self-start">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              <button
                 onClick={() => setShowChangesHistory(!showChangesHistory)}
-                className={`px-4 py-2.5 font-medium rounded-lg shadow-lg flex items-center gap-2 
+                className={`px-4 py-2.5 font-black uppercase tracking-widest border-2 border-[#111111] flex items-center gap-2 transition-all
                   ${showChangesHistory 
-                    ? 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50' 
-                    : 'bg-white/10 backdrop-blur-sm text-white border border-white/20 hover:bg-white/20'
-                  } transition-all`}
+                    ? 'bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]' 
+                    : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
+                  }`}
               >
-                <FaHistory className={showChangesHistory ? "text-indigo-600" : "text-indigo-200"} /> 
+                <FaHistory /> 
                 {showChangesHistory ? 'Hide Changes' : 'View Changes'}
-              </motion.button>
+              </button>
               
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              <button
                 onClick={() => {
                   setIsSaved(true);
                 }}
-                className={`px-4 py-2.5 font-medium rounded-lg shadow-lg flex items-center gap-2 
+                className={`px-4 py-2.5 font-black uppercase tracking-widest border-2 border-[#111111] flex items-center gap-2 transition-all
                   ${isSaved 
-                    ? 'bg-green-500 text-white hover:bg-green-600' 
-                    : 'bg-white text-indigo-600 hover:bg-opacity-90'
-                  } transition-all`}
+                    ? 'bg-[#CC0000] text-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#CC0000]' 
+                    : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
+                  }`}
               >
                 {isSaved ? <FaCheck /> : <FaSave />}
                 {isSaved ? 'Saved' : 'Save Changes'}
-              </motion.button>
+              </button>
             </div>
           </div>
           
           <div className="mt-6 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaDesktop className="text-blue-200" size={12} />
-              <span className="text-xs text-blue-50">Last updated today</span>
+            <div className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1.5">
+              <FaDesktop className="text-[#CC0000]" size={12} />
+              <span className="text-xs uppercase tracking-widest font-black text-[#F9F9F7]">Last updated today</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaInfoCircle className="text-blue-200" size={12} />
-              <span className="text-xs text-blue-50">Settings synced across devices</span>
+            <div className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1.5">
+              <FaInfoCircle className="text-[#CC0000]" size={12} />
+              <span className="text-xs uppercase tracking-widest font-black text-[#F9F9F7]">Settings synced across devices</span>
             </div>
           </div>
         </div>

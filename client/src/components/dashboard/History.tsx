@@ -259,54 +259,47 @@ const History: React.FC = () => {
   return (
     <div className="space-y-6 -mt-4">
       {/* Redesigned header with more sophisticated gradient and visual elements */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-2xl shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-blue-300 opacity-10 rounded-full translate-y-1/3"></div>
-        
+      <div className="relative border-4 border-[#111111] bg-[#111111]">
         <div className="relative z-10 p-7">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="inline-flex items-center gap-3 mb-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <FaClock className="text-blue-200" />
-                <span className="text-xs font-medium text-blue-50">Activity Log</span>
+              <div className="inline-flex items-center gap-3 mb-2 border border-[#F9F9F7] px-3 py-1.5">
+                <FaClock className="text-[#CC0000]" />
+                <span className="text-xs font-black uppercase tracking-widest text-[#F9F9F7]">Activity Log</span>
               </div>
-              <h2 className="text-3xl font-bold text-white flex flex-wrap items-center gap-3">
-                <FaHistory className="text-blue-200" /> 
+              <h2 className="text-4xl font-black text-[#F9F9F7] flex flex-wrap items-center gap-3 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <FaHistory className="text-[#CC0000]" /> 
                 <span>Security Timeline</span>
               </h2>
-              <p className="text-blue-100 mt-1.5 max-w-lg">
+              <p className="text-[#E5E5E0] mt-2 max-w-lg" style={{ fontFamily: "'Lora', serif" }}>
                 Monitor and track access patterns to keep your sensitive information secure
               </p>
             </div>
             
             <div className="flex items-center gap-3 self-start">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              <button
                 onClick={() => setShowSecuritySettings(true)}
-                className="px-4 py-2.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium rounded-lg transition-all flex items-center gap-2 border border-white/20"
+                className="px-4 py-2.5 bg-[#F9F9F7] text-[#111111] font-black uppercase tracking-widest border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all flex items-center gap-2"
               >
-                <FaLock className="text-blue-200" /> Security Settings
-              </motion.button>
+                <FaLock className="text-[#111111]" /> Security Settings
+              </button>
               
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="px-4 py-2.5 bg-white text-indigo-700 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+              <button
+                className="px-4 py-2.5 bg-[#CC0000] text-[#F9F9F7] font-black uppercase tracking-widest border-2 border-[#111111] hover:bg-[#F9F9F7] hover:text-[#CC0000] transition-all flex items-center gap-2"
               >
                 <FaEye /> View Full Logs
-              </motion.button>
+              </button>
             </div>
           </div>
           
           <div className="mt-6 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaCalendarAlt className="text-blue-200" size={12} />
-              <span className="text-xs text-blue-50">Last 30 days</span>
+            <div className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1.5">
+              <FaCalendarAlt className="text-[#CC0000]" size={12} />
+              <span className="text-xs uppercase tracking-widest font-black text-[#F9F9F7]">Last 30 days</span>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaInfoCircle className="text-blue-200" size={12} />
-              <span className="text-xs text-blue-50">{pagination.totalItems} events recorded</span>
+            <div className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1.5">
+              <FaInfoCircle className="text-[#CC0000]" size={12} />
+              <span className="text-xs uppercase tracking-widest font-black text-[#F9F9F7]">{pagination.totalItems} events recorded</span>
             </div>
             {stats && (
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">

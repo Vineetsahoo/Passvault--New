@@ -1,17 +1,20 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaGithub, FaTwitter, FaLinkedin, FaEnvelope } from 'react-icons/fa';
-import { Wallet } from 'lucide-react';
+import React from "react";
+import { Link } from "react-router-dom";
+import { FaGithub, FaTwitter, FaLinkedin, FaEnvelope } from "react-icons/fa";
+import { Wallet } from "lucide-react";
 
 interface FooterProps {
   className?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ className = '' }) => {
+const Footer: React.FC<FooterProps> = ({ className = "" }) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={`bg-[#111111] text-[#F9F9F7] border-t-4 border-[#CC0000] ${className}`} style={{ fontFamily: "'Inter', sans-serif" }}>
+    <footer
+      className={`bg-[#111111] text-[#F9F9F7] border-t-4 border-[#CC0000] ${className}`}
+      style={{ fontFamily: "'Inter', sans-serif" }}
+    >
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header Section */}
         <div className="border-b-2 border-[#E5E5E0] pb-8 mb-8">
@@ -22,7 +25,10 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
                 <Wallet className="h-6 w-6 text-[#F9F9F7]" />
               </div>
               <div>
-                <div className="text-2xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div
+                  className="text-2xl font-black"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
                   PASSVAULT
                 </div>
                 <div className="text-xs uppercase tracking-widest font-mono text-[#A3A3A3]">
@@ -65,39 +71,82 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* About */}
           <div className="border-r-2 border-[#E5E5E0] pr-8">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+            <h3
+              className="text-sm font-black uppercase tracking-widest mb-4"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "1.5rem",
+                color: "#CC0000",
+              }}
+            >
               ABOUT
             </h3>
-            <p className="text-sm leading-relaxed mb-4" style={{ fontFamily: "'Lora', serif" }}>
-              PassVault secures your digital life with military-grade encryption and trusted security practices.
+
+            <p
+              className="text-sm leading-relaxed mb-4"
+              style={{ fontFamily: "'Lora', serif" }}
+            >
+              PassVault secures your digital life with military-grade encryption
+              and trusted security practices.
             </p>
+
             <div className="flex gap-3">
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="border border-[#F9F9F7] p-2 hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors">
+              <a
+                href="https://github.com/Vineetsahoo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-[#F9F9F7] p-2 flex items-center justify-center hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors"
+              >
                 <FaGithub size={18} />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="border border-[#F9F9F7] p-2 hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors">
+
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-[#F9F9F7] p-2 flex items-center justify-center hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors"
+              >
                 <FaTwitter size={18} />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="border border-[#F9F9F7] p-2 hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors">
+
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-[#F9F9F7] p-2 flex items-center justify-center hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors"
+              >
                 <FaLinkedin size={18} />
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="border-r-2 border-[#E5E5E0] pr-8">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+          <div className="border-r-2 border-[#E5E5E0] pr-8 min-w-[220px]">
+            <h3
+              className="text-sm font-black uppercase tracking-widest mb-4 text-[#CC0000]"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "1.5rem",
+              }}
+            >
               LINKS
             </h3>
-            <ul className="space-y-3">
+
+            <ul
+              className="space-y-3"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               {[
-                { name: 'Features', path: '/features' },
-                { name: 'Pricing', path: '/pricing' },
-                { name: 'FAQ', path: '/faq' },
-                { name: 'Blog', path: '/blog' },
+                { name: "Features", path: "/features" },
+                { name: "Pricing", path: "/pricing" },
+                { name: "FAQ", path: "/faq" },
+                { name: "Blog", path: "/blog" },
               ].map((item) => (
                 <li key={item.name}>
-                  <Link to={item.path} className="text-sm hover:text-[#CC0000] transition-colors underline-offset-2 hover:underline">
+                  <Link
+                    to={item.path}
+                    className="text-sm text-[#F9F9F7] hover:text-[#CC0000] transition-colors underline-offset-2 hover:underline"
+                  >
                     {item.name}
                   </Link>
                 </li>
@@ -106,19 +155,32 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
           </div>
 
           {/* Legal */}
-          <div className="border-r-2 border-[#E5E5E0] pr-8">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+          <div className="border-r-2 border-[#E5E5E0] pr-8 min-w-[220px]">
+            <h3
+              className="text-sm font-black uppercase tracking-widest mb-4 text-[#CC0000]"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "1.5rem",
+              }}
+            >
               LEGAL
             </h3>
-            <ul className="space-y-3">
+
+            <ul
+              className="space-y-3"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
               {[
-                { name: 'Privacy', path: '/privacy' },
-                { name: 'Terms', path: '/terms' },
-                { name: 'Security', path: '/' },
-                { name: 'Compliance', path: '/' },
+                { name: "Privacy", path: "/privacy" },
+                { name: "Terms", path: "/terms" },
+                { name: "Security", path: "/security" },
+                { name: "Compliance", path: "/compliance" },
               ].map((item) => (
                 <li key={item.name}>
-                  <Link to={item.path} className="text-sm hover:text-[#CC0000] transition-colors underline-offset-2 hover:underline">
+                  <Link
+                    to={item.path}
+                    className="text-sm text-[#F9F9F7] hover:text-[#CC0000] transition-colors duration-300 underline-offset-4 hover:underline"
+                  >
                     {item.name}
                   </Link>
                 </li>
@@ -128,12 +190,18 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-black uppercase tracking-widest mb-4" style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem' }}>
+            <h3
+              className="text-sm font-black uppercase tracking-widest mb-4 text-[#CC0000]"
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "1.5rem",
+              }}
+            >
               CONTACT
             </h3>
             <div className="space-y-4">
               <button
-                onClick={() => window.location.href = '/contact'}
+                onClick={() => (window.location.href = "/contact")}
                 className="w-full bg-[#CC0000] text-[#F9F9F7] px-4 py-2 font-bold text-xs uppercase tracking-widest hover:bg-[#990000] transition-colors"
               >
                 GET SUPPORT
@@ -141,9 +209,17 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               <div className="border border-[#F9F9F7] p-3 bg-[#1a1a1a]">
                 <div className="flex items-center gap-2 mb-2">
                   <FaEnvelope className="text-[#CC0000]" />
-                  <span className="text-xs uppercase tracking-widest font-mono">Email</span>
+                  <span className="text-xs uppercase tracking-widest font-mono">
+                    Email
+                  </span>
                 </div>
-                <a href="mailto:support@passvault.com" className="text-sm hover:text-[#CC0000] transition-colors">
+                <a
+                  href="mailto:support@passvault.com"
+                  className="text-sm text-[#F9F9F7] hover:text-[#CC0000] transition-colors duration-300"
+                  style={{
+                    fontFamily: "'Playfair Display', serif",
+                  }}
+                >
                   support@passvault.com
                 </a>
               </div>

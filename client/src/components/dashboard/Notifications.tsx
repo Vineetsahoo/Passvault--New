@@ -386,47 +386,42 @@ const Notifications = () => {
   return (
     <div className="space-y-8 -mt-4"> {/* Increased spacing between sections */}
       {/* Enhanced header with decorative elements */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-700 rounded-2xl shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-purple-300 opacity-10 rounded-full translate-y-1/3"></div>
-        
+      <div className="relative border-4 border-[#111111] bg-[#111111]">
         <div className="relative z-10 p-7">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <div className="inline-flex items-center gap-3 mb-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
+              <div className="inline-flex items-center gap-3 mb-2 border border-[#F9F9F7] px-3 py-1.5">
                 {unreadCount > 0 ? (
                   <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    <span className="absolute inline-flex h-full w-full bg-[#CC0000]"></span>
+                    <span className="relative inline-flex h-3 w-3 bg-[#CC0000]"></span>
                   </span>
                 ) : (
-                  <span className="h-3 w-3 rounded-full bg-green-400"></span>
+                  <span className="h-3 w-3 bg-[#F9F9F7]"></span>
                 )}
-                <span className="text-xs font-medium text-blue-50">
+                <span className="text-xs font-black uppercase tracking-widest text-[#F9F9F7]">
                   {unreadCount > 0 ? `${unreadCount} unread alerts` : 'All caught up!'}
                 </span>
               </div>
               
-              <h2 className="text-3xl font-bold text-white flex flex-wrap items-center gap-3">
-                <HiBell className="text-blue-200" /> 
+              <h2 className="text-4xl font-black text-[#F9F9F7] flex flex-wrap items-center gap-3 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <HiBell className="text-[#CC0000]" /> 
                 <span>Notifications & Alerts</span>
               </h2>
               
-              <p className="text-indigo-100 mt-1.5 max-w-lg">
+              <p className="text-[#E5E5E0] mt-2 max-w-lg" style={{ fontFamily: "'Lora', serif" }}>
                 Stay informed about important security updates and account events
               </p>
             </div>
             
             <div className="flex items-center gap-3 self-end">
               {unreadCount > 0 && (
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                <button
                   onClick={markAllAsRead}
-                  className="px-4 py-2.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium rounded-lg transition-all flex items-center gap-2 border border-white/20"
+                  className="px-4 py-2.5 bg-[#F9F9F7] text-[#111111] font-black uppercase tracking-widest border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all flex items-center gap-2"
                 >
-                  <IoCheckmarkDoneCircle className="text-blue-200" /> Mark All Read
-                </motion.button>
+                  <IoCheckmarkDoneCircle className="text-[#111111]" /> Mark All Read
+                </button>
               )}
               
               <motion.button

@@ -210,76 +210,69 @@ const UserProfileHeader: React.FC<{
   profile: IUserProfile; 
   onEditClick: () => void;
 }> = ({ profile, onEditClick }) => (
-  <div className="relative overflow-hidden rounded-2xl shadow-lg bg-gradient-to-r from-indigo-600 to-purple-700 mb-8">
-    <div className="absolute inset-0 bg-pattern opacity-10"></div>
-    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-x-10 -translate-y-20"></div>
-    <div className="absolute bottom-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full translate-x-10 translate-y-20"></div>
-    
+  <div className="relative border-4 border-[#111111] bg-[#111111] mb-8">
     <div className="relative p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6">
       <div className="relative group">
-        <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white/20 shadow-xl">
+        <div className="w-28 h-28 border-4 border-[#111111] bg-[#E5E5E0]">
           <img
             src={profile.avatar}
             alt={profile.name}
             className="w-full h-full object-cover"
           />
         </div>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+        <button
           onClick={onEditClick}
-          className="absolute bottom-0 right-0 p-2 bg-white text-indigo-600 rounded-full shadow-lg hover:bg-indigo-50 transition-all"
+          className="absolute bottom-0 right-0 p-2 bg-[#F9F9F7] text-[#111111] border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all"
         >
           <FaCamera className="w-4 h-4" />
-        </motion.button>
+        </button>
       </div>
       
-      <div className="text-center md:text-left text-white">
-        <h1 className="text-2xl sm:text-3xl font-bold">{profile.name}</h1>
-        <p className="text-indigo-100">{profile.email}</p>
-        <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-2">
-          <span className="px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium border border-white/30">
+      <div className="text-left text-[#F9F9F7] md:text-left">
+        <h1 className="text-3xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.name}</h1>
+        <p className="text-[#E5E5E0] text-lg" style={{ fontFamily: "'Lora', serif" }}>{profile.email}</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <span className="px-4 py-1.5 bg-[#F9F9F7] text-[#111111] text-sm font-black uppercase tracking-widest border-2 border-[#111111]">
             {profile.role}
           </span>
           {profile.twoFactorEnabled && (
-            <span className="px-4 py-1.5 bg-green-600/30 backdrop-blur-sm border border-green-300/30 rounded-full text-white text-sm font-medium flex items-center gap-1.5">
-              <FaShieldAlt className="text-green-100" size={12} /> 2FA Enabled
+            <span className="px-4 py-1.5 bg-[#CC0000] text-[#F9F9F7] text-sm font-black uppercase tracking-widest border-2 border-[#111111] flex items-center gap-1.5">
+              <FaShieldAlt size={12} /> 2FA Enabled
             </span>
           )}
         </div>
       </div>
       
-      <div className="ml-auto hidden lg:flex items-center gap-6 text-white/80">
-        <div className="flex flex-col items-center">
-          <span className="text-xl font-bold text-white">{profile.securityScore}%</span>
-          <span className="text-xs">Security Score</span>
+      <div className="ml-auto hidden lg:flex items-center gap-6 text-[#F9F9F7]">
+        <div className="flex flex-col items-center text-center">
+          <span className="text-xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.securityScore}%</span>
+          <span className="text-xs uppercase tracking-widest font-mono">Security Score</span>
         </div>
-        <div className="h-12 w-0.5 bg-white/20"></div>
-        <div className="flex flex-col items-center">
-          <span className="text-xl font-bold text-white">{profile.totalDevices}</span>
-          <span className="text-xs">Devices</span>
+        <div className="h-12 w-1 bg-[#E5E5E0]"></div>
+        <div className="flex flex-col items-center text-center">
+          <span className="text-xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.totalDevices}</span>
+          <span className="text-xs uppercase tracking-widest font-mono">Devices</span>
         </div>
-        <div className="h-12 w-0.5 bg-white/20"></div>
-        <div className="flex flex-col items-center">
-          <span className="text-xl font-bold text-white">{profile.memberSince}</span>
-          <span className="text-xs">Member Since</span>
+        <div className="h-12 w-1 bg-[#E5E5E0]"></div>
+        <div className="flex flex-col items-center text-center">
+          <span className="text-xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.memberSince}</span>
+          <span className="text-xs uppercase tracking-widest font-mono">Member Since</span>
         </div>
       </div>
     </div>
     
-    <div className="bg-indigo-800/30 backdrop-blur-sm flex items-center justify-between px-6 sm:px-8 py-3 border-t border-white/10">
-      <div className="text-white/70 text-sm flex items-center gap-2">
+    <div className="bg-[#F9F9F7] flex items-center justify-between px-6 sm:px-8 py-3 border-t-4 border-[#111111]">
+      <div className="text-[#525252] text-sm flex items-center gap-2 font-mono">
         <FaHistory size={12} /> Last login: {profile.lastLogin}
       </div>
       <div className="flex items-center">
-        <motion.button
-          whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+        <button
           onClick={onEditClick}
-          className="p-2 rounded-full text-white/80 hover:text-white"
+          className="p-2 text-[#111111] hover:bg-[#E5E5E0] transition-all"
           title="Edit Profile"
         >
           <FaEdit className="w-4 h-4" />
-        </motion.button>
+        </button>
       </div>
     </div>
   </div>
@@ -290,12 +283,12 @@ const ProfileSection: React.FC<{ title: string; icon?: React.ReactNode; children
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4 }}
-    className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden"
+    className="bg-[#F9F9F7] border-4 border-[#111111] overflow-hidden"
   >
-    <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
+    <div className="p-5 border-b-4 border-[#111111] flex items-center justify-between bg-[#E5E5E0]">
       <div className="flex items-center gap-3">
         {icon}
-        <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        <h2 className="text-xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</h2>
       </div>
     </div>
     <div className="p-6">{children}</div>
@@ -303,19 +296,17 @@ const ProfileSection: React.FC<{ title: string; icon?: React.ReactNode; children
 );
 
 const InfoCard: React.FC<{ label: string; value: string; icon?: React.ReactNode }> = ({ label, value, icon }) => (
-  <motion.div 
-    whileHover={{ y: -4 }}
-    transition={{ type: "spring", stiffness: 400 }}
-    className="p-4 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-100 transition-all"
+  <div 
+    className="p-4 bg-[#E5E5E0] hover:bg-[#F9F9F7] border-2 border-[#111111] transition-all"
   >
     <div className="flex items-center gap-3">
-      {icon && <div className="text-indigo-500">{icon}</div>}
+      {icon && <div className="text-[#111111]">{icon}</div>}
       <div className="flex-1">
-        <p className="text-sm text-gray-500 mb-1">{label}</p>
-        <p className="font-medium text-gray-900">{value}</p>
+        <p className="text-sm text-[#525252] mb-1 font-mono">{label}</p>
+        <p className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{value}</p>
       </div>
     </div>
-  </motion.div>
+  </div>
 );
 
 // Validation Error Component

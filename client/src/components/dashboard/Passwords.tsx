@@ -511,48 +511,41 @@ const Passwords = () => {
   return (
     <div className="space-y-8 -mt-4"> {/* Increased spacing between sections */}
       {/* Enhanced header section with more visual appeal */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 rounded-2xl shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-purple-300 opacity-10 rounded-full translate-y-1/3"></div>
-        
+      <div className="relative border-4 border-[#111111] bg-[#111111]">
         <div className="relative z-10 p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-3 mb-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaFingerprint className="text-blue-200" />
-              <span className="text-xs font-medium text-blue-50">End-to-End Encrypted</span>
+            <div className="inline-flex items-center gap-3 mb-2 border border-[#F9F9F7] px-3 py-1.5">
+              <FaFingerprint className="text-[#CC0000]" />
+              <span className="text-xs font-black uppercase tracking-widest text-[#F9F9F7]">End-to-End Encrypted</span>
             </div>
             
-            <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-              <FaLock className="text-blue-200" /> 
+            <h2 className="text-4xl font-black text-[#F9F9F7] flex items-center gap-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+              <FaLock className="text-[#CC0000]" /> 
               <span>Secured Vault</span>
             </h2>
             
-            <p className="text-indigo-100 mt-1.5 max-w-lg">
+            <p className="text-[#E5E5E0] mt-2 max-w-lg text-lg" style={{ fontFamily: "'Lora', serif" }}>
               Safely store and manage all your sensitive credentials
             </p>
           </div>
           
           <div className="flex flex-wrap gap-3">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               onClick={() => setShowPasswordGenerator(!showPasswordGenerator)}
-              className="px-4 py-2.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium rounded-lg transition-all flex items-center gap-2 border border-white/20"
+              className="px-4 py-2.5 bg-[#F9F9F7] text-[#111111] font-black uppercase tracking-widest rounded-none transition-all flex items-center gap-2 border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]"
             >
-              <FaDice className="text-blue-200" /> Generate Password
-            </motion.button>
+              <FaDice className="text-[#111111]" /> Generate Password
+            </button>
             
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+            <button
               onClick={() => {
                 setSelectedPassword(null);
                 setShowAddEditModal(true);
               }}
-              className="px-4 py-2.5 bg-white text-indigo-700 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+              className="px-4 py-2.5 bg-[#CC0000] text-[#F9F9F7] font-black uppercase tracking-widest rounded-none transition-all flex items-center gap-2 border-2 border-[#111111] hover:bg-[#F9F9F7] hover:text-[#CC0000]"
             >
               <FaPlus /> Add New Item
-            </motion.button>
+            </button>
           </div>
         </div>
       </div>
@@ -635,9 +628,9 @@ const Passwords = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-xl shadow-lg border border-indigo-100 overflow-hidden"
+            className="bg-[#F9F9F7] border-4 border-[#111111] overflow-hidden"
           >
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 border-b border-indigo-100 flex justify-between items-center">
+            <div className="bg-[#E5E5E0] p-5 border-b-4 border-[#111111] flex justify-between items-center">
               <h3 className="font-semibold text-lg flex items-center text-indigo-800">
                 <div className="p-2 bg-indigo-100 rounded-lg mr-3">
                   <FaLock className="text-indigo-600" />
@@ -667,7 +660,7 @@ const Passwords = () => {
                       setPlatformSpecificPassword('');
                     }}
                     placeholder="e.g., facebook.com, github.com, netflix.com"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-all"
+                    className="w-full px-4 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:bg-[#E5E5E0] transition-all"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     <FaGlobe className="text-gray-400" />
@@ -683,10 +676,10 @@ const Passwords = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100"
+                  className="bg-[#F9F9F7] p-4 border-2 border-[#111111]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-lg ${getPlatformInfo(websiteUrl)?.color || 'bg-gray-500'}`}>
+                    <div className="w-10 h-10 border-2 border-[#111111] bg-[#111111] flex items-center justify-center text-[#F9F9F7] text-lg">
                       {getPlatformInfo(websiteUrl)?.icon || '🌐'}
                     </div>
                     <div>
@@ -701,7 +694,7 @@ const Passwords = () => {
                 </motion.div>
               )}
 
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200 flex items-center">
+              <div className="bg-[#F9F9F7] p-4 border-2 border-[#111111] flex items-center">
                 <input 
                   type="text" 
                   readOnly 
