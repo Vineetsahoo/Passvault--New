@@ -149,49 +149,49 @@ const History: React.FC = () => {
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
       case 'password': 
-        return <div className="p-2.5 bg-blue-100 rounded-full">
-          <FaKey className="text-blue-600 w-5 h-5" />
+        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
+          <FaKey className="text-[#111111] w-5 h-5" />
         </div>;
       case 'document': 
-        return <div className="p-2.5 bg-orange-100 rounded-full">
-          <FaFileAlt className="text-orange-600 w-5 h-5" />
+        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
+          <FaFileAlt className="text-[#111111] w-5 h-5" />
         </div>;
       case 'qrcode': 
-        return <div className="p-2.5 bg-purple-100 rounded-full">
-          <FaCreditCard className="text-purple-600 w-5 h-5" />
+        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
+          <FaCreditCard className="text-[#111111] w-5 h-5" />
         </div>;
       case 'backup': 
-        return <div className="p-2.5 bg-green-100 rounded-full">
-          <FaShieldAlt className="text-green-600 w-5 h-5" />
+        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
+          <FaShieldAlt className="text-[#111111] w-5 h-5" />
         </div>;
       case 'login': 
-        return <div className="p-2.5 bg-indigo-100 rounded-full">
-          <FaPassport className="text-indigo-600 w-5 h-5" />
+        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
+          <FaPassport className="text-[#111111] w-5 h-5" />
         </div>;
       default: 
-        return <div className="p-2.5 bg-gray-100 rounded-full">
-          <FaFingerprint className="text-gray-600 w-5 h-5" />
+        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
+          <FaFingerprint className="text-[#111111] w-5 h-5" />
         </div>;
     }
   };
 
   const getSeverityColor = (action: string) => {
     switch (action) {
-      case 'deleted': return 'text-red-600 bg-red-50 border border-red-100';
-      case 'updated': return 'text-yellow-600 bg-yellow-50 border border-yellow-100';
-      case 'created': return 'text-green-600 bg-green-50 border border-green-100';
-      default: return 'text-gray-600 bg-gray-50 border border-gray-200';
+      case 'deleted': return 'text-[#CC0000] bg-[#F9F9F7] border-2 border-[#CC0000]';
+      case 'updated': return 'text-[#111111] bg-[#E5E5E0] border-2 border-[#111111]';
+      case 'created': return 'text-[#111111] bg-[#F9F9F7] border-2 border-[#111111]';
+      default: return 'text-[#111111] bg-[#F9F9F7] border-2 border-[#111111]';
     }
   };
 
   const getStatusBadge = (success: boolean) => {
     return success ? (
-      <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 text-green-600 border border-green-100">
+      <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-black bg-[#F9F9F7] text-[#111111] border border-[#111111]">
         <FaCheckCircle size={12} />
         Success
       </span>
     ) : (
-      <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-50 text-red-600 border border-red-100">
+      <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-black bg-[#CC0000] text-[#F9F9F7] border border-[#111111]">
         <FaExclamationCircle size={12} />
         Failed
       </span>
@@ -312,29 +312,29 @@ const History: React.FC = () => {
       </div>
 
       {/* Redesigned search and filter section */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="border-4 border-[#111111] bg-[#F9F9F7] overflow-hidden">
         <div className="p-5">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="relative flex-1 w-full">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <FaSearch className="text-gray-400" />
+                <FaSearch className="text-[#111111]" />
               </div>
               <input
                 type="text"
                 placeholder="Search security events by description, target or location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 transition-all"
+                className="w-full pl-12 pr-4 py-3.5 border-b-2 border-[#111111] bg-[#F9F9F7] text-[#111111] focus:bg-[#E5E5E0] focus:outline-none transition-all"
               />
             </div>
             
             <div className="flex items-center gap-3 self-end">
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#E5E5E0] border-2 border-[#111111] hover:bg-[#F9F9F7] transition-colors">
                 <FaSort className="text-gray-500" />
                 <select 
                   value={sortBy} 
                   onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
-                  className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
+                  className="bg-transparent border-none text-sm focus:ring-0 text-[#111111] font-black"
                 >
                   <option value="newest">Sort: Newest first</option>
                   <option value="oldest">Sort: Oldest first</option>
@@ -345,13 +345,13 @@ const History: React.FC = () => {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setShowFilters(!showFilters)}
-                className={`p-3.5 rounded-xl transition-all flex items-center gap-2 ${
-                  showFilters ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : 'hover:bg-gray-100 border border-gray-200'
+                className={`p-3.5 border-2 transition-all flex items-center gap-2 ${
+                  showFilters ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]' : 'hover:bg-[#E5E5E0] bg-[#F9F9F7] text-[#111111] border-[#111111]'
                 }`}
               >
-                <FaFilter className={showFilters ? 'text-indigo-600' : 'text-gray-600'} />
+                <FaFilter className={showFilters ? 'text-[#F9F9F7]' : 'text-[#111111]'} />
                 {activeFiltersCount > 0 && (
-                  <span className="w-5 h-5 flex items-center justify-center bg-indigo-600 text-white text-xs font-bold rounded-full">
+                  <span className="w-5 h-5 flex items-center justify-center bg-[#CC0000] text-[#F9F9F7] text-xs font-black">
                     {activeFiltersCount}
                   </span>
                 )}
@@ -367,77 +367,77 @@ const History: React.FC = () => {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="mt-4 pt-4 border-t-2 border-[#111111]">
                   {/* Filter options would go here */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Event Type</label>
+                      <label className="text-xs font-black text-[#111111] uppercase tracking-widest">Event Type</label>
                       <div className="mt-2 space-y-2">
                         {eventTypes.map(type => (
                           <label key={type.id} className="flex items-center gap-2 cursor-pointer">
                             <input 
                               type="checkbox" 
-                              className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" 
+                              className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
                             />
-                            <span className="text-sm text-gray-700">{type.label}</span>
+                            <span className="text-sm text-[#111111] font-medium">{type.label}</span>
                           </label>
                         ))}
                       </div>
                     </div>
                     
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Severity</label>
+                      <label className="text-xs font-black text-[#111111] uppercase tracking-widest">Severity</label>
                       <div className="mt-2 space-y-2">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input 
                             type="checkbox" 
-                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" 
+                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
                           />
-                          <span className="text-sm text-gray-700">High</span>
+                          <span className="text-sm text-[#111111] font-medium">High</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input 
                             type="checkbox" 
-                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" 
+                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
                           />
-                          <span className="text-sm text-gray-700">Medium</span>
+                          <span className="text-sm text-[#111111] font-medium">Medium</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input 
                             type="checkbox" 
-                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" 
+                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
                           />
-                          <span className="text-sm text-gray-700">Low</span>
+                          <span className="text-sm text-[#111111] font-medium">Low</span>
                         </label>
                       </div>
                     </div>
                     
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</label>
+                      <label className="text-xs font-black text-[#111111] uppercase tracking-widest">Status</label>
                       <div className="mt-2 space-y-2">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input 
                             type="checkbox" 
-                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" 
+                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
                           />
-                          <span className="text-sm text-gray-700">Success</span>
+                          <span className="text-sm text-[#111111] font-medium">Success</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input 
                             type="checkbox" 
-                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500" 
+                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
                           />
-                          <span className="text-sm text-gray-700">Failed</span>
+                          <span className="text-sm text-[#111111] font-medium">Failed</span>
                         </label>
                       </div>
                     </div>
                   </div>
                   
                   <div className="mt-4 flex justify-end gap-3">
-                    <button className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">
+                    <button className="px-4 py-2 text-sm font-black text-[#111111] hover:text-[#CC0000]">
                       Reset Filters
                     </button>
-                    <button className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <button className="px-4 py-2 bg-[#111111] hover:bg-[#F9F9F7] text-[#F9F9F7] hover:text-[#111111] text-sm font-black border-2 border-[#111111] transition-colors">
                       Apply Filters
                     </button>
                   </div>
@@ -448,7 +448,7 @@ const History: React.FC = () => {
         </div>
         
         {/* Redesigned category selector */}
-        <div className="bg-gray-50 border-t border-gray-200 px-5 py-3">
+        <div className="bg-[#E5E5E0] border-t-2 border-[#111111] px-5 py-3">
           <div className="flex overflow-x-auto gap-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-1">
             {eventTypes.map(type => (
               <motion.button
@@ -456,14 +456,14 @@ const History: React.FC = () => {
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setFilter(type.id)}
-                className={`px-4 py-2.5 rounded-full flex items-center gap-2 whitespace-nowrap transition-all ${
+                className={`px-4 py-2.5 flex items-center gap-2 whitespace-nowrap transition-all border-2 ${
                   filter === type.id 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 shadow-sm'
+                    ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]' 
+                    : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0] border-[#111111]'
                 }`}
               >
-                <type.icon className={filter === type.id ? 'text-indigo-200' : 'text-indigo-600'} />
-                <span className="font-medium">{type.label}</span>
+                <type.icon className={filter === type.id ? 'text-[#F9F9F7]' : 'text-[#111111]'} />
+                <span className="font-black">{type.label}</span>
               </motion.button>
             ))}
           </div>
@@ -471,18 +471,18 @@ const History: React.FC = () => {
       </div>
 
       {loading && page === 1 ? (
-        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-          <FaSpinner className="animate-spin text-indigo-600 text-4xl mx-auto mb-4" />
-          <p className="text-gray-600">Loading history...</p>
+        <div className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center">
+          <FaSpinner className="animate-spin text-[#111111] text-4xl mx-auto mb-4" />
+          <p className="text-[#111111]">Loading history...</p>
         </div>
       ) : error ? (
-        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-          <FaExclamationCircle className="text-red-500 text-4xl mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Error Loading History</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+        <div className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center">
+          <FaExclamationCircle className="text-[#CC0000] text-4xl mx-auto mb-4" />
+          <h3 className="text-xl font-black text-[#111111] mb-2">Error Loading History</h3>
+          <p className="text-[#111111] mb-4">{error}</p>
           <button 
             onClick={() => fetchHistory()}
-            className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-5 py-2.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors font-black"
           >
             Try Again
           </button>
@@ -491,19 +491,19 @@ const History: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-sm p-12 text-center"
+          className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center"
         >
           <div className="relative mx-auto w-20 h-20 mb-6">
-            <div className="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-50"></div>
-            <div className="relative bg-indigo-50 rounded-full w-full h-full flex items-center justify-center">
-              <FaHistory className="text-indigo-400 text-2xl" />
+            <div className="absolute inset-0 border-4 border-[#111111] bg-[#E5E5E0]"></div>
+            <div className="relative border-4 border-[#111111] bg-[#F9F9F7] w-full h-full flex items-center justify-center">
+              <FaHistory className="text-[#111111] text-2xl" />
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No matching activity found</h3>
-          <p className="text-gray-500 max-w-md mx-auto">
+          <h3 className="text-xl font-black text-[#111111] mb-2">No matching activity found</h3>
+          <p className="text-[#111111] max-w-md mx-auto">
             Try adjusting your search terms or filters to view more results. Security events will appear here when they occur.
           </p>
-          <button onClick={() => {setFilter('all'); setSearchTerm('');}} className="mt-6 px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+          <button onClick={() => {setFilter('all'); setSearchTerm('');}} className="mt-6 px-5 py-2.5 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors">
             Reset filters
           </button>
         </motion.div>
@@ -518,17 +518,17 @@ const History: React.FC = () => {
             <motion.div
               key={event.id}
               variants={cardVariants}
-              className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+              className="border-l-4 border-b-2 border-r-2 border-t-2 border-[#111111] bg-[#F9F9F7] overflow-hidden"
               layout
             >
               <div className="flex">
-                <div className={`w-1 ${
-                  event.action === 'deleted' ? 'bg-red-500' : 
-                  event.action === 'updated' ? 'bg-amber-500' :
-                  event.eventType === 'password' ? 'bg-blue-500' : 
-                  event.eventType === 'document' ? 'bg-orange-500' :
-                  event.eventType === 'qrcode' ? 'bg-purple-500' :
-                  'bg-green-500'
+                <div className={`w-2 ${
+                  event.action === 'deleted' ? 'bg-[#CC0000]' : 
+                  event.action === 'updated' ? 'bg-[#E5E5E0]' :
+                  event.eventType === 'password' ? 'bg-[#111111]' : 
+                  event.eventType === 'document' ? 'bg-[#111111]' :
+                  event.eventType === 'qrcode' ? 'bg-[#111111]' :
+                  'bg-[#111111]'
                 }`}></div>
                 
                 <div className="flex-1">
@@ -541,12 +541,12 @@ const History: React.FC = () => {
                         
                         <div>
                           <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <span className="text-xs font-medium bg-gray-100 px-2 py-1 rounded-md text-gray-600">
+                            <span className="text-xs font-black bg-[#E5E5E0] px-2 py-1 text-[#111111]">
                               {formatDate(event.date)}
                             </span>
                             
                             {event.action && (
-                              <span className={`px-2 py-1 rounded-md text-xs font-medium ${getSeverityColor(event.action)}`}>
+                              <span className={`px-2 py-1 text-xs font-black ${getSeverityColor(event.action)}`}>
                                 {event.action.charAt(0).toUpperCase() + event.action.slice(1)}
                               </span>
                             )}
@@ -554,32 +554,32 @@ const History: React.FC = () => {
                             {getStatusBadge(event.success)}
                           </div>
                           
-                          <h3 className="font-semibold text-gray-900 text-lg">{event.description}</h3>
-                          <p className="text-gray-600 mt-1">{event.target}</p>
+                          <h3 className="font-black text-[#111111] text-lg">{event.description}</h3>
+                          <p className="text-[#111111] mt-1">{event.target}</p>
                           
                           <div className="mt-4 flex flex-wrap items-center gap-3">
                             {event.metadata?.device && (
-                              <div className="flex items-center gap-1.5 text-sm text-gray-500 bg-gray-50 px-2.5 py-1 rounded-md">
-                                <FaDesktop className="text-gray-400" size={12} />
+                              <div className="flex items-center gap-1.5 text-sm text-[#111111] bg-[#E5E5E0] px-2.5 py-1 border border-[#111111]">
+                                <FaDesktop className="text-[#111111]" size={12} />
                                 {event.metadata.device}
                               </div>
                             )}
                             
                             {event.ipAddress && (
-                              <div className="flex items-center gap-1.5 text-sm text-gray-500 bg-gray-50 px-2.5 py-1 rounded-md">
-                                <FaGlobe className="text-gray-400" size={12} />
+                              <div className="flex items-center gap-1.5 text-sm text-[#111111] bg-[#E5E5E0] px-2.5 py-1 border border-[#111111]">
+                                <FaGlobe className="text-[#111111]" size={12} />
                                 {event.ipAddress}
                               </div>
                             )}
                             
                             {event.metadata?.location && (
-                              <div className="flex items-center gap-1.5 text-sm text-gray-500 bg-gray-50 px-2.5 py-1 rounded-md">
-                                <FaCalendarAlt className="text-gray-400" size={12} />
+                              <div className="flex items-center gap-1.5 text-sm text-[#111111] bg-[#E5E5E0] px-2.5 py-1 border border-[#111111]">
+                                <FaCalendarAlt className="text-[#111111]" size={12} />
                                 {event.metadata.location}
                               </div>
                             )}
                             
-                            <div className="flex items-center gap-1.5 text-sm font-medium text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-100">
+                            <div className="flex items-center gap-1.5 text-sm font-black text-[#CC0000] bg-[#F9F9F7] px-2.5 py-1 border-2 border-[#CC0000]">
                               Type: {event.eventType}
                             </div>
                           </div>
@@ -589,10 +589,10 @@ const History: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         onClick={() => setShowDetailId(showDetailId === event.id ? null : event.id)}
-                        className={`self-start flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium text-sm transition-colors ${
+                        className={`self-start flex items-center gap-2 px-3.5 py-2 font-black text-sm transition-colors border-2 ${
                           showDetailId === event.id ? 
-                          'bg-indigo-100 text-indigo-700 border border-indigo-200' : 
-                          'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
+                          'bg-[#111111] text-[#F9F9F7] border-[#111111]' : 
+                          'bg-[#E5E5E0] hover:bg-[#111111] hover:text-[#F9F9F7] text-[#111111] border-[#111111]'
                         }`}
                       >
                         {showDetailId === event.id ? 'Hide details' : 'View details'}
