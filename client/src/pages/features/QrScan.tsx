@@ -12,6 +12,62 @@ import ScrollButton from '../../components/ScrollButton';
 import TerminalQrScanner from '../../components/TerminalQrScanner';
 import qrcodeService, { QRCode as QRCodeType, QRCodeType as QRType, CreateQRCodeData } from '../../services/qrcodeService';
 
+// Newsprint Design System — font imports & utility classes
+const NewsprintStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
+    .np-serif  { font-family: 'Playfair Display', 'Times New Roman', serif; }
+    .np-body   { font-family: 'Lora', Georgia, serif; }
+    .np-sans   { font-family: 'Inter', 'Helvetica Neue', sans-serif; }
+    .np-mono   { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+    * { border-radius: 0px !important; }
+    .np-hard-hover:hover { box-shadow: 4px 4px 0px 0px #111111; transform: translate(-2px, -2px); }
+    .np-input {
+      border: none;
+      border-bottom: 2px solid #111111;
+      background: transparent;
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875rem;
+      outline: none;
+      width: 100%;
+    }
+    .np-input:focus { background: #F0F0F0; }
+    .np-input::placeholder { color: #A3A3A3; }
+    .np-select {
+      border: none;
+      border-bottom: 2px solid #111111;
+      background: transparent;
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875rem;
+      outline: none;
+      width: 100%;
+      appearance: none;
+      cursor: pointer;
+    }
+    .np-select:focus { background: #F0F0F0; }
+    .np-textarea {
+      border: 2px solid #111111;
+      background: transparent;
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875rem;
+      outline: none;
+      width: 100%;
+      resize: vertical;
+    }
+    .np-textarea:focus { background: #F0F0F0; }
+    input[type='range'] { accent-color: #111111; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .np-dot-bg {
+      background-color: #F9F9F7;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+    }
+  `}</style>
+);
+
 // Feature Template component for page layout
 const FeatureTemplate: React.FC<{
   title: string;
@@ -22,15 +78,16 @@ const FeatureTemplate: React.FC<{
   const navigate = useNavigate();
   
   return (
-    <div className="bg-[#F9F9F7] min-h-screen pt-28 pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="np-dot-bg min-h-screen pt-28 pb-20 np-sans">
+      <NewsprintStyles />
       <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
         {/* Go Back Button */}
         <div className="mb-8">
           <button 
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F9F9F7] border border-[#111111] text-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F9F9F7] border border-[#111111] text-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px]"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             BACK TO HOME
           </button>
         </div>
@@ -38,18 +95,19 @@ const FeatureTemplate: React.FC<{
         <div className="border-4 border-[#111111] bg-[#F9F9F7] overflow-hidden">
           <div className="p-8 md:p-12 border-b-4 border-[#111111]">
             <div className="flex flex-col md:flex-row md:items-center gap-8">
-              <div className="border-2 border-[#111111] p-6 flex items-center justify-center w-24 h-24 flex-shrink-0">
+              <div className="border-2 border-[#111111] p-6 flex items-center justify-center w-24 h-24 flex-shrink-0 np-hard-hover transition-all duration-200">
                 {React.cloneElement(icon as React.ReactElement, { 
-                  className: "h-12 w-12 text-[#111111]" 
+                  className: "h-12 w-12 text-[#111111]",
+                  strokeWidth: 1.5
                 })}
               </div>
               
               <div className="space-y-4">
-                <div className="inline-block border border-[#111111] px-4 py-1 text-xs font-black uppercase tracking-widest text-[#111111]">
+                <div className="inline-block border border-[#111111] px-4 py-1 text-xs font-black uppercase tracking-widest text-[#111111] np-mono">
                   FEATURE
                 </div>
-                <h1 className="text-5xl md:text-6xl font-black leading-[0.9]" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</h1>
-                <p className="text-lg leading-relaxed max-w-2xl" style={{ fontFamily: "'Lora', serif" }}>{description}</p>
+                <h1 className="text-5xl md:text-6xl font-black leading-[0.9] tracking-tighter text-[#111111] np-serif">{title}</h1>
+                <p className="text-base leading-relaxed max-w-2xl text-[#525252] np-body">{description}</p>
               </div>
             </div>
           </div>
@@ -59,7 +117,11 @@ const FeatureTemplate: React.FC<{
           </div>
         </div>
         
-        <div className="mt-8 h-1 bg-[#111111]"></div>
+        {/* Ornamental divider */}
+        <div className="mt-8 py-4 text-center np-serif text-xl text-[#A3A3A3] tracking-[1em]">
+          &#x2727; &#x2727; &#x2727;
+        </div>
+        <div className="h-1 bg-[#111111]" />
       </div>
     </div>
   );
@@ -213,6 +275,7 @@ const cardCategories = {
   pass: ['Transit', 'Gym', 'Cinema', 'Museum', 'Library', 'Event', 'Concert', 'Others'],
   membership: ['Premium', 'VIP', 'Gold', 'Silver', 'Diamond', 'Platinum', 'Elite']
 };
+
 // Add new card images and pass designs
 const cardImages = {
   mastercard: '/images/mastercard-logo.png',
@@ -244,41 +307,41 @@ const ManualEntryForm: React.FC<{
   onSave: () => void;
 }> = React.memo(({ formData, validationErrors, loading, onFormChange, onSave }) => {
   return (
-    <div className="bg-white rounded-xl p-6 space-y-6">
+    <div className="bg-[#F9F9F7] space-y-6 np-sans">
       {/* Card Type Selection */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-3">Card/Pass Type</label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {(['credit', 'debit', 'pass', 'membership'] as const).map(type => (
+        <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-3 np-mono">Card / Pass Type</label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-[#111111]">
+          {(['credit', 'debit', 'pass', 'membership'] as const).map((type, idx) => (
             <button
               key={type}
               onClick={() => onFormChange('type', type)}
-              className={`p-3 rounded-lg border-2 transition-all text-center ${
+              className={`p-4 text-center transition-all duration-200 border-r border-[#111111] last:border-r-0 min-h-[44px] ${
                 formData.type === type
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  ? 'bg-[#111111] text-[#F9F9F7]'
+                  : 'bg-transparent text-[#111111] hover:bg-[#F5F5F5]'
               }`}
             >
               <div className="text-2xl mb-1">
                 {type === 'credit' ? '💳' : type === 'debit' ? '🏦' : type === 'pass' ? '🎫' : '🏛️'}
               </div>
-              <div className="font-medium capitalize text-sm">{type}</div>
+              <div className="font-black capitalize text-xs uppercase tracking-widest np-mono">{type}</div>
             </button>
           ))}
         </div>
         
         {/* Input Requirements Info */}
-        <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+        <div className="mt-3 p-3 bg-[#F5F5F5] border border-[#111111]">
           <div className="flex items-start gap-2">
-            <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
+            <Info className="h-4 w-4 text-[#111111] flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+            <div className="text-xs text-[#111111] np-mono">
               {formData.type === 'credit' || formData.type === 'debit' ? (
                 <>
-                  <strong>Card Number:</strong> 13-16 digits only • Auto-formatted with spaces • Test/demo cards accepted
+                  <strong>Card Number:</strong> 13-16 digits only · Auto-formatted with spaces · Test/demo cards accepted
                 </>
               ) : (
                 <>
-                  <strong>Pass/Membership ID:</strong> Alphanumeric characters allowed • Min 3 characters
+                  <strong>Pass/Membership ID:</strong> Alphanumeric characters allowed · Min 3 characters
                 </>
               )}
             </div>
@@ -287,23 +350,23 @@ const ManualEntryForm: React.FC<{
       </div>
 
       {/* Basic Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Title <span className="text-red-500">*</span>
+          <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
+            Title <span className="text-[#CC0000]">*</span>
           </label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => onFormChange('title', e.target.value)}
             placeholder="e.g., Premium Credit Card"
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="np-input"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            {formData.type === 'credit' || formData.type === 'debit' ? 'Card Number' : 'Pass/Membership ID'} <span className="text-red-500">*</span>
+          <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
+            {formData.type === 'credit' || formData.type === 'debit' ? 'Card Number' : 'Pass/Membership ID'} <span className="text-[#CC0000]">*</span>
           </label>
           <input
             type="text"
@@ -315,9 +378,9 @@ const ManualEntryForm: React.FC<{
                 : 'ABC-123-XYZ'
             }
             maxLength={formData.type === 'credit' || formData.type === 'debit' ? 19 : 50}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono"
+            className="np-input"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-[#737373] mt-1 np-mono">
             {formData.type === 'credit' || formData.type === 'debit' 
               ? '13-16 digits, auto-formatted with spaces' 
               : 'Alphanumeric characters allowed'}
@@ -325,34 +388,34 @@ const ManualEntryForm: React.FC<{
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Holder Name <span className="text-red-500">*</span>
+          <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
+            Holder Name <span className="text-[#CC0000]">*</span>
           </label>
           <input
             type="text"
             value={formData.holderName}
             onChange={(e) => onFormChange('holderName', e.target.value)}
             placeholder="John Doe"
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="np-input"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Issuer/Organization
+          <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
+            Issuer / Organization
           </label>
           <input
             type="text"
             value={formData.issuer}
             onChange={(e) => onFormChange('issuer', e.target.value)}
             placeholder="Bank Name, Company"
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="np-input"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Expiry Date {(formData.type === 'credit' || formData.type === 'debit') && <span className="text-amber-500">(Recommended)</span>}
+          <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
+            Expiry Date {(formData.type === 'credit' || formData.type === 'debit') && <span className="text-[#737373]">(Recommended)</span>}
           </label>
           <input
             type="text"
@@ -360,21 +423,19 @@ const ManualEntryForm: React.FC<{
             onChange={(e) => onFormChange('expiryDate', e.target.value)}
             placeholder="MM/YY"
             maxLength={5}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono"
+            className="np-input"
           />
-          <p className="text-xs text-slate-500 mt-1">
-            Format: MM/YY (e.g., 12/25)
-          </p>
+          <p className="text-xs text-[#737373] mt-1 np-mono">Format: MM/YY (e.g., 12/25)</p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
             Category
           </label>
           <select
             value={formData.category}
             onChange={(e) => onFormChange('category', e.target.value)}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="np-select"
           >
             <option value="">Select Category</option>
             {cardCategories[formData.type]?.map(category => (
@@ -386,7 +447,7 @@ const ManualEntryForm: React.FC<{
 
       {/* Additional Notes */}
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-2">
+        <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
           Additional Notes
         </label>
         <textarea
@@ -394,19 +455,19 @@ const ManualEntryForm: React.FC<{
           onChange={(e) => onFormChange('customData', e.target.value)}
           placeholder="Any additional information..."
           rows={3}
-          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          className="np-textarea"
         />
       </div>
 
       {/* Live QR Code Preview */}
       {formData.title && formData.number && formData.holderName && (
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
-          <div className="flex items-center gap-2 mb-4">
-            <Eye className="h-5 w-5 text-indigo-600" />
-            <h4 className="font-semibold text-slate-800">Live QR Code Preview</h4>
+        <div className="bg-[#F5F5F5] p-6 border border-[#111111]">
+          <div className="flex items-center gap-2 mb-4 border-b border-[#E5E5E0] pb-3">
+            <Eye className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />
+            <h4 className="font-black text-[#111111] uppercase text-xs tracking-widest np-mono">Live QR Code Preview</h4>
           </div>
           <div className="flex flex-col items-center gap-4">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 border border-[#111111]">
               <QRCodeSVG
                 value={`${formData.type}:${formData.title}:${formData.number}`}
                 size={180}
@@ -415,10 +476,10 @@ const ManualEntryForm: React.FC<{
               />
             </div>
             <div className="text-center">
-              <p className="text-sm text-slate-600">
+              <p className="text-xs text-[#737373] np-mono uppercase tracking-widest">
                 Preview QR code (simplified for display)
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-[#A3A3A3] mt-1 np-mono">
                 {formData.type === 'credit' || formData.type === 'debit' ? '🔒 Full data will be encrypted when saved' : '📄 Full data will be included when saved'}
               </p>
             </div>
@@ -428,12 +489,12 @@ const ManualEntryForm: React.FC<{
 
       {/* Validation Errors */}
       {validationErrors.length > 0 && (
-        <div className="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+        <div className="bg-[#F9F9F7] border-l-4 border-[#CC0000] p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-700 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-[#CC0000] flex-shrink-0 mt-0.5" strokeWidth={1.5} />
             <div className="flex-1">
-              <h4 className="font-medium text-red-700 mb-2">Please fix the following errors:</h4>
-              <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
+              <h4 className="font-black text-[#CC0000] mb-2 text-xs uppercase tracking-widest np-mono">Please fix the following errors:</h4>
+              <ul className="list-disc list-inside space-y-1 text-xs text-[#CC0000] np-mono">
                 {validationErrors.map((error, index) => (
                   <li key={index}>{error}</li>
                 ))}
@@ -448,19 +509,19 @@ const ManualEntryForm: React.FC<{
         <button
           onClick={onSave}
           disabled={loading}
-          className={`w-full px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg transition-all font-medium flex items-center justify-center gap-2 shadow-md ${
-            loading ? 'opacity-50 cursor-not-allowed' : 'hover:from-emerald-700 hover:to-teal-700 hover:shadow-lg'
+          className={`w-full px-6 py-3 border border-transparent bg-[#111111] text-[#F9F9F7] font-black uppercase text-xs tracking-widest transition-all duration-200 flex items-center justify-center gap-2 min-h-[44px] np-mono ${
+            loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111]'
           }`}
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Saving...
+              <Loader2 className="h-5 w-5 animate-spin" strokeWidth={1.5} />
+              SAVING...
             </>
           ) : (
             <>
-              <Save className="h-5 w-5" />
-              Save {formData.type === 'credit' || formData.type === 'debit' ? 'Card' : 'Pass'}
+              <Save className="h-5 w-5" strokeWidth={1.5} />
+              SAVE {formData.type === 'credit' || formData.type === 'debit' ? 'CARD' : 'PASS'}
             </>
           )}
         </button>
@@ -1173,18 +1234,18 @@ const QrScan = () => {
   };
 
   const AuthPrompt = () => (
-    <div className="bg-white border border-slate-200/60 p-8 rounded-xl shadow-lg text-center backdrop-blur-sm">
-      <div className="bg-indigo-50 rounded-full p-4 w-20 h-20 flex items-center justify-center mx-auto mb-6">
-        <Lock className="h-10 w-10 text-indigo-600" />
+    <div className="bg-[#F9F9F7] border border-[#111111] p-8 text-center np-sans">
+      <div className="border-2 border-[#111111] p-4 w-20 h-20 flex items-center justify-center mx-auto mb-6">
+        <Lock className="h-10 w-10 text-[#111111]" strokeWidth={1.5} />
       </div>
-      <h3 className="text-xl font-semibold text-slate-800 mb-3">Sign in Required</h3>
-      <p className="text-slate-600 mb-6">Please sign in to view your cards and passes</p>
+      <h3 className="text-xl font-black text-[#111111] mb-3 np-serif uppercase tracking-tight">Sign In Required</h3>
+      <p className="text-[#525252] mb-6 np-body text-sm">Please sign in to view your cards and passes</p>
       <button 
         onClick={() => navigate('/signin')}
-        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
+        className="inline-flex items-center gap-2 px-6 py-3 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px]"
       >
-        <LogIn className="h-5 w-5" />
-        Sign In
+        <LogIn className="h-4 w-4" strokeWidth={1.5} />
+        SIGN IN
       </button>
     </div>
   );
@@ -1211,10 +1272,10 @@ const QrScan = () => {
       <div className="flex justify-end mb-4">
         <button
           onClick={handleSignOut}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-widest text-[#111111] hover:text-[#CC0000] transition-colors np-mono min-h-[44px]"
         >
-          <LogIn className="h-4 w-4" />
-          Sign Out
+          <LogIn className="h-4 w-4" strokeWidth={1.5} />
+          SIGN OUT
         </button>
       </div>
     )
@@ -1223,17 +1284,19 @@ const QrScan = () => {
   // Update the CardDisplay component with uniform design for all cards and passes
   const CardDisplay: React.FC<{ card: CardData }> = ({ card }) => {
     return (
-      <div className="relative w-[340px] flex-shrink-0 rounded-2xl shadow-lg mx-2 overflow-hidden group transition-all duration-300 hover:scale-[1.03] hover:shadow-xl">
+      <div className="relative w-[340px] flex-shrink-0 mx-2 overflow-hidden group transition-all duration-200 np-hard-hover cursor-pointer"
+           style={{ borderRadius: 0 }}>
         {/* Background - gradient for all cards and passes */}
         <div 
           className="absolute inset-0"
           style={{ 
             background: typeof card.backgroundColor === 'string' 
               ? card.backgroundColor 
-              : card.backgroundColor.gradient
+              : card.backgroundColor.gradient,
+            borderRadius: 0
           }}
         >
-          {/* Enhanced Background Pattern */}
+          {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute inset-0 bg-[url('/card-pattern.svg')] mix-blend-overlay" />
             <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent" />
@@ -1244,11 +1307,11 @@ const QrScan = () => {
         <div className="relative z-10 p-6 h-[200px] flex flex-col" style={{ color: card.textColor }}>
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <h3 className="text-lg font-semibold tracking-wide">{card.title}</h3>
-              <p className="text-sm opacity-80 font-mono tracking-wider">{card.number}</p>
+              <h3 className="text-lg font-black tracking-wide np-serif">{card.title}</h3>
+              <p className="text-sm opacity-80 np-mono tracking-wider">{card.number}</p>
             </div>
             {card.logo && (
-              <div className="bg-white/30 backdrop-blur-sm rounded-lg p-1.5 shadow-sm">
+              <div className="bg-white/30 backdrop-blur-sm p-1.5">
                 <img 
                   src={card.logo} 
                   alt={card.issuer} 
@@ -1264,46 +1327,42 @@ const QrScan = () => {
           
           <div className="mt-auto space-y-3">
             <div>
-              <p className="text-sm opacity-90 uppercase tracking-wider font-medium">{card.holderName}</p>
+              <p className="text-sm opacity-90 uppercase tracking-widest font-black np-mono">{card.holderName}</p>
               {card.expiryDate && (
-                <p className="text-xs opacity-80 mt-1 font-medium">Valid Thru: {card.expiryDate}</p>
+                <p className="text-xs opacity-80 mt-1 np-mono">Valid Thru: {card.expiryDate}</p>
               )}
             </div>
-            <div className="text-xs opacity-70 uppercase tracking-wider">{card.issuer}</div>
+            <div className="text-xs opacity-70 uppercase tracking-widest np-mono">{card.issuer}</div>
           </div>
 
-          {/* Enhanced QR Code with hover effect for all cards */}
-          <div className="absolute right-4 bottom-4 group-hover:scale-110 transition-all duration-300 transform-gpu">
-            <div className="relative">
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-lg blur-sm"></div>
-              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-2 relative shadow-lg border border-white/50">
-                {card.qrData && card.qrData.startsWith('data:image') ? (
-                  <img 
-                    src={card.qrData} 
-                    alt="QR Code" 
-                    className="w-[84px] h-[84px]"
-                    onError={(e) => {
-                      console.error(`❌ Failed to load QR image for card: ${card.title}`);
-                      // Fallback to SVG QR code if image fails
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = 'none';
-                      target.parentElement!.innerHTML = `
-                        <div class="w-[84px] h-[84px] flex items-center justify-center bg-slate-100 text-xs text-slate-600">
-                          QR Code
-                        </div>
-                      `;
-                    }}
-                  />
-                ) : (
-                  <QRCodeSVG 
-                    value={card.qrData || card.number}
-                    size={84}
-                    level="M"
-                    includeMargin={true}
-                    className="w-full h-full"
-                  />
-                )}
-              </div>
+          {/* QR Code */}
+          <div className="absolute right-4 bottom-4 group-hover:scale-110 transition-all duration-200 transform-gpu">
+            <div className="bg-white/90 p-2 border border-white/50">
+              {card.qrData && card.qrData.startsWith('data:image') ? (
+                <img 
+                  src={card.qrData} 
+                  alt="QR Code" 
+                  className="w-[84px] h-[84px]"
+                  onError={(e) => {
+                    console.error(`❌ Failed to load QR image for card: ${card.title}`);
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    target.parentElement!.innerHTML = `
+                      <div class="w-[84px] h-[84px] flex items-center justify-center bg-slate-100 text-xs text-slate-600">
+                        QR Code
+                      </div>
+                    `;
+                  }}
+                />
+              ) : (
+                <QRCodeSVG 
+                  value={card.qrData || card.number}
+                  size={84}
+                  level="M"
+                  includeMargin={true}
+                  className="w-full h-full"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -1316,17 +1375,17 @@ const QrScan = () => {
     if (!selectedCard) return null;
 
     return (
-      <div className="mt-4 p-4 bg-slate-50 rounded-lg">
+      <div className="mt-4 p-4 bg-[#F5F5F5] border border-[#111111]">
         <div className="flex items-center justify-between mb-2">
-          <h4 className="font-medium text-slate-700">Selected Card QR Code</h4>
+          <h4 className="font-black text-[#111111] text-xs uppercase tracking-widest np-mono">Selected Card QR Code</h4>
           <button 
             onClick={() => setSelectedCard(null)}
-            className="text-slate-500 hover:text-slate-700"
+            className="text-[#111111] hover:text-[#CC0000] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
-            <XCircle className="h-5 w-5" />
+            <XCircle className="h-5 w-5" strokeWidth={1.5} />
           </button>
         </div>
-        <div className="flex justify-center p-4 bg-white rounded-lg">
+        <div className="flex justify-center p-4 bg-white border border-[#111111]">
           {selectedCard.qrData && selectedCard.qrData.startsWith('data:image') ? (
             <img 
               src={selectedCard.qrData} 
@@ -1447,58 +1506,76 @@ const QrScan = () => {
     }
   };
 
+  // ── Section Header helper ──────────────────────────────────────────────────
+  const SectionHeader: React.FC<{
+    icon: React.ReactNode;
+    title: string;
+    badge?: React.ReactNode;
+    actions?: React.ReactNode;
+  }> = ({ icon, title, badge, actions }) => (
+    <div className="bg-[#F5F5F5] p-4 border-b border-[#111111] flex items-center justify-between">
+      <h3 className="font-black flex items-center gap-2 text-[#111111] text-xs uppercase tracking-widest np-mono">
+        {icon}
+        {title}
+      </h3>
+      <div className="flex items-center gap-2">
+        {badge}
+        {actions}
+      </div>
+    </div>
+  );
+
   // Cards section
   const cardsSection = auth.isAuthenticated ? (
-    <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60 flex items-center justify-between">
-        <h3 className="font-medium flex items-center gap-2 text-slate-800">
-          <CreditCard className="h-5 w-5 text-indigo-600" />
-          Credit & Debit Cards
-        </h3>
-        <div className="flex items-center gap-2">
-          <div className="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">
+    <div className="bg-[#F9F9F7] border border-[#111111] overflow-hidden">
+      <SectionHeader
+        icon={<CreditCard className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+        title="Credit & Debit Cards"
+        badge={
+          <span className="bg-[#111111] text-[#F9F9F7] px-3 py-0.5 np-mono text-xs uppercase tracking-widest">
             {creditCards.length} Cards
-          </div>
-          {creditCards.length > 0 && (
+          </span>
+        }
+        actions={
+          creditCards.length > 0 ? (
             <button
               onClick={deleteAllCards}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Delete all cards"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F9F9F7] text-[#CC0000] border border-[#CC0000] hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-all duration-200 text-xs font-black uppercase tracking-widest np-mono disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
             >
-              <Trash2 className="h-4 w-4" />
-              Delete All
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+              DELETE ALL
             </button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
       
       <div className="p-6">
         {loading ? (
           <div className="py-12 text-center">
-            <Loader2 className="h-12 w-12 mx-auto text-indigo-600 animate-spin mb-3" />
-            <p className="text-slate-600">Loading your cards...</p>
+            <Loader2 className="h-10 w-10 mx-auto text-[#111111] animate-spin mb-3" strokeWidth={1.5} />
+            <p className="text-[#737373] np-mono text-xs uppercase tracking-widest">Loading your cards...</p>
           </div>
         ) : error ? (
-          <div className="py-8 text-center text-red-600">
-            <AlertCircle className="h-12 w-12 mx-auto mb-3" />
-            <p className="font-medium">{error}</p>
+          <div className="py-8 text-center text-[#CC0000]">
+            <AlertCircle className="h-10 w-10 mx-auto mb-3" strokeWidth={1.5} />
+            <p className="font-black np-mono text-xs uppercase">{error}</p>
             <button 
               onClick={fetchQRCodes}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              className="mt-4 px-4 py-2 bg-[#111111] text-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] border border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px]"
             >
-              Retry
+              RETRY
             </button>
           </div>
         ) : creditCards.length > 0 ? (
           <div className="relative">
             <div className="overflow-x-auto pb-6 scrollbar-hide -mx-2">
-              <div className="flex flex-row space-x-6 px-2">
+              <div className="flex flex-row space-x-4 px-2">
                 {creditCards.map(card => (
                   <div 
                     key={card.id}
                     onClick={() => setSelectedCard(card)}
-                    className="cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+                    className="cursor-pointer"
                   >
                     <CardDisplay card={card} />
                   </div>
@@ -1506,31 +1583,31 @@ const QrScan = () => {
               </div>
             </div>
             
-            {/* Enhanced scroll indicators */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+            {/* Scroll indicators */}
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#F9F9F7] to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#F9F9F7] to-transparent pointer-events-none" />
             
             {/* Carousel navigation */}
             {creditCards.length > 1 && (
               <>
                 <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                  <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md border border-slate-200/50 hover:bg-white transition-colors">
-                    <ChevronLeft className="h-5 w-5 text-slate-700" />
+                  <button className="p-2 bg-[#F9F9F7] border border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
                   </button>
                 </div>
                 <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                  <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md border border-slate-200/50 hover:bg-white transition-colors">
-                    <ChevronRight className="h-5 w-5 text-slate-700" />
+                  <button className="p-2 bg-[#F9F9F7] border border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
                   </button>
                 </div>
               </>
             )}
           </div>
         ) : (
-          <div className="py-8 text-center text-slate-500">
-            <CreditCard className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-            <p className="font-medium">No credit or debit cards</p>
-            <p className="text-sm text-slate-400 mt-1">Add your first card to get started</p>
+          <div className="py-8 text-center text-[#737373]">
+            <CreditCard className="h-10 w-10 mx-auto text-[#E5E5E5] mb-3" strokeWidth={1.5} />
+            <p className="font-black text-xs uppercase tracking-widest np-mono">No credit or debit cards</p>
+            <p className="text-xs text-[#A3A3A3] mt-1 np-mono">Add your first card to get started</p>
           </div>
         )}
       </div>
@@ -1541,56 +1618,55 @@ const QrScan = () => {
 
   // Passes section
   const passesSection = auth.isAuthenticated ? (
-    <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50/30 p-4 border-b border-slate-200/60 flex items-center justify-between">
-        <h3 className="font-medium flex items-center gap-2 text-slate-800">
-          <Layers className="h-5 w-5 text-emerald-600" />
-          Passes & Memberships
-        </h3>
-        <div className="flex items-center gap-2">
-          <div className="text-sm bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
+    <div className="bg-[#F9F9F7] border border-[#111111] overflow-hidden">
+      <SectionHeader
+        icon={<Layers className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+        title="Passes & Memberships"
+        badge={
+          <span className="bg-[#111111] text-[#F9F9F7] px-3 py-0.5 np-mono text-xs uppercase tracking-widest">
             {passes.length} Passes
-          </div>
-          {passes.length > 0 && (
+          </span>
+        }
+        actions={
+          passes.length > 0 ? (
             <button
               onClick={deleteAllPasses}
               disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Delete all passes"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F9F9F7] text-[#CC0000] border border-[#CC0000] hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-all duration-200 text-xs font-black uppercase tracking-widest np-mono disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
             >
-              <Trash2 className="h-4 w-4" />
-              Delete All
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+              DELETE ALL
             </button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
       
       <div className="p-6">
         {loading ? (
           <div className="py-12 text-center">
-            <Loader2 className="h-12 w-12 mx-auto text-emerald-600 animate-spin mb-3" />
-            <p className="text-slate-600">Loading your passes...</p>
+            <Loader2 className="h-10 w-10 mx-auto text-[#111111] animate-spin mb-3" strokeWidth={1.5} />
+            <p className="text-[#737373] np-mono text-xs uppercase tracking-widest">Loading your passes...</p>
           </div>
         ) : error ? (
-          <div className="py-8 text-center text-red-600">
-            <AlertCircle className="h-12 w-12 mx-auto mb-3" />
-            <p className="font-medium">{error}</p>
+          <div className="py-8 text-center text-[#CC0000]">
+            <AlertCircle className="h-10 w-10 mx-auto mb-3" strokeWidth={1.5} />
+            <p className="font-black np-mono text-xs uppercase">{error}</p>
             <button 
               onClick={fetchQRCodes}
-              className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              className="mt-4 px-4 py-2 bg-[#111111] text-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] border border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px]"
             >
-              Retry
+              RETRY
             </button>
           </div>
         ) : passes.length > 0 ? (
           <div className="relative">
             <div className="overflow-x-auto pb-6 scrollbar-hide -mx-2">
-              <div className="flex flex-row space-x-6 px-2">
+              <div className="flex flex-row space-x-4 px-2">
                 {passes.map(card => (
                   <div 
                     key={card.id}
                     onClick={() => setSelectedCard(card)}
-                    className="cursor-pointer transform transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
+                    className="cursor-pointer"
                   >
                     <CardDisplay card={card} />
                   </div>
@@ -1598,31 +1674,31 @@ const QrScan = () => {
               </div>
             </div>
             
-            {/* Enhanced scroll indicators */}
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+            {/* Scroll indicators */}
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#F9F9F7] to-transparent pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#F9F9F7] to-transparent pointer-events-none" />
             
             {/* Carousel navigation */}
             {passes.length > 1 && (
               <>
                 <div className="absolute left-0 top-1/2 -translate-y-1/2">
-                  <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md border border-slate-200/50 hover:bg-white transition-colors">
-                    <ChevronLeft className="h-5 w-5 text-slate-700" />
+                  <button className="p-2 bg-[#F9F9F7] border border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
                   </button>
                 </div>
                 <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                  <button className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md border border-slate-200/50 hover:bg-white transition-colors">
-                    <ChevronRight className="h-5 w-5 text-slate-700" />
+                  <button className="p-2 bg-[#F9F9F7] border border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
                   </button>
                 </div>
               </>
             )}
           </div>
         ) : (
-          <div className="py-8 text-center text-slate-500">
-            <Layers className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-            <p className="font-medium">No passes or memberships</p>
-            <p className="text-sm text-slate-400 mt-1">Add your first pass to get started</p>
+          <div className="py-8 text-center text-[#737373]">
+            <Layers className="h-10 w-10 mx-auto text-[#E5E5E5] mb-3" strokeWidth={1.5} />
+            <p className="font-black text-xs uppercase tracking-widest np-mono">No passes or memberships</p>
+            <p className="text-xs text-[#A3A3A3] mt-1 np-mono">Add your first pass to get started</p>
           </div>
         )}
       </div>
@@ -1633,21 +1709,21 @@ const QrScan = () => {
 
   // Selected card/pass QR section
   const selectedCardSection = selectedCard && auth.isAuthenticated ? (
-    <div className="bg-gradient-to-r from-indigo-50 to-blue-50/50 rounded-xl p-6 border border-indigo-100/50">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-medium text-slate-800 flex items-center gap-2">
-          <QrCode className="h-5 w-5 text-indigo-600" />
+    <div className="bg-[#F5F5F5] p-6 border border-[#111111]">
+      <div className="flex items-center justify-between mb-4 border-b border-[#E5E5E0] pb-3">
+        <h4 className="font-black text-[#111111] flex items-center gap-2 text-xs uppercase tracking-widest np-mono">
+          <QrCode className="h-4 w-4" strokeWidth={1.5} />
           Selected {selectedCard.type === 'credit' || selectedCard.type === 'debit' ? 'Card' : 'Pass'} QR Code
         </h4>
         <button 
           onClick={() => setSelectedCard(null)}
-          className="text-slate-500 hover:text-slate-700 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
+          className="text-[#111111] hover:text-[#CC0000] transition-colors p-1.5 hover:bg-[#F5F5F5] min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
-          <XCircle className="h-5 w-5" />
+          <XCircle className="h-5 w-5" strokeWidth={1.5} />
         </button>
       </div>
       <div className="flex flex-col md:flex-row items-center gap-6">
-        <div className="bg-white rounded-xl p-5 shadow-md border border-slate-200/60">
+        <div className="bg-white p-5 border border-[#111111]">
           {selectedCard.qrData && selectedCard.qrData.startsWith('data:image') ? (
             <img 
               src={selectedCard.qrData} 
@@ -1665,16 +1741,16 @@ const QrScan = () => {
           )}
         </div>
         <div className="space-y-2">
-          <h5 className="text-lg font-medium">{selectedCard.title}</h5>
-          <p className="text-slate-600">{selectedCard.issuer}</p>
+          <h5 className="text-lg font-black text-[#111111] np-serif">{selectedCard.title}</h5>
+          <p className="text-[#737373] np-mono text-xs uppercase tracking-widest">{selectedCard.issuer}</p>
           <div className="flex items-center gap-2 mt-4">
-            <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 transition-colors flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              Share
+            <button className="px-4 py-2 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono flex items-center gap-2 min-h-[44px]">
+              <Share2 className="h-4 w-4" strokeWidth={1.5} />
+              SHARE
             </button>
-            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-2">
-              <Image className="h-4 w-4" />
-              Download
+            <button className="px-4 py-2 bg-transparent border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono flex items-center gap-2 min-h-[44px]">
+              <Image className="h-4 w-4" strokeWidth={1.5} />
+              DOWNLOAD
             </button>
           </div>
         </div>
@@ -1683,46 +1759,46 @@ const QrScan = () => {
   ) : null;
 
   const ScanHistorySection = () => (
-    <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-      <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-        <h3 className="font-medium flex items-center gap-2 text-slate-800">
-          <History className="h-5 w-5 text-indigo-600" />
-          Recent Scans
-        </h3>
-      </div>
-      <div className="divide-y divide-slate-200">
+    <div className="bg-[#F9F9F7] border border-[#111111] overflow-hidden">
+      <SectionHeader
+        icon={<History className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+        title="Recent Scans"
+      />
+      <div className="divide-y divide-[#E5E5E0]">
         {scanHistory.length === 0 ? (
-          <div className="py-8 text-slate-500 text-center">
-            <History className="h-12 w-12 mx-auto text-slate-300 mb-3" />
-            <p className="font-medium">No scan history</p>
-            <p className="text-sm text-slate-400 mt-1">Your scan results will appear here</p>
+          <div className="py-8 text-[#737373] text-center">
+            <History className="h-10 w-10 mx-auto text-[#E5E5E5] mb-3" strokeWidth={1.5} />
+            <p className="font-black text-xs uppercase tracking-widest np-mono">No scan history</p>
+            <p className="text-xs text-[#A3A3A3] mt-1 np-mono">Your scan results will appear here</p>
           </div>
         ) : (
           scanHistory.slice(0, 5).map(scan => (
-            <div key={scan.id} className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+            <div key={scan.id} className="p-5 flex items-center justify-between hover:bg-[#F5F5F5] transition-colors">
               <div className="flex items-center gap-4">
-                <div className={`rounded-full p-2 ${
-                  scan.status === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+                <div className={`p-2 border ${
+                  scan.status === 'success' 
+                    ? 'border-[#111111] text-[#111111]' 
+                    : 'border-[#CC0000] text-[#CC0000]'
                 }`}>
                   {scan.status === 'success' ? (
-                    <CheckCircle2 className="h-5 w-5" />
+                    <CheckCircle2 className="h-5 w-5" strokeWidth={1.5} />
                   ) : (
-                    <XCircle className="h-5 w-5" />
+                    <XCircle className="h-5 w-5" strokeWidth={1.5} />
                   )}
                 </div>
                 <div>
-                  <div className="font-medium text-slate-800">{scan.type}</div>
-                  <div className="text-sm text-slate-500">
+                  <div className="font-black text-[#111111] text-xs uppercase tracking-widest np-mono">{scan.type}</div>
+                  <div className="text-xs text-[#737373] np-mono">
                     {scan.timestamp.toLocaleString()}
                   </div>
                 </div>
               </div>
               <div className="flex gap-2">
-                <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-700 transition-colors">
-                  <Share2 className="h-4 w-4" />
+                <button className="p-1.5 hover:bg-[#F5F5F5] text-[#A3A3A3] hover:text-[#111111] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+                  <Share2 className="h-4 w-4" strokeWidth={1.5} />
                 </button>
-                <button className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-500 transition-colors">
-                  <Trash2 className="h-4 w-4" />
+                <button className="p-1.5 hover:bg-[#F5F5F5] text-[#A3A3A3] hover:text-[#CC0000] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+                  <Trash2 className="h-4 w-4" strokeWidth={1.5} />
                 </button>
               </div>
             </div>
@@ -1738,45 +1814,44 @@ const QrScan = () => {
       <FeatureTemplate
         title="QR Code Scanning & Card Management"
         description="Scan QR codes or manually create digital cards and passes with auto-generated QR codes"
-        icon={<QrCode className="h-8 w-8 text-gray-700" />}
+        icon={<QrCode className="h-8 w-8 text-[#111111]" />}
       >
         {renderHeader()}
-        <div className="space-y-6 relative">
+        <div className="space-y-6 relative np-sans">
           
-          {/* Enhanced Action Bar */}
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-100">
+          {/* Action Bar */}
+          <div className="bg-[#F5F5F5] p-4 border border-[#111111]">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="bg-white rounded-lg p-2 shadow-sm">
-                  <QrCode className="h-6 w-6 text-indigo-600" />
+                <div className="border border-[#111111] p-2 flex items-center justify-center w-10 h-10">
+                  <QrCode className="h-5 w-5 text-[#111111]" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className="font-medium text-slate-800">Quick Actions</h3>
-                  <p className="text-sm text-slate-600">Scan QR codes and manage your cards</p>
+                  <h3 className="font-black text-[#111111] text-xs uppercase tracking-widest np-mono">Quick Actions</h3>
+                  <p className="text-xs text-[#737373] np-mono">Scan QR codes and manage your cards</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowSettings(!showSettings)}
-                  className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="p-2 bg-[#F9F9F7] border border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label="Settings"
                 >
-                  <Settings className="h-5 w-5 text-slate-600" />
+                  <Settings className="h-5 w-5" strokeWidth={1.5} />
                 </button>
               </div>
             </div>
           </div>
 
           {/* Camera Scanner Section */}
-          <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-              <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                <Camera className="h-5 w-5 text-indigo-600" />
-                QR Code Scanner
-              </h3>
-            </div>
+          <div className="bg-[#F9F9F7] border border-[#111111] overflow-hidden">
+            <SectionHeader
+              icon={<Camera className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+              title="QR Code Scanner"
+            />
             
             <div className="p-6">
-              <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+              <div className="relative aspect-video bg-[#111111] overflow-hidden">
                 {isScanning ? (
                   <>
                     <video
@@ -1790,40 +1865,41 @@ const QrScan = () => {
                       }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-64 h-64 border-2 border-white/80 rounded-2xl animate-pulse">
-                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-indigo-500 rounded-tl-lg"></div>
-                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-indigo-500 rounded-tr-lg"></div>
-                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-indigo-500 rounded-bl-lg"></div>
-                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-indigo-500 rounded-br-lg"></div>
+                      <div className="w-64 h-64 border border-white/40 animate-pulse">
+                        {/* Sharp corner accents — Editorial Red */}
+                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#CC0000]"></div>
+                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#CC0000]"></div>
+                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#CC0000]"></div>
+                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#CC0000]"></div>
                       </div>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
-                      <div className="bg-black/50 backdrop-blur-sm text-white px-3 py-2 rounded-lg text-sm">
-                        {quality.resolution.toUpperCase()} | Zoom: {quality.zoom}x
+                      <div className="bg-black/70 text-[#F9F9F7] px-3 py-2 np-mono text-xs uppercase tracking-widest">
+                        {quality.resolution.toUpperCase()} | ZOOM {quality.zoom}×
                       </div>
                       <button
                         onClick={stopScanning}
-                        className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transition-colors shadow-lg"
+                        className="bg-[#CC0000] hover:bg-[#111111] text-white p-3 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
-                        <XCircle className="h-6 w-6" />
+                        <XCircle className="h-6 w-6" strokeWidth={1.5} />
                       </button>
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-200">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-full p-6 mb-6">
-                      <Camera className="h-16 w-16" />
+                  <div className="flex flex-col items-center justify-center h-full text-[#F9F9F7]">
+                    <div className="border-2 border-[#F9F9F7]/30 p-6 mb-6">
+                      <Camera className="h-16 w-16" strokeWidth={1} />
                     </div>
-                    <h4 className="text-xl font-medium mb-2">Ready to Scan</h4>
-                    <p className="text-gray-400 text-center mb-6 max-w-md">
+                    <h4 className="text-xl font-black mb-2 np-serif uppercase tracking-wide">Ready to Scan</h4>
+                    <p className="text-[#A3A3A3] text-center mb-6 max-w-md np-mono text-xs uppercase tracking-wider">
                       Position a QR code within the frame to scan
                     </p>
                     <button
                       onClick={startScanning}
-                      className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2 shadow-lg"
+                      className="px-8 py-3 bg-[#F9F9F7] text-[#111111] border border-transparent hover:bg-transparent hover:text-[#F9F9F7] hover:border-[#F9F9F7] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono flex items-center gap-2 min-h-[44px]"
                     >
-                      <Camera className="h-5 w-5" />
-                      Start Scanning
+                      <Camera className="h-5 w-5" strokeWidth={1.5} />
+                      START SCANNING
                     </button>
                   </div>
                 )}
@@ -1831,9 +1907,9 @@ const QrScan = () => {
 
               {/* Scanner Controls */}
               {isScanning && (
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 border border-[#111111] p-4 bg-[#F5F5F5]">
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-slate-600">Brightness:</label>
+                    <label className="text-xs np-mono uppercase tracking-widest text-[#111111] flex-shrink-0">BRIGHT:</label>
                     <input
                       type="range"
                       min="50"
@@ -1844,7 +1920,7 @@ const QrScan = () => {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-slate-600">Contrast:</label>
+                    <label className="text-xs np-mono uppercase tracking-widest text-[#111111] flex-shrink-0">CONTRAST:</label>
                     <input
                       type="range"
                       min="50"
@@ -1855,7 +1931,7 @@ const QrScan = () => {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-slate-600">Zoom:</label>
+                    <label className="text-xs np-mono uppercase tracking-widest text-[#111111] flex-shrink-0">ZOOM:</label>
                     <input
                       type="range"
                       min="1"
@@ -1868,35 +1944,35 @@ const QrScan = () => {
                   </div>
                   <button
                     onClick={toggleBatchMode}
-                    className={`px-3 py-1 rounded-lg text-sm transition-colors ${
+                    className={`px-3 py-1.5 text-xs font-black uppercase tracking-widest np-mono border transition-all duration-200 min-h-[44px] ${
                       batchConfig.enabled
-                        ? 'bg-indigo-100 text-indigo-700'
-                        : 'bg-slate-100 text-slate-600'
+                        ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]'
+                        : 'bg-transparent text-[#111111] border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
                     }`}
                   >
-                    Batch Mode
+                    {batchConfig.enabled ? '● BATCH ON' : 'BATCH MODE'}
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Terminal QR Scanner Section - NEW! */}
-          <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-50 to-pink-50/30 p-4 border-b border-purple-100">
+          {/* Terminal QR Scanner Section */}
+          <div className="bg-[#F9F9F7] border border-[#111111] overflow-hidden">
+            <div className="bg-[#F5F5F5] p-4 border-b border-[#111111]">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                    <QrCode className="h-5 w-5 text-purple-600" />
+                  <h3 className="font-black flex items-center gap-2 text-[#111111] text-xs uppercase tracking-widest np-mono">
+                    <QrCode className="h-4 w-4" strokeWidth={1.5} />
                     Terminal QR Scanner
                   </h3>
-                  <p className="text-sm text-slate-600 mt-1">
+                  <p className="text-xs text-[#737373] mt-1 np-mono">
                     Generate QR code in terminal, scan with phone camera
                   </p>
                 </div>
-                <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
-                  Recommended
-                </div>
+                <span className="bg-[#111111] text-[#F9F9F7] px-3 py-0.5 np-mono text-xs uppercase tracking-widest">
+                  RECOMMENDED
+                </span>
               </div>
             </div>
             
@@ -1912,18 +1988,20 @@ const QrScan = () => {
                   }}
                 />
               ) : (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-center">
-                  <Lock className="h-12 w-12 mx-auto text-amber-600 mb-3" />
-                  <h4 className="font-semibold text-slate-800 mb-2">Sign in Required</h4>
-                  <p className="text-slate-600 mb-4">
+                <div className="bg-[#F9F9F7] border border-[#111111] p-6 text-center">
+                  <div className="border-2 border-[#111111] p-4 w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <Lock className="h-8 w-8 text-[#111111]" strokeWidth={1.5} />
+                  </div>
+                  <h4 className="font-black text-[#111111] mb-2 text-xs uppercase tracking-widest np-mono">Sign In Required</h4>
+                  <p className="text-[#525252] mb-4 text-sm np-body">
                     Please sign in to use the Terminal QR Scanner
                   </p>
                   <button 
                     onClick={() => navigate('/signin')}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px]"
                   >
-                    <LogIn className="h-5 w-5" />
-                    Sign In Now
+                    <LogIn className="h-4 w-4" strokeWidth={1.5} />
+                    SIGN IN NOW
                   </button>
                 </div>
               )}
@@ -1931,13 +2009,13 @@ const QrScan = () => {
           </div>
 
           {/* Manual Entry Section */}
-          <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 p-4 border-b border-emerald-100">
-              <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                <Edit3 className="h-5 w-5 text-emerald-600" />
-                Manual Entry - Create Card or Pass
-              </h3>
-              <p className="text-sm text-slate-600 mt-1">Fill in the details below to generate a digital card with QR code</p>
+          <div className="bg-[#F9F9F7] border border-[#111111] overflow-hidden">
+            <SectionHeader
+              icon={<Edit3 className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+              title="Manual Entry — Create Card or Pass"
+            />
+            <div className="p-4 bg-[#F5F5F5] border-b border-[#111111]">
+              <p className="text-xs text-[#737373] np-mono">Fill in the details below to generate a digital card with QR code</p>
             </div>
             
             <div className="p-6">
