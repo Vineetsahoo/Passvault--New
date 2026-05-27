@@ -24,7 +24,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed w-full z-50 bg-[#F9F9F7] border-b-2 border-[#111111] font-sans" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <nav className="fixed top-0 left-0 w-full z-50 bg-[#F9F9F7] border-b-2 border-[#111111] font-sans" style={{ fontFamily: "'Inter', sans-serif" }}>
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}

@@ -57,7 +57,7 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="bg-[#F9F9F7] overflow-hidden pt-28">
+    <div className="bg-[#F9F9F7] overflow-hidden">
       <Navbar />
 
       {/* HERO */}
