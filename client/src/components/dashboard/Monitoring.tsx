@@ -929,7 +929,7 @@ const Monitoring: React.FC = () => {
                 key={category}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 flex items-center gap-2 whitespace-nowrap transition-all duration-200 capitalize np-mono text-xs uppercase tracking-wider border border-[#111111] ${
+                className={`px-4 py-2 flex items-center gap-2 whitespace-nowrap transition-all duration-200 np-mono text-xs uppercase tracking-wider border border-[#111111] ${
                   selectedCategory === category
                     ? 'bg-[#111111] text-[#F9F9F7]'
                     : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
