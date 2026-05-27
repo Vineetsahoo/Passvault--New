@@ -136,7 +136,7 @@ const Home = () => {
               <div className="text-xs uppercase tracking-widest font-mono text-[#A3A3A3] mb-6 border-b border-[#404040] pb-4">
                 Ready to Start
               </div>
-              <h2 className="text-6xl md:text-8xl font-black leading-[0.9] mb-8" style={{ fontFamily: "'Playfair Display', serif" }}>
+              <h2 className="text-6xl md:text-8xl font-black leading-[0.9] mb-8" style={{ fontFamily: "'Playfair Display', serif", color: '#F9F9F7' }}>
                 JOIN
                 <br />
                 THOUSANDS

@@ -150,50 +150,47 @@ const SidebarProfile: React.FC<{
   onLogout: () => void;
 }> = ({ profile, onClick, isActive, onLogout }) => (
   <div className="mt-auto pt-4 space-y-3">
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      className="overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 shadow-sm"
+    <div
+      onClick={onClick}
+      className="overflow-hidden border-2 border-[#111111] bg-[#F9F9F7]"
     >
       <button
         onClick={onClick}
-        className={`w-full flex items-center space-x-3 p-3 ${
-          isActive ? 'bg-indigo-50' : 'hover:bg-indigo-50/50'
+        className={`w-full flex items-center space-x-3 p-4 ${
+          isActive ? 'bg-[#E5E5E0]' : 'hover:bg-[#E5E5E0]'
         } transition-colors`}
       >
         <div className="relative">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-lg font-semibold overflow-hidden shadow-inner">
+          <div className="w-12 h-12 border-2 border-[#111111] bg-[#F9F9F7] flex items-center justify-center text-[#111111] text-lg font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
             {profile.name.charAt(0).toUpperCase()}
           </div>
-          <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-500 border-2 border-white"></div>
+          <div className="absolute bottom-0 right-0 w-4 h-4 border border-[#111111] bg-[#CC0000]"></div>
         </div>
         <div className="flex-1 text-left">
-          <div className="text-sm font-semibold text-gray-900 truncate">{profile.name}</div>
-          <div className="text-xs text-gray-500 truncate">{profile.email}</div>
+          <div className="text-sm font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.name}</div>
+          <div className="text-xs uppercase tracking-widest font-mono text-[#525252]">{profile.email}</div>
         </div>
       </button>
       
-      <div className={`overflow-hidden transition-all duration-300 ${isActive ? 'max-h-24' : 'max-h-0'}`}>
+      <div className={`overflow-hidden transition-all duration-300 border-t border-[#111111] ${isActive ? 'max-h-24' : 'max-h-0'}`}>
         <div className="p-3 pt-0 space-y-2">
-          <button className="w-full text-left text-xs text-indigo-700 hover:text-indigo-800 font-medium p-2 rounded hover:bg-indigo-50 flex items-center">
+          <button className="w-full text-left text-xs text-[#111111] hover:bg-[#E5E5E0] font-bold uppercase tracking-widest p-2 flex items-center">
             <FaUserCircle className="mr-2" /> View Profile
           </button>
-          <button className="w-full text-left text-xs text-indigo-700 hover:text-indigo-800 font-medium p-2 rounded hover:bg-indigo-50 flex items-center">
-            <FaCog className="mr-2" /> Account Settings
+          <button className="w-full text-left text-xs text-[#111111] hover:bg-[#E5E5E0] font-bold uppercase tracking-widest p-2 flex items-center">
+            <FaCog className="mr-2" /> Settings
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
     
-    <motion.button
-      whileTap={{ scale: 0.97 }}
+    <button
       onClick={onLogout}
-      className="flex items-center w-full p-3 rounded-xl text-white bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 shadow-sm transition-all duration-200"
+      className="flex items-center w-full p-4 text-[#F9F9F7] bg-[#111111] border-2 border-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
     >
-      <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/20 mr-3">
-        <FaSignOutAlt className="text-xl" />
-      </div>
-      <span className="text-sm font-medium">Logout</span>
-    </motion.button>
+      <FaSignOutAlt className="mr-3 text-lg" />
+      <span>LOGOUT</span>
+    </button>
   </div>
 );
 
@@ -204,28 +201,19 @@ const QuickActionButton: React.FC<{
   color: string;
   onClick?: () => void;
 }> = ({ icon: Icon, label, color, onClick }) => {
-  const colorStyles = {
-    blue: "from-blue-100 to-blue-50 text-blue-600 hover:bg-blue-100",
-    green: "from-green-100 to-green-50 text-green-600 hover:bg-green-100",
-    purple: "from-purple-100 to-purple-50 text-purple-600 hover:bg-purple-100",
-    amber: "from-amber-100 to-amber-50 text-amber-600 hover:bg-amber-100",
-  };
   
   return (
-    <motion.button
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
+    <button
       onClick={onClick}
-      className={`p-6 rounded-2xl bg-gradient-to-br ${colorStyles[color as keyof typeof colorStyles]} 
-        shadow-sm hover:shadow-md transition-all duration-200`}
+      className="p-6 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
     >
       <div className="flex flex-col items-center text-center">
-        <div className="p-3 rounded-xl bg-white/80 mb-3">
-          <Icon className="w-6 h-6" />
+        <div className="p-3 mb-3">
+          <Icon className="w-6 h-6 text-[#111111] group-hover:text-[#F9F9F7]" />
         </div>
-        <span className="text-sm font-medium">{label}</span>
+        <span className="text-xs font-black uppercase tracking-widest" style={{ fontFamily: "'Inter', sans-serif" }}>{label}</span>
       </div>
-    </motion.button>
+    </button>
   );
 };
 
@@ -239,39 +227,31 @@ const StatsCard: React.FC<{
   color?: string;
   alert?: boolean;
 }> = ({ title, value, icon: Icon, description, trend, color = 'indigo', alert = false }) => {
-  const colorStyles = {
-    blue: "from-blue-50 to-blue-100/30 border-blue-100",
-    green: "from-green-50 to-green-100/30 border-green-100",
-    indigo: "from-indigo-50 to-indigo-100/30 border-indigo-100",
-    red: "from-red-50 to-red-100/30 border-red-100",
-  };
   
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.2 }}
-      className={`p-6 rounded-2xl bg-gradient-to-br ${colorStyles[color as keyof typeof colorStyles]} 
-        shadow-sm border backdrop-blur`}
+    <div
+      className="p-6 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#E5E5E0] transition-colors"
     >
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-xl ${alert ? 'bg-red-100 text-red-600' : `bg-${color}-100 text-${color}-600`}`}>
+        <div className="p-3 border border-[#111111] bg-[#F9F9F7] text-[#111111]">
           <Icon className="w-6 h-6" />
         </div>
         {trend !== undefined && (
-          <div className={`text-xs font-medium px-2 py-1 rounded-lg 
-            ${trend > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+          <div className={`text-xs font-black px-3 py-1 uppercase tracking-widest border ${
+            trend > 0 ? 'border-[#CC0000] text-[#CC0000]' : 'border-[#111111] text-[#111111]'
+          }`}>
             {trend > 0 ? `+${trend}` : trend}
           </div>
         )}
       </div>
-      <div className="mt-2">
-        <h3 className="text-lg font-bold text-gray-800">{value}</h3>
-        <p className="text-sm text-gray-500">{title}</p>
+      <div className="mt-4">
+        <h3 className="text-3xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{value}</h3>
+        <p className="text-xs font-black uppercase tracking-widest text-[#525252] mt-2">{title}</p>
         {description && (
-          <p className="text-xs text-gray-400 mt-1">{description}</p>
+          <p className="text-xs text-[#A3A3A3] mt-2">{description}</p>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -281,35 +261,32 @@ const ActivityItem: React.FC<{
 }> = ({ activity }) => {
   const getSeverityStyles = (severity?: 'low' | 'medium' | 'high') => {
     switch (severity) {
-      case 'high': return 'bg-red-100 text-red-600';
-      case 'medium': return 'bg-orange-100 text-orange-600';
-      case 'low': return 'bg-blue-100 text-blue-600';
-      default: return 'bg-gray-100 text-gray-600';
+      case 'high': return 'border-[#CC0000] text-[#CC0000]';
+      case 'medium': return 'border-[#525252] text-[#525252]';
+      case 'low': return 'border-[#111111] text-[#111111]';
+      default: return 'border-[#111111] text-[#111111]';
     }
   };
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="p-4 hover:bg-gray-50 transition-colors"
+    <div
+      className="p-4 border-b border-[#E5E5E0] hover:bg-[#E5E5E0] transition-colors"
     >
       <div className="flex items-start space-x-4">
-        <div className={`p-3 rounded-xl ${activity.severity ? getSeverityStyles(activity.severity) : 'bg-indigo-100 text-indigo-600'}`}>
+        <div className={`p-3 border ${activity.severity ? getSeverityStyles(activity.severity) : 'border-[#111111]'} text-[#111111]`}>
           <activity.icon className="w-5 h-5" />
         </div>
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div>
-              <h4 className="font-medium text-gray-900">{activity.title}</h4>
-              <p className="text-sm text-gray-600">{activity.description}</p>
+              <h4 className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{activity.title}</h4>
+              <p className="text-sm text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>{activity.description}</p>
             </div>
-            <span className="text-xs text-gray-400">{activity.timestamp}</span>
+            <span className="text-xs uppercase tracking-widest font-mono text-[#A3A3A3]">{activity.timestamp}</span>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -318,26 +295,22 @@ const SidebarToggle: React.FC<{
   isExpanded: boolean;
   onClick: () => void;
 }> = ({ isExpanded, onClick }) => (
-  <motion.button
-    whileTap={{ scale: 0.9 }}
+  <button
     onClick={onClick}
-    className="p-3 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-200 border border-indigo-100"
+    className="p-3 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] transition-all duration-200"
   >
     <div className="w-8 h-8 flex flex-col items-center justify-center space-y-1.5 relative">
-      <motion.div 
-        animate={isExpanded ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
-        className="w-6 h-0.5 bg-indigo-600 rounded-full origin-center" 
+      <div 
+        className={`w-6 h-0.5 bg-[#111111] transition-transform origin-center ${isExpanded ? 'rotate-45 translate-y-2' : ''}`}
       />
-      <motion.div 
-        animate={isExpanded ? { opacity: 0 } : { opacity: 1 }}
-        className="w-6 h-0.5 bg-indigo-600 rounded-full" 
+      <div 
+        className={`w-6 h-0.5 bg-[#111111] transition-opacity ${isExpanded ? 'opacity-0' : 'opacity-100'}`}
       />
-      <motion.div 
-        animate={isExpanded ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
-        className="w-6 h-0.5 bg-indigo-600 rounded-full origin-center" 
+      <div 
+        className={`w-6 h-0.5 bg-[#111111] transition-transform origin-center ${isExpanded ? '-rotate-45 -translate-y-2' : ''}`}
       />
     </div>
-  </motion.button>
+  </button>
 );
 
 const DashboardHome: React.FC<{
