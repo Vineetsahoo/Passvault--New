@@ -62,6 +62,18 @@ const Passwords = () => {
 
   const categories = ['all', 'identity', 'payment', 'finance', 'license', 'document'];
 
+  // Simple motion variants locally defined for the newsprint-styled cards
+  const containerVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.04 } }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 6 },
+    visible: { opacity: 1, y: 0 },
+    hover: { y: -4 }
+  };
+
   const [passwordOptions, setPasswordOptions] = useState({
     length: 12,
     includeUppercase: true,
@@ -480,100 +492,32 @@ const Passwords = () => {
     }
   };
 
-  // Animation variants
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        type: "spring", 
-        stiffness: 100,
-        damping: 15
-      } 
-    },
-    hover: {
-      y: -8,
-      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
+      /* Enhanced search and filter section */
   return (
-    <div className="space-y-8 -mt-4"> {/* Increased spacing between sections */}
-      {/* Enhanced header section with more visual appeal */}
-      <div className="relative border-4 border-[#111111] bg-[#111111]">
-        <div className="relative z-10 p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-3 mb-2 border border-[#F9F9F7] px-3 py-1.5">
-              <FaFingerprint className="text-[#CC0000]" />
-              <span className="text-xs font-black uppercase tracking-widest text-[#F9F9F7]">End-to-End Encrypted</span>
-            </div>
-            
-            <h2 className="text-4xl font-black text-[#F9F9F7] flex items-center gap-3" style={{ fontFamily: "'Playfair Display', serif" }}>
-              <FaLock className="text-[#CC0000]" /> 
-              <span>Secured Vault</span>
-            </h2>
-            
-            <p className="text-[#E5E5E0] mt-2 max-w-lg text-lg" style={{ fontFamily: "'Lora', serif" }}>
-              Safely store and manage all your sensitive credentials
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => setShowPasswordGenerator(!showPasswordGenerator)}
-              className="px-4 py-2.5 bg-[#F9F9F7] text-[#111111] font-black uppercase tracking-widest rounded-none transition-all flex items-center gap-2 border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]"
-            >
-              <FaDice className="text-[#111111]" /> Generate Password
-            </button>
-            
-            <button
-              onClick={() => {
-                setSelectedPassword(null);
-                setShowAddEditModal(true);
-              }}
-              className="px-4 py-2.5 bg-[#CC0000] text-[#F9F9F7] font-black uppercase tracking-widest rounded-none transition-all flex items-center gap-2 border-2 border-[#111111] hover:bg-[#F9F9F7] hover:text-[#CC0000]"
-            >
-              <FaPlus /> Add New Item
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced search and filter section */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+  <div className="space-y-6">
+    <div className="border-4 border-[#111111] bg-[#F9F9F7] overflow-hidden">
         <div className="p-5">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="relative flex-1 w-full">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <FaSearch className="text-gray-400" />
+                <FaSearch className="text-[#111111]" />
               </div>
               <input
                 type="text"
                 placeholder="Search by title, username, or issuer..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-all"
+                className="w-full pl-12 pr-4 py-3.5 border-b-2 border-[#111111] bg-[#F9F9F7] text-[#111111] focus:bg-[#E5E5E0] focus:outline-none transition-all"
               />
             </div>
             
             <div className="flex items-center gap-3 self-end">
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
-                <FaSort className="text-gray-500" />
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#E5E5E0] border-2 border-[#111111] hover:bg-[#F9F9F7] transition-colors">
+                <FaSort className="text-[#111111]" />
                 <select 
                   value={sortBy} 
                   onChange={(e) => setSortBy(e.target.value as 'title' | 'lastUpdated')}
-                  className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
+                  className="bg-transparent border-none text-sm focus:ring-0 text-[#111111] font-black"
                 >
                   <option value="title">Sort by name</option>
                   <option value="lastUpdated">Sort by last updated</option>
@@ -583,45 +527,45 @@ const Passwords = () => {
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="p-3.5 rounded-xl transition-all hover:bg-gray-100 border border-gray-200"
+                className="p-3.5 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] transition-all hover:bg-[#E5E5E0]"
               >
-                <FaFilter className="text-gray-600" />
+                <FaFilter className="text-[#111111]" />
               </motion.button>
             </div>
           </div>
         </div>
         
         {/* Categories selector with pill design */}
-        <div className="bg-gray-50 border-t border-gray-200 px-5 py-3">
-          <div className="flex overflow-x-auto gap-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-1">
+        <div className="bg-[#E5E5E0] border-t-2 border-[#111111] px-5 py-3">
+          <div className="flex overflow-x-auto gap-2 scrollbar-thin scrollbar-thumb-[#111111] scrollbar-track-transparent pb-1">
             {categories.map(category => (
               <motion.button
                 key={category}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2.5 rounded-full flex items-center gap-2 whitespace-nowrap transition-all capitalize ${
+                className={`px-4 py-2.5 flex items-center gap-2 whitespace-nowrap transition-all border-2 ${
                   selectedCategory === category 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 shadow-sm'
+                    ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]' 
+                    : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0] border-[#111111]'
                 }`}
               >
                 {{
-                  'all': <FaDatabase className={selectedCategory === category ? 'text-indigo-200' : 'text-indigo-600'} />,
-                  'identity': <FaIdCard className={selectedCategory === category ? 'text-indigo-200' : 'text-blue-600'} />,
-                  'payment': <FaCreditCard className={selectedCategory === category ? 'text-indigo-200' : 'text-green-600'} />,
-                  'finance': <FaFolder className={selectedCategory === category ? 'text-indigo-200' : 'text-amber-600'} />,
-                  'license': <FaAddressCard className={selectedCategory === category ? 'text-indigo-200' : 'text-purple-600'} />,
-                  'document': <FaFileAlt className={selectedCategory === category ? 'text-indigo-200' : 'text-orange-600'} />
-                }[category] || <FaDatabase className={selectedCategory === category ? 'text-indigo-200' : 'text-indigo-600'} />}
-                <span className="font-medium">{category === 'all' ? 'All Items' : category}</span>
+                  'all': <FaDatabase className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#111111]'} />,
+                  'identity': <FaIdCard className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#111111]'} />,
+                  'payment': <FaCreditCard className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#111111]'} />,
+                  'finance': <FaFolder className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#111111]'} />,
+                  'license': <FaAddressCard className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#111111]'} />,
+                  'document': <FaFileAlt className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#111111]'} />
+                }[category] || <FaDatabase className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#111111]'} />}
+                <span className="font-black">{category === 'all' ? 'All Items' : category}</span>
               </motion.button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Enhanced password generator */}
+    {/* Enhanced password generator */}
       <AnimatePresence>
         {showPasswordGenerator && (
           <motion.div
@@ -631,15 +575,15 @@ const Passwords = () => {
             className="bg-[#F9F9F7] border-4 border-[#111111] overflow-hidden"
           >
             <div className="bg-[#E5E5E0] p-5 border-b-4 border-[#111111] flex justify-between items-center">
-              <h3 className="font-semibold text-lg flex items-center text-indigo-800">
-                <div className="p-2 bg-indigo-100 rounded-lg mr-3">
-                  <FaLock className="text-indigo-600" />
+              <h3 className="font-black text-lg flex items-center text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <div className="p-2 border-2 border-[#111111] bg-[#F9F9F7] mr-3 flex items-center justify-center">
+                  <FaLock className="text-[#111111]" />
                 </div>
                 Password Generator
               </h3>
               <button 
                 onClick={() => setShowPasswordGenerator(false)}
-                className="p-2 hover:bg-white/50 rounded-full text-indigo-600"
+                className="p-2 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]"
               >
                 <FaTimes />
               </button>
@@ -679,14 +623,16 @@ const Passwords = () => {
                   className="bg-[#F9F9F7] p-4 border-2 border-[#111111]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 border-2 border-[#111111] bg-[#111111] flex items-center justify-center text-[#F9F9F7] text-lg">
+                    <div className="w-10 h-10 border-2 border-[#111111] bg-[#F9F9F7] flex items-center justify-center text-[#111111] text-lg">
                       {getPlatformInfo(websiteUrl)?.icon || '🌐'}
                     </div>
+
                     <div>
-                      <h4 className="font-semibold text-indigo-800">
-                        {getPlatformInfo(websiteUrl)?.name || 'Custom Platform'}
+                      <h4 className="font-black text-[#111111]">
+                        {getPlatformInfo(websiteUrl)?.name}
                       </h4>
-                      <p className="text-sm text-indigo-600">
+
+                      <p className="text-sm text-[#111111]">
                         Platform recognized • Optimized password rules applied
                       </p>
                     </div>
@@ -700,19 +646,19 @@ const Passwords = () => {
                   readOnly 
                   value={websiteUrl ? platformSpecificPassword : generatedPassword}
                   placeholder={websiteUrl ? "Platform-specific password will appear here" : "Your secure password will appear here"}
-                  className="flex-1 bg-transparent border-none focus:ring-0 font-mono text-lg"
+                  className="flex-1 bg-transparent border-none focus:ring-0 font-mono text-lg text-[#111111]"
                 />
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => enhancedCopyToClipboard(websiteUrl ? platformSpecificPassword : generatedPassword, 'generated')}
-                  className="p-2.5 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-2 text-gray-700 font-medium"
+                  className="p-2.5 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] transition-colors flex items-center gap-2 font-black"
                   title="Copy to clipboard"
                 >
                   {copiedText === 'generated' ? (
                     <>
-                      <FaClipboardCheck className="text-green-600" /> 
-                      <span className="text-sm text-green-700">Copied!</span>
+                      <FaClipboardCheck className="text-[#111111]" /> 
+                      <span className="text-sm">Copied!</span>
                     </>
                   ) : (
                     <>
@@ -723,10 +669,10 @@ const Passwords = () => {
                 </motion.button>
               </div>
               
-              <div className="bg-white p-5 rounded-xl border border-gray-200">
+              <div className="bg-[#F9F9F7] p-5 border-2 border-[#111111]">
                 <div className="flex justify-between items-center mb-3">
-                  <label className="font-medium text-gray-800">Password Length</label>
-                  <span className="text-sm font-mono bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded">
+                  <label className="font-black text-[#111111]">Password Length</label>
+                  <span className="text-sm font-mono bg-[#E5E5E0] text-[#111111] px-2.5 py-1 border-2 border-[#111111]">
                     {passwordOptions.length} chars
                   </span>
                 </div>
@@ -739,7 +685,7 @@ const Passwords = () => {
                     ...passwordOptions,
                     length: parseInt(e.target.value)
                   })}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                  className="w-full h-2 bg-[#E5E5E0] appearance-none cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>8</span>
@@ -751,7 +697,7 @@ const Passwords = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <motion.label 
                   whileHover={{ scale: 1.02 }}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-[#F9F9F7] border-2 border-[#111111] cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -760,17 +706,17 @@ const Passwords = () => {
                       ...passwordOptions,
                       includeUppercase: !passwordOptions.includeUppercase
                     })}
-                    className="rounded-md border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5"
+                    className="border-2 border-[#111111] h-5 w-5"
                   />
                   <div>
-                    <div className="font-medium text-gray-800">Uppercase Letters</div>
-                    <div className="text-xs text-gray-500">A-Z</div>
+                    <div className="font-black text-[#111111]">Uppercase Letters</div>
+                    <div className="text-xs text-[#111111]">A-Z</div>
                   </div>
                 </motion.label>
                 
                 <motion.label 
                   whileHover={{ scale: 1.02 }}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-[#F9F9F7] border-2 border-[#111111] cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -779,17 +725,17 @@ const Passwords = () => {
                       ...passwordOptions,
                       includeLowercase: !passwordOptions.includeLowercase
                     })}
-                    className="rounded-md border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5"
+                    className="border-2 border-[#111111] h-5 w-5"
                   />
                   <div>
-                    <div className="font-medium text-gray-800">Lowercase Letters</div>
-                    <div className="text-xs text-gray-500">a-z</div>
+                    <div className="font-black text-[#111111]">Lowercase Letters</div>
+                    <div className="text-xs text-[#111111]">a-z</div>
                   </div>
                 </motion.label>
                 
                 <motion.label 
                   whileHover={{ scale: 1.02 }}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-[#F9F9F7] border-2 border-[#111111] cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -798,17 +744,17 @@ const Passwords = () => {
                       ...passwordOptions,
                       includeNumbers: !passwordOptions.includeNumbers
                     })}
-                    className="rounded-md border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5"
+                    className="border-2 border-[#111111] h-5 w-5"
                   />
                   <div>
-                    <div className="font-medium text-gray-800">Numbers</div>
-                    <div className="text-xs text-gray-500">0-9</div>
+                    <div className="font-black text-[#111111]">Numbers</div>
+                    <div className="text-xs text-[#111111]">0-9</div>
                   </div>
                 </motion.label>
                 
                 <motion.label 
                   whileHover={{ scale: 1.02 }}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-3 p-3 bg-[#F9F9F7] border-2 border-[#111111] cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -817,20 +763,20 @@ const Passwords = () => {
                       ...passwordOptions,
                       includeSymbols: !passwordOptions.includeSymbols
                     })}
-                    className="rounded-md border-gray-300 text-indigo-600 focus:ring-indigo-500 h-5 w-5"
+                    className="border-2 border-[#111111] h-5 w-5"
                   />
                   <div>
-                    <div className="font-medium text-gray-800">Special Characters</div>
-                    <div className="text-xs text-gray-500">!@#$%^&*</div>
+                    <div className="font-black text-[#111111]">Special Characters</div>
+                    <div className="text-xs text-[#111111]">!@#$%^&*</div>
                   </div>
                 </motion.label>
               </div>
               
-              <div className="flex items-center p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <div className="p-2 bg-blue-100 rounded-lg text-blue-700 mr-3">
+              <div className="flex items-center p-3 bg-[#F9F9F7] border-2 border-[#111111]">
+                <div className="p-2 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] mr-3">
                   <FaInfoCircle />
                 </div>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-[#111111]">
                   Strong passwords should be at least 12 characters and include a mix of letters, numbers, and symbols.
                 </p>
               </div>
@@ -840,7 +786,7 @@ const Passwords = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={websiteUrl ? generatePlatformSpecificPassword : generatePassword}
-                  className="flex-1 px-5 py-3.5 bg-indigo-600 text-white rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors shadow-sm font-medium"
+                  className="flex-1 px-5 py-3.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] flex items-center justify-center gap-2 hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors font-black"
                 >
                   <FaDice /> {websiteUrl ? 'Generate Platform Password' : 'Generate Strong Password'}
                 </motion.button>
@@ -856,10 +802,10 @@ const Passwords = () => {
                     }
                   }}
                   disabled={!(websiteUrl ? platformSpecificPassword : generatedPassword) || !selectedPassword}
-                  className={`px-5 py-3.5 rounded-xl flex items-center justify-center gap-2 font-medium ${
+                  className={`px-5 py-3.5 flex items-center justify-center gap-2 font-black ${
                     (websiteUrl ? platformSpecificPassword : generatedPassword) && selectedPassword 
-                      ? 'bg-green-600 text-white hover:bg-green-700 shadow-sm'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? 'bg-[#111111] text-[#F9F9F7] border-2 border-[#111111]' 
+                      : 'bg-[#E5E5E0] text-[#111111] cursor-not-allowed border-2 border-[#111111]'
                   }`}
                 >
                   <FaCheckCircle /> Use This Password
@@ -876,20 +822,20 @@ const Passwords = () => {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-sm p-12 text-center"
+          className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center"
         >
           <div className="relative mx-auto w-20 h-20 mb-6">
-            <div className="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-50"></div>
-            <div className="relative bg-indigo-50 rounded-full w-full h-full flex items-center justify-center">
-              <FaSearch className="text-indigo-400 text-2xl" />
+            <div className="absolute inset-0 border-4 border-[#111111] bg-[#E5E5E0]"></div>
+            <div className="relative border-4 border-[#111111] bg-[#F9F9F7] w-full h-full flex items-center justify-center">
+              <FaSearch className="text-[#111111] text-2xl" />
             </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No credentials found</h3>
-          <p className="text-gray-500 max-w-md mx-auto">
+          <h3 className="text-xl font-black text-[#111111] mb-2">No credentials found</h3>
+          <p className="text-[#111111] max-w-md mx-auto">
             No items match your current search or filters. Try adjusting your criteria or add a new item to your vault.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button onClick={() => {setSelectedCategory('all'); setSearch('');}} className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+            <button onClick={() => {setSelectedCategory('all'); setSearch('');}} className="px-5 py-2.5 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors">
               Clear filters
             </button>
             <button 
@@ -897,7 +843,7 @@ const Passwords = () => {
                 setSelectedPassword(null);
                 setShowAddEditModal(true);
               }}
-              className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              className="px-5 py-2.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] font-black hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors flex items-center gap-2"
             >
               <FaPlus size={12} /> Add New Item
             </button>
@@ -915,32 +861,26 @@ const Passwords = () => {
               key={password.id}
               variants={cardVariants}
               whileHover="hover"
-              className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 hover:border-indigo-200 transition-colors"
+              className="border-l-4 border-b-2 border-r-2 border-t-2 border-[#111111] bg-[#F9F9F7] overflow-hidden"
             >
               <div className="relative overflow-hidden">
                 <div className={`absolute top-0 left-0 w-full h-1 ${
-                  password.strength === 'strong' ? 'bg-green-500' :
-                  password.strength === 'medium' ? 'bg-amber-500' :
-                  'bg-red-500'
+                  password.strength === 'strong' ? 'bg-[#111111]' :
+                  password.strength === 'medium' ? 'bg-[#525252]' :
+                  'bg-[#CC0000]'
                 }`}></div>
                 
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                <div className="p-5 border-b-2 border-[#111111] flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-xl ${
-                      password.passType === 'payment' ? 'bg-green-50 text-green-600' :
-                      password.passType === 'identity' ? 'bg-blue-50 text-blue-600' :
-                      password.passType === 'license' ? 'bg-purple-50 text-purple-600' : 
-                      password.passType === 'document' ? 'bg-orange-50 text-orange-600' : 
-                      'bg-indigo-50 text-indigo-600'
-                    }`}>
+                    <div className={`p-3 border-2 border-[#111111] bg-[#F9F9F7]`}>
                       {getPassTypeIcon(password.passType)}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-800">{password.title}</h3>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <h3 className="font-black text-[#111111]">{password.title}</h3>
+                      <div className="flex items-center gap-2 text-sm text-[#111111]">
                         <span>{password.issuer}</span>
                         {password.expiryDate && (
-                          <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                          <span className="px-2 py-0.5 border-2 border-[#111111] text-xs text-[#111111]">
                             Expires {new Date(password.expiryDate).toLocaleDateString()}
                           </span>
                         )}
@@ -952,7 +892,7 @@ const Passwords = () => {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-indigo-600 transition-colors"
+                      className="p-2 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] transition-colors"
                       onClick={() => {
                         setSelectedPassword(password as Password);
                         setShowAddEditModal(true);
@@ -963,7 +903,7 @@ const Passwords = () => {
                       <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      className="p-2 hover:bg-red-50 rounded-lg text-gray-500 hover:text-red-600 transition-colors"
+                      className="p-2 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] transition-colors"
                       onClick={() => {
                         if (confirm("Are you sure you want to delete this item?")) {
                           handleDelete(password.id as string);
@@ -977,7 +917,7 @@ const Passwords = () => {
                 
                 <div className="p-5">
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex justify-between items-center p-3 bg-[#F9F9F7] border-2 border-[#111111] transition-colors">
                       <div>
                         <div className="text-xs text-gray-500 mb-1">Username</div>
                         <div className="font-medium">{password.username}</div>
@@ -986,17 +926,17 @@ const Passwords = () => {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => enhancedCopyToClipboard(password.username, `user-${password.id}`)}
-                        className={`p-2 rounded-lg transition-colors ${
+                        className={`p-2 border-2 border-[#111111] bg-[#F9F9F7] transition-colors ${
                           copiedText === `user-${password.id}` 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'hover:bg-gray-200 text-gray-600'
+                            ? 'bg-[#E5E5E0] text-[#111111]' 
+                            : 'hover:bg-[#E5E5E0] text-[#111111]'
                         }`}
                       >
                         {copiedText === `user-${password.id}` ? <FaRegCheckCircle /> : <FaRegCopy />}
                       </motion.button>
                     </div>
                     
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex justify-between items-center p-3 bg-[#F9F9F7] border-2 border-[#111111] transition-colors">
                       <div>
                         <div className="text-xs text-gray-500 mb-1">Password</div>
                         <div className="font-medium font-mono">
@@ -1008,7 +948,7 @@ const Passwords = () => {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleShowPassword(password.id as string)}
-                          className="p-2 hover:bg-gray-200 rounded-lg text-gray-600"
+                          className="p-2 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111]"
                         >
                           {showPassword === password.id ? <FaEyeSlash /> : <FaEye />}
                         </motion.button>
@@ -1016,10 +956,10 @@ const Passwords = () => {
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => enhancedCopyToClipboard(password.password, `pass-${password.id}`)}
-                          className={`p-2 rounded-lg transition-colors ${
+                          className={`p-2 border-2 border-[#111111] bg-[#F9F9F7] ${
                             copiedText === `pass-${password.id}` 
-                              ? 'bg-green-100 text-green-600' 
-                              : 'hover:bg-gray-200 text-gray-600'
+                              ? 'bg-[#E5E5E0] text-[#111111]' 
+                              : 'hover:bg-[#E5E5E0] text-[#111111]'
                           }`}
                         >
                           {copiedText === `pass-${password.id}` ? <FaRegCheckCircle /> : <FaRegCopy />}
@@ -1028,17 +968,16 @@ const Passwords = () => {
                     </div>
                   </div>
                   
-                  <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                  <div className="mt-5 pt-4 border-t-2 border-[#111111] flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                      <span className="text-xs text-gray-500">Last updated {password.lastUpdated}</span>
+                      <div className="w-2 h-2 bg-[#111111]"></div>
+                      <span className="text-xs text-[#111111]">Last updated {password.lastUpdated}</span>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5
-                      ${password.strength === 'strong' ? 'bg-green-50 text-green-700' : 
-                        password.strength === 'medium' ? 'bg-amber-50 text-amber-700' : 
-                        'bg-red-50 text-red-700'
-                      }`}
-                    >
+                    <div className={`px-3 py-1 text-xs font-black flex items-center gap-1.5 border-2 ${
+                      password.strength === 'strong' ? 'bg-[#F9F9F7] text-[#111111] border-[#111111]' : 
+                        password.strength === 'medium' ? 'bg-[#E5E5E0] text-[#111111] border-[#111111]' : 
+                        'bg-[#F9F9F7] text-[#CC0000] border-2 border-[#CC0000]'
+                      }`}>
                       {password.strength === 'strong' ? <FaCheckCircle size={10} /> : 
                        password.strength === 'medium' ? <FaShieldAlt size={10} /> : 
                        <FaExclamationTriangle size={10} />}
@@ -1065,10 +1004,10 @@ const Passwords = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-hidden"
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-md w-full max-h-[85vh] overflow-hidden"
             >
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-5 flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-white flex items-center gap-3">
+              <div className="p-5 flex justify-between items-center bg-[#111111]">
+                <h3 className="text-xl font-black text-[#F9F9F7] flex items-center gap-3" style={{ fontFamily: "'Playfair Display', serif" }}>
                   {selectedPassword ? (
                     <>
                       <FaEdit /> Edit Credential
@@ -1081,7 +1020,7 @@ const Passwords = () => {
                 </h3>
                 <button 
                   onClick={() => setShowAddEditModal(false)}
-                  className="text-white bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
+                  className="p-2 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]"
                 >
                   <FaTimes />
                 </button>
@@ -1090,12 +1029,12 @@ const Passwords = () => {
               <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
                 <form className="space-y-5" onSubmit={handleSubmitPassword}>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <label className="block text-sm font-black text-[#111111] mb-2">Title</label>
                     <input 
                       type="text" 
                       defaultValue={selectedPassword?.title}
                       name="title"
-                      className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors" 
+                      className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none" 
                       placeholder="Enter credential title"
                       required
                     />
@@ -1103,11 +1042,11 @@ const Passwords = () => {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                      <label className="block text-sm font-black text-[#111111] mb-2">Category</label>
                       <select 
                         defaultValue={selectedPassword?.category || 'finance'}
                         name="category"
-                        className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors"
+                        className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none"
                       >
                         <option value="finance">Finance</option>
                         <option value="identity">Identity</option>
@@ -1117,11 +1056,11 @@ const Passwords = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Credential Type</label>
+                      <label className="block text-sm font-black text-[#111111] mb-2">Credential Type</label>
                       <select 
                         defaultValue={selectedPassword?.passType || 'account'}
                         name="passType"
-                        className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors"
+                        className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none"
                       >
                         <option value="account">Account</option>
                         <option value="payment">Payment</option>
@@ -1133,97 +1072,97 @@ const Passwords = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Issuer/Organization</label>
+                    <label className="block text-sm font-black text-[#111111] mb-2">Issuer/Organization</label>
                     <input 
                       type="text" 
                       defaultValue={selectedPassword?.issuer}
                       name="website"
-                      className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors" 
+                      className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none" 
                       placeholder="e.g., Bank Name, Service Provider"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Username/ID</label>
+                    <label className="block text-sm font-black text-[#111111] mb-2">Username/ID</label>
                     <input 
                       type="text" 
                       defaultValue={selectedPassword?.username}
                       name="username"
-                      className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors" 
+                      className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none" 
                       placeholder="Enter your username or ID"
                       required
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <label className="block text-sm font-black text-[#111111] mb-2">Password</label>
                     <div className="relative">
                       <input 
                         type="password" 
                         defaultValue={selectedPassword?.password}
                         name="password"
-                        className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors pr-20" 
+                        className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none pr-20" 
                         placeholder="Enter a secure password"
                         required
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
-                        <button type="button" className="p-1 text-gray-400 hover:text-gray-600">
+                        <button type="button" className="p-1 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111]">
                           <FaEye />
                         </button>
-                        <button type="button" className="p-1 text-gray-400 hover:text-gray-600">
-                          <FaDice className="ml-1" />
+                        <button type="button" className="p-1 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] ml-1">
+                          <FaDice />
                         </button>
                       </div>
                     </div>
                     <div className="mt-1.5 flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-16 h-1.5 bg-[#E5E5E0] overflow-hidden">
                           <div className={`h-full ${
-                            selectedPassword?.strength === 'strong' ? 'bg-green-500 w-full' : 
-                            selectedPassword?.strength === 'medium' ? 'bg-amber-500 w-2/3' : 
-                            'bg-red-500 w-1/3'
+                            selectedPassword?.strength === 'strong' ? 'bg-[#111111] w-full' : 
+                            selectedPassword?.strength === 'medium' ? 'bg-[#525252] w-2/3' : 
+                            'bg-[#CC0000] w-1/3'
                           }`}></div>
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-[#111111]">
                           {selectedPassword?.strength === 'strong' ? 'Strong password' : 
                           selectedPassword?.strength === 'medium' ? 'Medium strength' : 
                           'Weak password'}
                         </span>
                       </div>
-                      <button type="button" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                      <button type="button" className="text-xs text-[#111111] hover:text-[#CC0000] font-black">
                         Generate
                       </button>
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
+                    <label className="block text-sm font-black text-[#111111] mb-2">Expiry Date</label>
                     <input 
                       type="date" 
-                      defaultValue={selectedPassword?.expiryDate ? selectedPassword.expiryDate.split('T')[0] : ''}
+                      defaultValue={(selectedPassword && selectedPassword.expiryDate) ? selectedPassword.expiryDate.split('T')[0] : ''}
                       name="expiryDate"
-                      className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors" 
+                      className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none" 
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <label className="block text-sm font-black text-[#111111] mb-2">Notes</label>
                     <textarea 
                       defaultValue={selectedPassword?.notes}
                       name="notes"
-                      className="w-full px-3 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-colors resize-none" 
+                      className="w-full px-3 py-3 border-2 border-[#111111] bg-[#F9F9F7] focus:outline-none resize-none" 
                       rows={3}
                       placeholder="Add any additional notes or details"
                     ></textarea>
                   </div>
                   
-                  <div className="pt-4 flex justify-end space-x-3 border-t border-gray-100">
+                  <div className="pt-4 flex justify-end space-x-3 border-t-2 border-[#111111]">
                     <motion.button 
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       type="button"
                       onClick={() => setShowAddEditModal(false)}
-                      className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                      className="px-5 py-2.5 border-2 border-[#111111] text-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] font-black"
                     >
                       Cancel
                     </motion.button>
@@ -1232,7 +1171,7 @@ const Passwords = () => {
                       whileTap={{ scale: 0.98 }}
                       type="submit"
                       disabled={saving}
-                      className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium shadow-sm"
+                      className="px-5 py-2.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] hover:bg-[#F9F9F7] hover:text-[#111111] font-black"
                     >
                       {saving ? 'Saving...' : (selectedPassword ? 'Update' : 'Save')}
                     </motion.button>
