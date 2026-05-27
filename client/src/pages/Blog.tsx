@@ -223,7 +223,7 @@ const Blog = () => {
       <Navbar />
       
       {/* Add spacing for fixed navbar */}
-      <div className="h-20"></div>
+      <div className=\"h-28\"></div>
 
       {/* Blog content */}
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 font-crimson">

@@ -80,64 +80,44 @@ const FeatureTemplate: React.FC<FeatureTemplateProps> = ({ title, description, i
   const navigate = useNavigate();
   
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50/20 to-white min-h-screen pt-24 pb-20">
-      <div className="container mx-auto px-4 sm:px-6 max-w-5xl relative">
+    <div className="bg-[#F9F9F7] min-h-screen pt-28 pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
         {/* Go Back Button */}
-        <div className="mb-6">
+        <div className="mb-8">
           <button 
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-slate-200 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-200 text-slate-700 hover:text-indigo-600 font-medium"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F9F9F7] border border-[#111111] text-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
           >
             <ArrowLeft className="h-5 w-5" />
-            Back to Home
+            BACK TO HOME
           </button>
         </div>
 
-        {/* Enhanced decorative elements */}
-        <div className="absolute top-20 right-20 w-48 h-48 bg-indigo-100/40 rounded-full blur-3xl -z-10 animate-pulse-slow"></div>
-        <div className="absolute bottom-20 left-20 w-56 h-56 bg-blue-100/30 rounded-full blur-3xl -z-10"></div>
-        <div className="absolute top-40 left-10 w-24 h-24 bg-purple-100/30 rounded-full blur-2xl -z-10"></div>
-        
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden transition-all duration-300 hover:shadow-xl">
-          {/* Redesigned header section */}
-          <div className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-blue-500/5 to-purple-500/10 z-0"></div>
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-100/30 rounded-full blur-2xl"></div>
-            
-            <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row md:items-center gap-8 border-b border-slate-200/50">
-              {/* Enhanced icon container */}
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 p-6 rounded-2xl shadow-lg flex items-center justify-center relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="border-4 border-[#111111] bg-[#F9F9F7] overflow-hidden">
+          <div className="p-8 md:p-12 border-b-4 border-[#111111]">
+            <div className="flex flex-col md:flex-row md:items-center gap-8">
+              <div className="border-2 border-[#111111] p-6 flex items-center justify-center w-24 h-24 flex-shrink-0">
                 {React.cloneElement(icon as React.ReactElement, { 
-                  className: "h-12 w-12 text-indigo-600 relative z-10 transition-transform duration-300 group-hover:scale-110" 
+                  className: "h-12 w-12 text-[#111111]" 
                 })}
               </div>
               
-              <div className="space-y-2">
-                <div className="inline-block rounded-full px-3 py-1 text-xs font-medium bg-indigo-100 text-indigo-800 mb-1">
-                  Feature
+              <div className="space-y-4">
+                <div className="inline-block border border-[#111111] px-4 py-1 text-xs font-black uppercase tracking-widest text-[#111111]">
+                  FEATURE
                 </div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-700 via-blue-700 to-indigo-800 bg-clip-text text-transparent mb-3">{title}</h1>
-                <p className="text-slate-600 text-lg max-w-2xl leading-relaxed">{description}</p>
+                <h1 className="text-5xl md:text-6xl font-black leading-[0.9]" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</h1>
+                <p className="text-lg leading-relaxed max-w-2xl" style={{ fontFamily: "'Lora', serif" }}>{description}</p>
               </div>
             </div>
           </div>
           
-          {/* Improved content section */}
-          <div className="p-8 md:p-12 relative">
-            <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-indigo-50/5 to-blue-50/10 opacity-70"></div>
-            <div className="relative z-10">
-              {children}
-            </div>
+          <div className="p-8 md:p-12">
+            {children}
           </div>
         </div>
         
-        {/* Redesigned bottom accent */}
-        <div className="relative h-1 mx-auto w-60 mt-6">
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-500 rounded-full shadow-lg opacity-70"></div>
-          <div className="absolute inset-0 bg-white rounded-full shadow blur-sm"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-500 rounded-full opacity-90"></div>
-        </div>
+        <div className="mt-8 h-1 bg-[#111111]"></div>
       </div>
     </div>
   );

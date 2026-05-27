@@ -40,7 +40,7 @@ const Features = () => {
   ];
 
   return (
-    <div className="bg-[#F9F9F7] overflow-hidden pt-20">
+    <div className="bg-[#F9F9F7] overflow-hidden pt-28">
       <Navbar />
 
       {/* HERO */}
