@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-// Import components that are still needed
 import Navbar from './Navbar';
 import Footer from './Footer';
 import ScrollButton from './ScrollButton';
-import Passwords from './dashboard/Passwords'; // Import actual Passwords component
-import History from './dashboard/History'; // Import actual History component
-import Notifications from './dashboard/Notifications'; // Import actual Notifications component
-import Settings from './dashboard/Settings'; // Import actual Settings component
-import BackUp from './dashboard/BackUp'; // Import actual BackUp component
-import Transactions from './dashboard/Transactions'; // Import actual Transactions component
-import UserProfile from './dashboard/UserProfile'; // Import actual UserProfile component
-import Monitoring from './dashboard/Monitoring'; // Import Monitoring component
-import { 
-  FaHome, FaBell, FaCog, FaChartBar, FaBookmark, 
+import Passwords from './dashboard/Passwords';
+import History from './dashboard/History';
+import Notifications from './dashboard/Notifications';
+import Settings from './dashboard/Settings';
+import BackUp from './dashboard/BackUp';
+import Transactions from './dashboard/Transactions';
+import UserProfile from './dashboard/UserProfile';
+import Monitoring from './dashboard/Monitoring';
+import {
+  FaHome, FaBell, FaCog, FaChartBar, FaBookmark,
   FaQuestionCircle, FaSignOutAlt, FaBars, FaTimes, FaUser,
   FaLock, FaHistory, FaSync, FaSearch, FaShieldAlt, FaChartLine, FaKey, FaExclamationCircle,
   FaExclamation, FaCheckCircle, FaDatabase, FaUserCircle,
@@ -25,6 +24,8 @@ import {
 } from 'react-icons/fa';
 import { FaSquarePollHorizontal, FaEllipsis } from 'react-icons/fa6';
 import { monitoringAPI, historyAPI, deviceAPI, backupAPI, sharingAPI, passwordAPI } from '../services/api';
+
+// ─── Interfaces ──────────────────────────────────────────────────────────────
 
 interface SubMenuItem {
   label: string;
@@ -98,7 +99,38 @@ interface UserProfile {
   role: string;
 }
 
-// Modernized SidebarItem component with enhanced visual effects
+// ─── Newsprint Switch Component ──────────────────────────────────────────────
+
+interface SwitchProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label?: string;
+}
+
+const Switch: React.FC<SwitchProps> = ({ checked, onChange, label }) => (
+  <label className="relative inline-flex items-center cursor-pointer">
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="sr-only peer"
+    />
+    <div className="w-14 h-7 bg-[#E5E5E0] border-2 border-[#111111] peer-focus:outline-none
+                   peer-checked:after:translate-x-full after:content-['']
+                   after:absolute after:top-[2px] after:left-[2px] after:bg-[#111111]
+                   after:border-2 after:border-[#111111] after:h-5 after:w-6 after:transition-all
+                   peer-checked:bg-[#CC0000]"></div>
+    {label && (
+      <span className="ml-3 text-xs font-black uppercase tracking-widest text-[#111111]"
+        style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        {label}
+      </span>
+    )}
+  </label>
+);
+
+// ─── Sidebar Item ─────────────────────────────────────────────────────────────
+
 const SidebarItem: React.FC<{
   icon: React.ElementType;
   label: string;
@@ -107,117 +139,119 @@ const SidebarItem: React.FC<{
   onClick: () => void;
 }> = ({ icon: Icon, label, isActive, notification, onClick }) => (
   <motion.button
-    whileHover={{ x: 4 }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className={`flex items-center w-full p-3 rounded-xl transition-all duration-200 group relative ${
-      isActive 
-        ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium shadow-md shadow-indigo-200'
-        : 'text-gray-700 hover:bg-indigo-50'
-    }`}
+    className={`flex items-center w-full p-3 transition-all duration-200 group relative border-l-4 ${isActive
+      ? 'bg-[#111111] text-[#F9F9F7] border-l-[#CC0000]'
+      : 'text-[#111111] hover:bg-[#E5E5E0] border-l-transparent'
+      }`}
   >
-    <div className={`flex items-center justify-center w-9 h-9 rounded-xl mr-3 ${
-      isActive 
-        ? 'bg-white/20' 
-        : 'bg-indigo-100/70 text-indigo-700 group-hover:bg-indigo-200 group-hover:text-indigo-800'
-    }`}>
-      <Icon className={`text-xl ${isActive ? 'text-white' : ''}`} />
-    </div>
-    <span className="text-sm font-medium">{label}</span>
-    {notification && (
-      <div className={`ml-auto flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full text-xs ${
-        isActive ? 'bg-white text-indigo-700' : 'bg-indigo-600 text-white'
+    <div className={`flex items-center justify-center w-8 h-8 mr-3 border ${isActive
+      ? 'border-[#F9F9F7] bg-transparent'
+      : 'border-[#111111] bg-[#F9F9F7] group-hover:bg-[#111111] group-hover:text-[#F9F9F7] group-hover:border-[#111111]'
       }`}>
+      <Icon className="text-base" />
+    </div>
+    <span className="text-xs font-black uppercase tracking-widest"
+      style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+      {label}
+    </span>
+    {notification && (
+      <div className={`ml-auto flex items-center justify-center min-w-[20px] h-5 px-1 text-[10px] font-black ${isActive ? 'bg-[#CC0000] text-[#F9F9F7]' : 'bg-[#CC0000] text-[#F9F9F7]'
+        }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
         {notification}
       </div>
-    )}
-    
-    {isActive && (
-      <motion.div 
-        layoutId="sidebar-active-indicator"
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full bg-white"
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      />
     )}
   </motion.button>
 );
 
-// Modern Profile Section for Sidebar
+// ─── Sidebar Profile ──────────────────────────────────────────────────────────
+
 const SidebarProfile: React.FC<{
   profile: UserProfile;
   onClick: () => void;
   isActive: boolean;
   onLogout: () => void;
 }> = ({ profile, onClick, isActive, onLogout }) => (
-  <div className="mt-auto pt-4 space-y-3">
-    <div
-      onClick={onClick}
-      className="overflow-hidden border-2 border-[#111111] bg-[#F9F9F7]"
-    >
+  <div className="mt-auto pt-4 space-y-3 border-t-4 border-[#111111]">
+    <div className="border-2 border-[#111111] bg-[#F9F9F7]">
       <button
         onClick={onClick}
-        className={`w-full flex items-center space-x-3 p-4 ${
-          isActive ? 'bg-[#E5E5E0]' : 'hover:bg-[#E5E5E0]'
-        } transition-colors`}
+        className={`w-full flex items-center space-x-3 p-4 ${isActive ? 'bg-[#E5E5E0]' : 'hover:bg-[#E5E5E0]'
+          } transition-colors`}
       >
-        <div className="relative">
-          <div className="w-12 h-12 border-2 border-[#111111] bg-[#F9F9F7] flex items-center justify-center text-[#111111] text-lg font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+        <div className="relative flex-shrink-0">
+          <div className="w-12 h-12 border-2 border-[#111111] bg-[#F9F9F7] flex items-center justify-center text-[#111111] text-lg font-black"
+            style={{ fontFamily: "'Playfair Display', serif" }}>
             {profile.name.charAt(0).toUpperCase()}
           </div>
           <div className="absolute bottom-0 right-0 w-4 h-4 border border-[#111111] bg-[#CC0000]"></div>
         </div>
-        <div className="flex-1 text-left">
-          <div className="text-sm font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.name}</div>
-          <div className="text-xs uppercase tracking-widest font-mono text-[#525252]">{profile.email}</div>
+        <div className="flex-1 text-left overflow-hidden">
+          <div className="text-sm font-black text-[#111111] truncate"
+            style={{ fontFamily: "'Playfair Display', serif" }}>
+            {profile.name}
+          </div>
+          <div className="text-[10px] uppercase tracking-widest font-mono text-[#525252] truncate">
+            {profile.email}
+          </div>
         </div>
       </button>
-      
-      <div className={`overflow-hidden transition-all duration-300 border-t border-[#111111] ${isActive ? 'max-h-24' : 'max-h-0'}`}>
-        <div className="p-3 pt-0 space-y-2">
-          <button className="w-full text-left text-xs text-[#111111] hover:bg-[#E5E5E0] font-bold uppercase tracking-widest p-2 flex items-center">
-            <FaUserCircle className="mr-2" /> View Profile
+
+      <div className={`overflow-hidden transition-all duration-300 border-t-2 border-[#111111] ${isActive ? 'max-h-24' : 'max-h-0'
+        }`}>
+        <div className="p-3 space-y-1">
+          <button className="w-full text-left text-[10px] text-[#111111] hover:bg-[#E5E5E0] font-black uppercase tracking-widest p-2 flex items-center"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaUserCircle className="mr-2" /> VIEW PROFILE
           </button>
-          <button className="w-full text-left text-xs text-[#111111] hover:bg-[#E5E5E0] font-bold uppercase tracking-widest p-2 flex items-center">
-            <FaCog className="mr-2" /> Settings
+          <button className="w-full text-left text-[10px] text-[#111111] hover:bg-[#E5E5E0] font-black uppercase tracking-widest p-2 flex items-center"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaCog className="mr-2" /> SETTINGS
           </button>
         </div>
       </div>
     </div>
-    
+
     <button
       onClick={onLogout}
-      className="flex items-center w-full p-4 text-[#F9F9F7] bg-[#111111] border-2 border-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
+      className="flex items-center w-full p-4 text-[#F9F9F7] bg-[#111111] border-2 border-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors"
+      style={{ fontFamily: "'JetBrains Mono', monospace" }}
     >
-      <FaSignOutAlt className="mr-3 text-lg" />
+      <FaSignOutAlt className="mr-3" />
       <span>LOGOUT</span>
     </button>
   </div>
 );
 
-// QuickActionButton Component
+// ─── Quick Action Button ──────────────────────────────────────────────────────
+
 const QuickActionButton: React.FC<{
   icon: React.ElementType;
   label: string;
   color: string;
   onClick?: () => void;
-}> = ({ icon: Icon, label, color, onClick }) => {
-  
-  return (
-    <button
-      onClick={onClick}
-      className="p-6 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
-    >
-      <div className="flex flex-col items-center text-center">
-        <div className="p-3 mb-3">
-          <Icon className="w-6 h-6 text-[#111111] group-hover:text-[#F9F9F7]" />
-        </div>
-        <span className="text-xs font-black uppercase tracking-widest" style={{ fontFamily: "'Inter', sans-serif" }}>{label}</span>
+}> = ({ icon: Icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="p-6 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7]
+      transition-all duration-200 group hover:shadow-[4px_4px_0px_0px_#111111]
+      hover:-translate-x-0.5 hover:-translate-y-0.5"
+  >
+    <div className="flex flex-col items-center text-center">
+      <div className="p-3 mb-3 border border-[#111111] group-hover:border-[#F9F9F7]">
+        <Icon className="w-6 h-6 text-[#111111] group-hover:text-[#F9F9F7]" />
       </div>
-    </button>
-  );
-};
+      <span className="text-xs font-black uppercase tracking-widest"
+        style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        {label}
+      </span>
+    </div>
+  </button>
+);
 
-// StatsCard Component
+// ─── Stats Card ───────────────────────────────────────────────────────────────
+
 const StatsCard: React.FC<{
   title: string;
   value: number;
@@ -226,63 +260,75 @@ const StatsCard: React.FC<{
   trend?: number;
   color?: string;
   alert?: boolean;
-}> = ({ title, value, icon: Icon, description, trend, color = 'indigo', alert = false }) => {
-  
-  return (
-    <div
-      className="p-6 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#E5E5E0] transition-colors"
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-3 border border-[#111111] bg-[#F9F9F7] text-[#111111]">
-          <Icon className="w-6 h-6" />
+}> = ({ title, value, icon: Icon, description, trend, alert = false }) => (
+  <div className="p-6 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#E5E5E0] transition-colors
+    hover:shadow-[4px_4px_0px_0px_#111111] hover:-translate-x-0.5 hover:-translate-y-0.5">
+    <div className="flex items-center justify-between mb-4">
+      <div className={`p-3 border ${alert ? 'border-[#CC0000] text-[#CC0000]' : 'border-[#111111]'} bg-[#F9F9F7] text-[#111111]`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      {trend !== undefined && (
+        <div className={`text-[10px] font-black px-2 py-1 uppercase tracking-widest border ${trend > 0 ? 'border-[#CC0000] text-[#CC0000] bg-red-50' : 'border-[#111111] text-[#111111]'
+          }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          {trend > 0 ? `+${trend}` : trend}
         </div>
-        {trend !== undefined && (
-          <div className={`text-xs font-black px-3 py-1 uppercase tracking-widest border ${
-            trend > 0 ? 'border-[#CC0000] text-[#CC0000]' : 'border-[#111111] text-[#111111]'
-          }`}>
-            {trend > 0 ? `+${trend}` : trend}
-          </div>
-        )}
-      </div>
-      <div className="mt-4">
-        <h3 className="text-3xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{value}</h3>
-        <p className="text-xs font-black uppercase tracking-widest text-[#525252] mt-2">{title}</p>
-        {description && (
-          <p className="text-xs text-[#A3A3A3] mt-2">{description}</p>
-        )}
-      </div>
+      )}
     </div>
-  );
-};
+    <div className="mt-4">
+      <h3 className="text-3xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+        {value}
+      </h3>
+      <p className="text-[10px] font-black uppercase tracking-widest text-[#525252] mt-2"
+        style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        {title}
+      </p>
+      {description && (
+        <p className="text-xs text-[#A3A3A3] mt-2" style={{ fontFamily: "'Lora', serif" }}>
+          {description}
+        </p>
+      )}
+    </div>
+  </div>
+);
 
-// ActivityItem Component
-const ActivityItem: React.FC<{
-  activity: ActivityItem;
-}> = ({ activity }) => {
-  const getSeverityStyles = (severity?: 'low' | 'medium' | 'high') => {
-    switch (severity) {
-      case 'high': return 'border-[#CC0000] text-[#CC0000]';
-      case 'medium': return 'border-[#525252] text-[#525252]';
-      case 'low': return 'border-[#111111] text-[#111111]';
-      default: return 'border-[#111111] text-[#111111]';
-    }
+// ─── Activity Feed Item ───────────────────────────────────────────────────────
+
+const ActivityFeedItem: React.FC<{ activity: ActivityItem }> = ({ activity }) => {
+  const severityBorder = {
+    high: 'border-l-[#CC0000]',
+    medium: 'border-l-[#525252]',
+    low: 'border-l-[#111111]',
   };
-  
+
   return (
-    <div
-      className="p-4 border-b border-[#E5E5E0] hover:bg-[#E5E5E0] transition-colors"
-    >
+    <div className={`p-4 border-b-2 border-[#E5E5E0] hover:bg-[#E5E5E0] transition-colors border-l-4 ${activity.severity ? severityBorder[activity.severity] : 'border-l-[#111111]'
+      }`}>
       <div className="flex items-start space-x-4">
-        <div className={`p-3 border ${activity.severity ? getSeverityStyles(activity.severity) : 'border-[#111111]'} text-[#111111]`}>
-          <activity.icon className="w-5 h-5" />
+        <div className={`p-2 border-2 flex-shrink-0 ${activity.severity === 'high' ? 'border-[#CC0000] text-[#CC0000]' : 'border-[#111111] text-[#111111]'
+          }`}>
+          <activity.icon className="w-4 h-4" />
         </div>
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h4 className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{activity.title}</h4>
-              <p className="text-sm text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>{activity.description}</p>
+              <h4 className="font-black text-[#111111] text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {activity.title}
+              </h4>
+              <p className="text-xs text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>
+                {activity.description}
+              </p>
             </div>
-            <span className="text-xs uppercase tracking-widest font-mono text-[#A3A3A3]">{activity.timestamp}</span>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {activity.severity === 'high' && (
+                <span className="text-[9px] px-2 py-0.5 border border-[#CC0000] text-[#CC0000] font-black uppercase tracking-widest"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  URGENT
+                </span>
+              )}
+              <span className="text-[10px] uppercase tracking-widest font-mono text-[#A3A3A3] whitespace-nowrap">
+                {activity.timestamp}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -290,28 +336,26 @@ const ActivityItem: React.FC<{
   );
 };
 
-// Modern Sidebar Toggle Button
-const SidebarToggle: React.FC<{
-  isExpanded: boolean;
-  onClick: () => void;
-}> = ({ isExpanded, onClick }) => (
+// ─── Sidebar Toggle ───────────────────────────────────────────────────────────
+
+const SidebarToggle: React.FC<{ isExpanded: boolean; onClick: () => void }> = ({ isExpanded, onClick }) => (
   <button
     onClick={onClick}
-    className="p-3 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] transition-all duration-200"
+    className="p-3 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 group"
+    aria-label={isExpanded ? 'Close sidebar' : 'Open sidebar'}
   >
-    <div className="w-8 h-8 flex flex-col items-center justify-center space-y-1.5 relative">
-      <div 
-        className={`w-6 h-0.5 bg-[#111111] transition-transform origin-center ${isExpanded ? 'rotate-45 translate-y-2' : ''}`}
-      />
-      <div 
-        className={`w-6 h-0.5 bg-[#111111] transition-opacity ${isExpanded ? 'opacity-0' : 'opacity-100'}`}
-      />
-      <div 
-        className={`w-6 h-0.5 bg-[#111111] transition-transform origin-center ${isExpanded ? '-rotate-45 -translate-y-2' : ''}`}
-      />
+    <div className="w-6 h-5 flex flex-col justify-between relative">
+      <div className={`w-6 h-0.5 bg-[#111111] group-hover:bg-[#F9F9F7] transition-transform origin-center ${isExpanded ? 'rotate-45 translate-y-[9px]' : ''
+        }`} />
+      <div className={`w-6 h-0.5 bg-[#111111] group-hover:bg-[#F9F9F7] transition-opacity ${isExpanded ? 'opacity-0' : 'opacity-100'
+        }`} />
+      <div className={`w-6 h-0.5 bg-[#111111] group-hover:bg-[#F9F9F7] transition-transform origin-center ${isExpanded ? '-rotate-45 -translate-y-[9px]' : ''
+        }`} />
     </div>
   </button>
 );
+
+// ─── Dashboard Home ───────────────────────────────────────────────────────────
 
 const DashboardHome: React.FC<{
   dashboardStats: DashboardStats;
@@ -321,8 +365,7 @@ const DashboardHome: React.FC<{
   onNavigate: (path: string) => void;
 }> = ({ dashboardStats, searchQuery, setSearchQuery, recentActivities, onNavigate }) => {
   const navigate = useNavigate();
-  
-  // Customization states
+
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
   const [customizationSettings, setCustomizationSettings] = useState({
     showQuickActions: true,
@@ -347,23 +390,16 @@ const DashboardHome: React.FC<{
   };
 
   const handleLayoutChange = (layout: 'grid' | 'list') => {
-    setCustomizationSettings(prev => ({
-      ...prev,
-      quickActionsLayout: layout
-    }));
+    setCustomizationSettings(prev => ({ ...prev, quickActionsLayout: layout }));
     setSettingsChanged(true);
   };
 
   const handleThemeChange = (theme: 'default' | 'minimal' | 'vibrant') => {
-    setCustomizationSettings(prev => ({
-      ...prev,
-      theme: theme
-    }));
+    setCustomizationSettings(prev => ({ ...prev, theme }));
     setSettingsChanged(true);
   };
 
   const handleSaveCustomization = () => {
-    // Save to localStorage or backend
     localStorage.setItem('dashboardCustomization', JSON.stringify(customizationSettings));
     setSettingsChanged(false);
     alert('Dashboard customization saved successfully!');
@@ -385,1285 +421,910 @@ const DashboardHome: React.FC<{
     });
     setSettingsChanged(true);
   };
-  
-  const handleBackupNowClick = () => {
-    onNavigate('backup');
-  };
-  
+
+  const handleBackupNowClick = () => onNavigate('backup');
+
+  const securityScoreLabel =
+    dashboardStats.securityScore > 80 ? 'STRONG' :
+      dashboardStats.securityScore > 60 ? 'FAIR' : 'WEAK';
+
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  }).toUpperCase();
+
   return (
-    <div className="space-y-8 -mt-4"> {/* Increased spacing between sections */}
-      {/* Enhanced Hero Section with Search */}
-      <section className="relative">
-        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 rounded-3xl p-8 text-white shadow-xl overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-          <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-purple-300 opacity-10 rounded-full translate-y-1/3"></div>
-          
-          <div className="relative z-10 max-w-3xl">
-            <div className="inline-flex items-center gap-3 mb-3 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium text-blue-50">Secured & Encrypted</span>
+    <div
+      className="space-y-0 -mt-4"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+      }}
+    >
+
+      {/* ── HERO EDITORIAL BANNER ── */}
+      <section className="border-b-4 border-[#111111]">
+        {/* Masthead strip */}
+        <div className="bg-[#111111] px-6 py-3 flex items-center justify-between border-b-2 border-[#CC0000]">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#A3A3A3]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            {today}
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#A3A3A3]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            SECURE VAULT EDITION
+          </span>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-[#CC0000]"></div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#A3A3A3]"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              ENCRYPTED
+            </span>
+          </div>
+        </div>
+
+        {/* Main hero grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 bg-[#F9F9F7]">
+          {/* Left – Welcome headline */}
+          <div className="lg:col-span-8 p-8 border-r-0 lg:border-r-4 border-[#111111] border-b-4 lg:border-b-0">
+            <div className="mb-4">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#525252]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                ■ DASHBOARD OVERVIEW
+              </span>
             </div>
-            
-            <h1 className="text-4xl font-bold mb-3 tracking-tight">Welcome to your Secure Dashboard</h1>
-            <p className="text-indigo-100 mb-6 text-lg">Manage and monitor all your digital credentials in one place</p>
-            
-            <div className="relative">
+            <h1 className="text-5xl lg:text-7xl font-black text-[#111111] leading-[0.9] tracking-tighter mb-6"
+              style={{ fontFamily: "'Playfair Display', serif" }}>
+              WELCOME<br />
+              <span className="italic" style={{ color: "#CC0000" }}>BACK</span>
+            </h1>
+            <p className="text-base text-[#525252] mb-8 max-w-lg" style={{ fontFamily: "'Lora', serif" }}>
+              All your credentials, monitored and secured in a single encrypted vault.
+            </p>
+            {/* Search Bar */}
+            <div className="relative max-w-xl">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#111111]">
+                <FaSearch />
+              </div>
               <input
                 type="text"
-                placeholder="Search passwords, notes, or cards..."
+                placeholder="SEARCH PASSWORDS, NOTES, OR CARDS..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-4 pl-14 rounded-xl bg-white/20 backdrop-blur border border-white/30 
-                  focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 text-white placeholder-indigo-200
-                  shadow-lg shadow-indigo-800/10"
+                className="w-full p-4 pl-12 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111]
+                  placeholder-[#A3A3A3] focus:outline-none focus:border-[#CC0000] transition-colors
+                  text-xs font-mono uppercase tracking-widest"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
               />
-              <div className="absolute left-5 top-1/2 -translate-y-1/2">
-                <FaSearch className="text-white/70" />
-              </div>
-              
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 text-xs text-white/70">
-                <span>Press</span>
-                <kbd className="bg-white/20 rounded px-2 py-1 font-mono">Ctrl + K</kbd>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#A3A3A3]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                CTRL+K
               </div>
             </div>
           </div>
-          
-          <div className="absolute right-8 bottom-0 translate-y-1/2">
-            <motion.div 
-              whileHover={{ y: -5 }}
-              className="bg-gradient-to-r from-emerald-400 to-teal-500 rounded-xl p-5 shadow-xl"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-white/20 rounded-lg shadow-inner">
-                  <FaShieldVirus className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    Security Score
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      dashboardStats.securityScore > 80 ? 'bg-emerald-300 text-emerald-900' : 
-                      dashboardStats.securityScore > 60 ? 'bg-amber-300 text-amber-900' : 
-                      'bg-red-300 text-red-900'
-                    }`}>
-                      {dashboardStats.securityScore > 80 ? 'Good' : 
-                       dashboardStats.securityScore > 60 ? 'Fair' : 'Poor'}
-                    </span>
-                  </h3>
-                  <div className="flex items-center mt-2">
-                    <div className="w-36 h-3 bg-black/20 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${dashboardStats.securityScore}%` }}
-                        transition={{ duration: 1, delay: 0.2 }}
-                        className={`h-3 rounded-full ${
-                          dashboardStats.securityScore > 80 ? 'bg-gradient-to-r from-emerald-200 to-white' : 
-                          dashboardStats.securityScore > 60 ? 'bg-gradient-to-r from-amber-200 to-white' : 
-                          'bg-gradient-to-r from-red-200 to-white'
-                        }`}
-                      />
-                    </div>
-                    <span className="ml-3 font-bold text-white text-lg">{dashboardStats.securityScore}%</span>
+
+          {/* Right – Security Score + quick stats */}
+          <div className="lg:col-span-4 flex flex-col divide-y-2 divide-[#111111]">
+            {/* Security score block */}
+            <div className="p-6 bg-[#111111] flex-1">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#A3A3A3] block mb-4"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                SECURITY SCORE
+              </span>
+              <div className="flex items-end gap-4 mb-4">
+                <span className="text-6xl font-black text-[#F9F9F7] leading-none"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {dashboardStats.securityScore}
+                </span>
+                <div className="pb-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#F9F9F7]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    /100
+                  </span>
+                  <div className={`mt-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 ${dashboardStats.securityScore > 80 ? 'bg-[#F9F9F7] text-[#111111]' :
+                    dashboardStats.securityScore > 60 ? 'bg-[#525252] text-[#F9F9F7]' :
+                      'bg-[#CC0000] text-[#F9F9F7]'
+                    }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {securityScoreLabel}
                   </div>
                 </div>
               </div>
-            </motion.div>
+              {/* Progress bar */}
+              <div className="w-full h-2 bg-[#333333] border border-[#525252]">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${dashboardStats.securityScore}%` }}
+                  transition={{ duration: 1, delay: 0.3 }}
+                  className={`h-full ${dashboardStats.securityScore > 80 ? 'bg-[#F9F9F7]' :
+                    dashboardStats.securityScore > 60 ? 'bg-[#A3A3A3]' : 'bg-[#CC0000]'
+                    }`}
+                />
+              </div>
+            </div>
+
+            {/* Two small stats */}
+            <div className="grid grid-cols-2 divide-x-2 divide-[#111111]">
+              <div className="p-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#525252] block mb-1"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  PASSWORDS
+                </span>
+                <span className="text-3xl font-black text-[#111111]"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {dashboardStats.totalPasswords}
+                </span>
+              </div>
+              <div className="p-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#525252] block mb-1"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  ALERTS
+                </span>
+                <span className={`text-3xl font-black ${dashboardStats.securityIncidents > 0 ? 'text-[#CC0000]' : 'text-[#111111]'
+                  }`} style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {dashboardStats.securityIncidents}
+                </span>
+              </div>
+            </div>
+
+            {/* Last backup */}
+            <div className="p-4 flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#525252]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                LAST BACKUP
+              </span>
+              <span className="text-xs font-black text-[#111111]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                {dashboardStats.lastBackup}
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Redesigned Quick Actions Section */}
-      <section>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6 mb-10">
-          <div>
-            <div className="mb-3">
-              <h2 className="text-3xl font-bold text-gray-800">Quick Actions</h2>
-              <p className="text-gray-500 text-lg">Essential tools to boost your productivity</p>
+      {/* ── QUICK ACTIONS ── */}
+      {customizationSettings.showQuickActions && (
+        <section className="border-b-4 border-[#111111]">
+          {/* Section header */}
+          <div className="bg-[#E5E5E0] border-b-4 border-[#111111] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#111111]"></div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#111111]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                QUICK ACTIONS
+              </h2>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl shadow-sm">
-              <div className="relative">
-                <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
-                <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
-              </div>
-              <span className="text-sm text-emerald-700 font-medium">All systems operational</span>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               onClick={() => setShowCustomizeModal(true)}
-              className="flex items-center gap-2 px-5 py-3 bg-white border-2 border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-lg transition-all font-medium text-gray-700 group"
+              className="flex items-center gap-2 px-4 py-2 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors text-xs font-black uppercase tracking-widest"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
-              <FaCog className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-              <span>Customize</span>
-            </motion.button>
+              <FaCog className="w-3 h-3" />
+              CUSTOMIZE
+            </button>
           </div>
-        </div>
-        
-        {/* Redesigned Quick Actions Bento Grid with Hover-Expanding Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-8 gap-6 mb-8">
-          {/* QR Scan - Large Feature Card */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/features/qr-scan')}
-            className="col-span-1 md:col-span-3 lg:col-span-4 row-span-2 relative block bg-gradient-to-b from-cyan-100 to-blue-200 rounded-xl p-8 cursor-pointer overflow-hidden z-0 hover-card-large group"
-            style={{ minHeight: '300px' }}
-          >
-            {/* Expanding circle effect */}
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-slate-600 to-gray-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            {/* Corner arrow */}
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
 
-            <div className="relative z-10 h-full flex flex-col">
-              <div className="mb-4">
-                <FaQrcode className="w-10 h-10 text-cyan-600 group-hover:text-cyan-200 transition-colors duration-500 mb-4" />
-              </div>
-              
-              <h3 className="text-2xl font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-3">
-                QR Scanner
-              </h3>
-              
-              <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-sm leading-relaxed flex-1">
-                Instantly scan QR codes to access websites, Wi-Fi networks, and secure login credentials. Advanced camera technology with real-time processing for quick and accurate scanning.
-              </p>
-              
-              <div className="mt-6 grid grid-cols-3 gap-3">
-                <div className="bg-white/20 rounded-lg p-3 text-center">
-                  <div className="text-cyan-600 group-hover:text-cyan-200 font-bold text-lg transition-colors duration-500">∞</div>
-                  <div className="text-xs text-gray-600 group-hover:text-white/70 transition-colors duration-500">Scans</div>
+          {/* Action grid - 4 columns, newspaper layout */}
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x-0 md:divide-x-2 divide-[#111111]">
+
+            {/* QR Scanner – spanning 2 rows visually via padding */}
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/features/qr-scan')}
+              className="col-span-2 md:col-span-2 p-8 bg-[#111111] text-[#F9F9F7] border-b-2 md:border-b-0 border-[#F9F9F7]
+                hover:bg-[#CC0000] transition-colors group text-left min-h-[200px] flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <FaQrcode className="w-10 h-10" />
+                  <FaArrowRight className="w-4 h-4 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-transform" />
                 </div>
-                <div className="bg-white/20 rounded-lg p-3 text-center">
-                  <div className="text-green-600 group-hover:text-green-200 font-bold text-lg transition-colors duration-500">✓</div>
-                  <div className="text-xs text-gray-600 group-hover:text-white/70 transition-colors duration-500">Secure</div>
-                </div>
-                <div className="bg-white/20 rounded-lg p-3 text-center">
-                  <div className="text-blue-600 group-hover:text-blue-200 font-bold text-lg transition-colors duration-500">⚡</div>
-                  <div className="text-xs text-gray-600 group-hover:text-white/70 transition-colors duration-500">Fast</div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Security Scan */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/features/secure-storage')}
-            className="col-span-1 md:col-span-2 lg:col-span-2 relative block bg-gradient-to-b from-red-100 to-rose-200 rounded-xl p-6 cursor-pointer overflow-hidden z-0 hover-card group"
-            style={{ height: '200px' }}
-          >
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-rose-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-red-500 to-rose-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
-
-            <div className="relative z-10 h-full flex flex-col">
-              <FaShieldAlt className="w-8 h-8 text-red-600 group-hover:text-red-200 transition-colors duration-500 mb-3" />
-              
-              <h3 className="text-xl font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-2">
-                Security Scan
-              </h3>
-              
-              <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-sm leading-relaxed flex-1">
-                Advanced threat detection and vulnerability assessment with real-time monitoring capabilities.
-              </p>
-              
-              <div className="mt-auto flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-red-600 group-hover:text-red-200 font-semibold transition-colors duration-500">SCANNING</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Quick Sync */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate('/features/sync')}
-            className="col-span-1 md:col-span-2 lg:col-span-2 relative block bg-gradient-to-b from-emerald-100 to-teal-200 rounded-xl p-6 cursor-pointer overflow-hidden z-0 hover-card group"
-            style={{ height: '200px' }}
-          >
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
-
-            <div className="relative z-10 h-full flex flex-col">
-              <FaSync className="w-8 h-8 text-emerald-600 group-hover:text-emerald-200 transition-colors duration-500 mb-3" />
-              
-              <h3 className="text-xl font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-2">
-                Quick Sync
-              </h3>
-              
-              <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-sm leading-relaxed flex-1">
-                Seamless data synchronization across all your devices with end-to-end encryption.
-              </p>
-              
-              <div className="mt-auto space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-emerald-600 group-hover:text-emerald-200 transition-colors duration-500">Last sync:</span>
-                  <span className="text-gray-700 group-hover:text-white font-semibold transition-colors duration-500">2m ago</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Import/Export - Wide Card */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onNavigate('backup')}
-            className="col-span-1 md:col-span-3 lg:col-span-4 relative block bg-gradient-to-b from-amber-100 to-orange-200 rounded-xl p-6 cursor-pointer overflow-hidden z-0 hover-card-wide group"
-            style={{ height: '160px' }}
-          >
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-amber-600 to-orange-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-amber-500 to-orange-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
-
-            <div className="relative z-10 h-full flex items-center gap-6">
-              <FaFileImport className="w-10 h-10 text-amber-600 group-hover:text-amber-200 transition-colors duration-500" />
-              
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-2">
-                  Import/Export Hub
+                <h3 className="text-2xl font-black mb-2 leading-tight"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+                  QR SCANNER
                 </h3>
-                <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-sm leading-relaxed">
-                  Comprehensive data management suite with advanced backup solutions and migration tools for seamless data transfer.
+                <p className="text-sm text-[#A3A3A3] group-hover:text-[#F9F9F7]"
+                  style={{ fontFamily: "'Lora', serif" }}>
+                  Scan codes to access credentials instantly.
                 </p>
               </div>
-              
-              <div className="text-right">
-                <div className="text-3xl font-bold text-amber-600 group-hover:text-amber-200 transition-colors duration-500">156</div>
-                <div className="text-xs text-gray-600 group-hover:text-white/70 transition-colors duration-500">Items ready</div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Add Password */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onNavigate('passwords')}
-            className="col-span-1 md:col-span-1 lg:col-span-2 relative block bg-gradient-to-b from-indigo-100 to-blue-200 rounded-xl p-5 cursor-pointer overflow-hidden z-0 hover-card group"
-            style={{ height: '180px' }}
-          >
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-indigo-600 to-blue-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-indigo-500 to-blue-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
-
-            <div className="relative z-10 h-full flex flex-col text-center">
-              <FaPlus className="w-8 h-8 text-indigo-600 group-hover:text-indigo-200 transition-colors duration-500 mb-3 mx-auto" />
-              
-              <h3 className="text-lg font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-2">
-                Add Password
-              </h3>
-              
-              <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-sm leading-relaxed flex-1">
-                Create secure credentials with our advanced password generator and encryption technology.
-              </p>
-              
-              <div className="mt-auto">
-                <span className="text-xs text-indigo-600 group-hover:text-indigo-200 font-semibold transition-colors duration-500">QUICK CREATE</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Multiple Device Access */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/features/multi-device')}
-            className="col-span-1 md:col-span-1 lg:col-span-2 relative block bg-gradient-to-b from-purple-100 to-violet-200 rounded-xl p-5 cursor-pointer overflow-hidden z-0 hover-card group"
-            style={{ height: '180px' }}
-          >
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-violet-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-purple-500 to-violet-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
-
-            <div className="relative z-10 h-full flex flex-col text-center">
-              <FaSync className="w-8 h-8 text-purple-600 group-hover:text-purple-200 transition-colors duration-500 mb-3 mx-auto" />
-              
-              <h3 className="text-lg font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-2">
-                Multi Device
-              </h3>
-              
-              <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-sm leading-relaxed flex-1">
-                Access your vault anywhere, anytime, on any device with seamless synchronization.
-              </p>
-              
-              <div className="mt-auto">
-                <span className="text-xs text-purple-600 group-hover:text-purple-200 font-semibold transition-colors duration-500">5 DEVICES CONNECTED</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Alerts */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/features/alerts')}
-            className="col-span-1 md:col-span-1 lg:col-span-2 relative block bg-gradient-to-b from-orange-100 to-red-200 rounded-xl p-5 cursor-pointer overflow-hidden z-0 hover-card group"
-            style={{ height: '180px' }}
-          >
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-orange-600 to-red-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
-
-            <div className="relative z-10 h-full flex flex-col text-center">
-              <div className="relative mx-auto">
-                <FaBell className="w-8 h-8 text-orange-600 group-hover:text-orange-200 transition-colors duration-500 mb-3" />
-                {dashboardStats.securityIncidents > 0 && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">{dashboardStats.securityIncidents}</span>
-                  </div>
-                )}
-              </div>
-              
-              <h3 className="text-lg font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-2">
-                Alerts
-              </h3>
-              
-              <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-xs leading-relaxed flex-1 px-1">
-                Security notifications and breach alerts for data protection
-              </p>
-              
-              <div className="mt-auto">
-                <span className="text-xs text-orange-600 group-hover:text-orange-200 font-semibold transition-colors duration-500">
-                  {dashboardStats.securityIncidents} ACTIVE ALERTS
-                </span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Pass Sharing */}
-          <motion.div
-            whileHover={{ y: -4, scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/features/sharing')}
-            className="col-span-1 md:col-span-1 lg:col-span-2 relative block bg-gradient-to-b from-teal-100 to-cyan-200 rounded-xl p-5 cursor-pointer overflow-hidden z-0 hover-card group"
-            style={{ height: '180px' }}
-          >
-            <div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-br from-teal-600 to-cyan-800 transform scale-100 origin-center transition-transform duration-500 ease-out group-hover:scale-[28] z-[-1]"></div>
-            
-            <div className="absolute top-0 right-0 w-8 h-8 flex items-center justify-center bg-gradient-to-br from-teal-500 to-cyan-600 overflow-hidden" style={{ borderRadius: '0 12px 0 32px' }}>
-              <FaArrowRight className="text-white text-sm -mt-1 -mr-1" />
-            </div>
-
-            <div className="relative z-10 h-full flex flex-col text-center">
-              <FaFileContract className="w-8 h-8 text-teal-600 group-hover:text-teal-200 transition-colors duration-500 mb-3 mx-auto" />
-              
-              <h3 className="text-lg font-bold text-gray-800 group-hover:text-white transition-colors duration-500 mb-2">
-                Pass Sharing
-              </h3>
-              
-              <p className="text-gray-700 group-hover:text-white/80 transition-colors duration-500 text-sm leading-relaxed flex-1">
-                Securely share credentials with team members and family using advanced encryption.
-              </p>
-              
-              <div className="mt-auto">
-                <span className="text-xs text-teal-600 group-hover:text-teal-200 font-semibold transition-colors duration-500">
-                  {dashboardStats.credentialsShared} ITEMS SHARED
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Enhanced Stats Overview */}
-      <section>
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">Password Status</h2>
-            <p className="text-gray-500">Overview of your credential security</p>
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1.5 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100"
-            onClick={() => onNavigate('passwords')}
-          >
-            Manage All
-            <FaChevronRight size={12} />
-          </motion.button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div
-            whileHover={{ y: -5 }}
-            transition={{ duration: 0.2 }}
-            className="relative p-6 rounded-2xl bg-white shadow-md border border-blue-100 overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 h-24 w-24 bg-blue-100 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-4">
-                <div className="p-3 rounded-xl bg-blue-100 text-blue-600">
-                  <FaKey className="w-6 h-6" />
-                </div>
-                {dashboardStats.totalPasswords > 150 && (
-                  <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">High volume</span>
-                )}
-              </div>
-              
-              <div className="flex items-end gap-2">
-                <h3 className="text-3xl font-bold text-gray-800">{dashboardStats.totalPasswords}</h3>
-                <div className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium flex items-center">
-                  +5 <FaChevronRight size={8} className="ml-0.5" />
-                </div>
-              </div>
-              
-              <p className="text-gray-500 mt-1">Total Passwords</p>
-              
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">5 categories</span>
-                  <span className="text-blue-600 font-medium">{Math.round((dashboardStats.strongPasswords / dashboardStats.totalPasswords) * 100)}% strong</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          
-          <motion.div
-            whileHover={{ y: -5 }}
-            transition={{ duration: 0.2 }}
-            className="relative p-6 rounded-2xl bg-white shadow-md border border-green-100 overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 h-24 w-24 bg-green-100 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-4">
-                <div className="p-3 rounded-xl bg-green-100 text-green-600">
-                  <FaShieldAlt className="w-6 h-6" />
-                </div>
-              </div>
-              
-              <div className="flex items-end gap-2">
-                <h3 className="text-3xl font-bold text-gray-800">{dashboardStats.strongPasswords}</h3>
-              </div>
-              
-              <p className="text-gray-500 mt-1">Strong Passwords</p>
-              
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Secure and robust</span>
-                  <span className="text-green-600 font-medium">✓ Excellent</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          
-          <motion.div
-            whileHover={{ y: -5 }}
-            transition={{ duration: 0.2 }}
-            className="relative p-6 rounded-2xl bg-white shadow-md border border-red-100 overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 h-24 w-24 bg-red-100 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-4">
-                <div className="p-3 rounded-xl bg-red-100 text-red-600">
-                  <FaExclamationTriangle className="w-6 h-6" />
-                </div>
-                <span className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-full">Action needed</span>
-              </div>
-              
-              <div className="flex items-end gap-2">
-                <h3 className="text-3xl font-bold text-gray-800">{dashboardStats.weakPasswords}</h3>
-                <div className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium flex items-center">
-                  -2 <FaChevronRight size={8} className="ml-0.5" />
-                </div>
-              </div>
-              
-              <p className="text-gray-500 mt-1">Weak Passwords</p>
-              
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Need attention</span>
-                  <span className="text-red-600 font-medium hover:underline cursor-pointer">Fix now</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-          
-          <motion.div
-            whileHover={{ y: -5 }}
-            transition={{ duration: 0.2 }}
-            className="relative p-6 rounded-2xl bg-white shadow-md border border-amber-100 overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 h-24 w-24 bg-amber-100 rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-4">
-                <div className="p-3 rounded-xl bg-amber-100 text-amber-600">
-                  <FaSync className="w-6 h-6" />
-                </div>
-              </div>
-              
-              <div className="flex items-end gap-2">
-                <h3 className="text-3xl font-bold text-gray-800">{dashboardStats.reusedPasswords}</h3>
-                <div className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded font-medium flex items-center">
-                  +2 <FaChevronRight size={8} className="ml-0.5" />
-                </div>
-              </div>
-              
-              <p className="text-gray-500 mt-1">Reused Passwords</p>
-              
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Multiple accounts</span>
-                  <span className="text-amber-600 font-medium hover:underline cursor-pointer">Update</span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Enhanced Security Status Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <motion.div
-          whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-          transition={{ duration: 0.2 }}
-          className="relative p-7 rounded-2xl bg-white shadow-md border border-amber-100 overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-50 rounded-full -translate-y-1/2 translate-x-1/3 opacity-70"></div>
-          <div className="relative z-10">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="p-3 rounded-xl bg-amber-100 text-amber-600 shadow-sm">
-                <FaExclamationCircle className="w-7 h-7" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold text-gray-800">Security Alerts</h3>
-                  {dashboardStats.securityIncidents > 0 && (
-                    <span className="animate-pulse flex h-3 w-3">
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                    </span>
-                  )}
-                </div>
-                <p className="text-gray-500 text-sm">Risk assessment & potential threats</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <span className="text-4xl font-bold text-amber-600">{dashboardStats.securityIncidents}</span>
-                <span className="text-lg font-medium text-gray-600 ml-2">incidents</span>
-              </div>
-              <span className="text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm border border-amber-200
-                flex items-center gap-1.5 bg-gradient-to-r from-amber-50 to-amber-100 text-amber-700">
-                {dashboardStats.securityIncidents > 0 
-                  ? <FaExclamationCircle className="text-amber-600" /> 
-                  : <FaCheckCircle className="text-green-600" />}
-                {dashboardStats.securityIncidents > 0 ? 'Action needed' : 'All clear'}
-              </span>
-            </div>
-            
-            <div className="space-y-3">
-              {dashboardStats.breachedAccounts > 0 && (
-                <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg">
-                  <div className="flex items-start">
-                    <div className="p-1.5 bg-amber-100 rounded-lg mr-3">
-                      <FaExclamation className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-amber-800">Data Breach Alert</div>
-                      <p className="text-amber-700 text-sm">
-                        {dashboardStats.breachedAccounts} {dashboardStats.breachedAccounts === 1 ? 'account' : 'accounts'} found in data breaches
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex justify-end">
-                    <button className="text-sm font-medium text-amber-700 hover:text-amber-800 flex items-center gap-1">
-                      Review
-                      <FaChevronRight size={10} />
-                    </button>
-                  </div>
-                </div>
-              )}
-              
-              {dashboardStats.securityIncidents === 0 && (
-                <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
-                  <div className="flex items-start">
-                    <div className="p-1.5 bg-green-100 rounded-lg mr-3">
-                      <FaCheckCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-green-800">All Secure</div>
-                      <p className="text-green-700 text-sm">
-                        No security incidents detected in the last 30 days
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-          transition={{ duration: 0.2 }}
-          className="relative p-7 rounded-2xl bg-white shadow-md border border-teal-100 overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-50 rounded-full -translate-y-1/2 translate-x-1/3 opacity-70"></div>
-          <div className="relative z-10">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="p-3 rounded-xl bg-teal-100 text-teal-600 shadow-sm">
-                <FaDatabase className="w-7 h-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">Latest Backup</h3>
-                <p className="text-gray-500 text-sm">Automatic cloud data protection</p>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex flex-col">
-                <div className="text-lg text-teal-600 font-medium">
-                  {dashboardStats.lastBackup}
-                </div>
-                <span className="text-xs text-gray-500">Next backup scheduled in 22 hours</span>
-              </div>
-              
-              <span className="text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm border border-teal-200
-                flex items-center gap-1.5 bg-gradient-to-r from-teal-50 to-teal-100 text-teal-700">
-                <FaCheckCircle className="text-teal-600" />
-                Auto-backup enabled
-              </span>
-            </div>
-            
-            <div className="p-5 bg-gradient-to-r from-teal-50 to-teal-100/30 rounded-xl border border-teal-100">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                <div>
-                  <h4 className="font-medium text-teal-800">Backup protection</h4>
-                  <p className="text-sm text-teal-700 mt-1">
-                    Your data is encrypted with AES-256 and stored securely in the cloud.
-                  </p>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleBackupNowClick}
-                  className="px-4 py-2.5 bg-white text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 
-                    shadow-sm flex items-center justify-center gap-2 whitespace-nowrap"
-                >
-                  <FaSync className="text-teal-600" />
-                  Backup Now
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Enhanced Profile Completion */}
-      <motion.section 
-        whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-        transition={{ duration: 0.2 }}
-        className="relative p-7 rounded-2xl bg-white shadow-md border border-violet-100 overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-violet-50 rounded-full -translate-y-1/2 translate-x-1/3 opacity-70"></div>
-        
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-xl bg-violet-100 text-violet-600 shadow-sm">
-                <FaUserCircle className="w-7 h-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">Profile Completion</h3>
-                <p className="text-gray-500 text-sm">Enhance your account security</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center">
-                  <svg className="w-16 h-16" viewBox="0 0 36 36">
-                    <path
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#E2E8F0"
-                      strokeWidth="3"
-                    />
-                    <path
-                      d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                      fill="none"
-                      stroke="#8B5CF6"
-                      strokeWidth="3"
-                      strokeDasharray={`${dashboardStats.profileCompletion}, 100`}
-                      className="animate-dasharray"
-                    />
-                  </svg>
-                  <span className="absolute text-xl font-bold text-violet-700">{dashboardStats.profileCompletion}%</span>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-1">
-                <span className="text-sm font-medium text-gray-800">Account Status:</span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-800">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-600"></span>
+              <div className="flex gap-4 mt-6">
+                {['∞ SCANS', '✓ SECURE', '⚡ FAST'].map((stat) => (
+                  <span key={stat} className="text-[10px] font-black uppercase tracking-widest border border-[#525252] group-hover:border-[#F9F9F7] px-2 py-1"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {stat}
                   </span>
-                  Premium Active
-                </span>
+                ))}
               </div>
-            </div>
-          </div>
-          
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className={`p-4 rounded-xl ${
-              dashboardStats.twoFactorEnabled ? 'bg-green-50 border border-green-100' : 'bg-amber-50 border border-amber-100'
-            }`}>
-              <div className="flex items-start">
-                <div className={`p-2 rounded-lg mr-3 ${
-                  dashboardStats.twoFactorEnabled ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
-                }`}>
-                  {dashboardStats.twoFactorEnabled
-                    ? <FaCheckCircle className="w-5 h-5" />
-                    : <FaExclamationCircle className="w-5 h-5" />
-                  }
-                </div>
-                <div>
-                  <div className="font-medium text-gray-800">Two-Factor Authentication</div>
-                  <p className={`text-sm ${dashboardStats.twoFactorEnabled ? 'text-green-700' : 'text-amber-700'}`}>
-                    {dashboardStats.twoFactorEnabled
-                      ? 'Enabled and active'
-                      : 'Not enabled - recommended'
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
-              <div className="flex items-start">
-                <div className="p-2 bg-green-100 text-green-600 rounded-lg mr-3">
-                  <FaCheckCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-medium text-gray-800">Recovery Email</div>
-                  <p className="text-sm text-green-700">
-                    Verified and active
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-4 bg-violet-50 border border-violet-100 rounded-xl">
-              <div className="flex items-start">
-                <div className="p-2 bg-violet-100 text-violet-600 rounded-lg mr-3">
-                  <FaKey className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="font-medium text-gray-800">Master Password</div>
-                  <div className="flex items-center mt-1">
-                    <div className="w-24 h-2 bg-gray-200 rounded-full">
-                      <div 
-                        className="h-2 bg-violet-600 rounded-full"
-                        style={{ width: `${dashboardStats.masterPasswordStrength}%` }}
-                      />
-                    </div>
-                    <span className="ml-2 text-sm text-violet-700 font-medium">
-                      {dashboardStats.masterPasswordStrength}% strong
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4 flex justify-end">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => onNavigate('user-profile')}
-              className="px-4 py-2 text-sm bg-violet-100 text-violet-700 rounded-lg hover:bg-violet-200 
-                transition-colors flex items-center gap-1.5"
-            >
-              Complete Profile
-              <FaChevronRight size={10} />
             </motion.button>
-          </div>
-        </div>
-      </motion.section>
 
-      {/* Enhanced Recent Activity */}
-      <motion.section 
-        whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-        className="rounded-2xl bg-white shadow-md border border-gray-100 overflow-hidden"
-      >
-        <div className="p-7 border-b border-gray-100">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-xl bg-indigo-100 text-indigo-600 shadow-sm">
-                <FaHistory className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">Recent Activity</h3>
-                <p className="text-gray-500 text-sm">Track and monitor account activity</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <select className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 py-2 px-4 pr-8 rounded-lg
-                  focus:outline-none focus:bg-white focus:border-indigo-300 text-sm font-medium">
-                  <option value="all">All Activity</option>
-                  <option value="login">Logins</option>
-                  <option value="security">Security</option>
-                  <option value="changes">Changes</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                  <FaChevronDown size={12} />
-                </div>
-              </div>
-              
+            {/* Right column – 4 smaller action cards */}
+            <div className="col-span-2 grid grid-cols-2 divide-x-2 divide-y-2 divide-[#111111]">
+
+              {/* Security Scan */}
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 text-sm bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 
-                  transition-colors flex items-center gap-1.5 font-medium"
-                onClick={() => onNavigate('history')}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/features/secure-storage')}
+                className="p-6 bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors group text-left
+                  hover:shadow-[4px_4px_0px_0px_#CC0000] hover:-translate-x-0.5 hover:-translate-y-0.5"
               >
-                View All
-                <FaChevronRight size={10} />
+                <FaShieldAlt className="w-6 h-6 text-[#CC0000] mb-3 group-hover:text-[#CC0000]" />
+                <h4 className="text-sm font-black uppercase tracking-widest mb-1"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  SECURITY SCAN
+                </h4>
+                <p className="text-xs text-[#525252] group-hover:text-[#A3A3A3]"
+                  style={{ fontFamily: "'Lora', serif" }}>
+                  Detect threats in real-time.
+                </p>
+                <div className="mt-3 flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-[#CC0000]"></div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-[#CC0000] group-hover:text-[#CC0000]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    SCANNING
+                  </span>
+                </div>
+              </motion.button>
+
+              {/* Quick Sync */}
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/features/sync')}
+                className="p-6 bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors group text-left
+                  hover:shadow-[4px_4px_0px_0px_#111111] hover:-translate-x-0.5 hover:-translate-y-0.5"
+              >
+                <FaSync className="w-6 h-6 text-[#111111] mb-3 group-hover:text-[#F9F9F7]" />
+                <h4 className="text-sm font-black uppercase tracking-widest mb-1"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  QUICK SYNC
+                </h4>
+                <p className="text-xs text-[#525252] group-hover:text-[#A3A3A3]"
+                  style={{ fontFamily: "'Lora', serif" }}>
+                  Sync across all devices.
+                </p>
+                <div className="mt-3 text-[9px] font-black uppercase tracking-widest text-[#A3A3A3]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  LAST: 2M AGO
+                </div>
+              </motion.button>
+
+              {/* Import/Export */}
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onNavigate('backup')}
+                className="p-6 bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors group text-left
+                  hover:shadow-[4px_4px_0px_0px_#111111] hover:-translate-x-0.5 hover:-translate-y-0.5"
+              >
+                <FaFileImport className="w-6 h-6 text-[#111111] mb-3 group-hover:text-[#F9F9F7]" />
+                <h4 className="text-sm font-black uppercase tracking-widest mb-1"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  IMPORT/EXPORT
+                </h4>
+                <p className="text-xs text-[#525252] group-hover:text-[#A3A3A3]"
+                  style={{ fontFamily: "'Lora', serif" }}>
+                  Backup & migrate data.
+                </p>
+                <div className="mt-3 text-[9px] font-black uppercase tracking-widest text-[#A3A3A3]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  156 ITEMS READY
+                </div>
+              </motion.button>
+
+              {/* Add Password */}
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onNavigate('passwords')}
+                className="p-6 bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors group text-left
+                  hover:shadow-[4px_4px_0px_0px_#111111] hover:-translate-x-0.5 hover:-translate-y-0.5"
+              >
+                <FaPlus className="w-6 h-6 text-[#111111] mb-3 group-hover:text-[#F9F9F7]" />
+                <h4 className="text-sm font-black uppercase tracking-widest mb-1"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  ADD PASSWORD
+                </h4>
+                <p className="text-xs text-[#525252] group-hover:text-[#A3A3A3]"
+                  style={{ fontFamily: "'Lora', serif" }}>
+                  Create secure credentials.
+                </p>
+                <div className="mt-3 text-[9px] font-black uppercase tracking-widest text-[#111111] group-hover:text-[#A3A3A3]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  QUICK CREATE →
+                </div>
               </motion.button>
             </div>
           </div>
-        </div>
-        
-        <div>
-          <motion.div
-            variants={{
-              hidden: { opacity: 0 },
-              show: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1
-                }
-              }
-            }}
-            initial="hidden"
-            animate="show"
-            className="divide-y divide-gray-100"
-          >
-            {recentActivities.slice(0, 4).map((activity) => (
-              <motion.div
-                key={activity.id}
-                variants={{
-                  hidden: { opacity: 0, y: 10 },
-                  show: { opacity: 1, y: 0 }
-                }}
-                className="hover:bg-gray-50 transition-colors"
+
+          {/* Bottom row: Multi-device / Alerts / Pass Sharing */}
+          <div className="grid grid-cols-1 md:grid-cols-3 border-t-2 border-[#111111] divide-y-2 md:divide-y-0 md:divide-x-2 divide-[#111111]">
+            {[
+              {
+                icon: FaSync, label: 'MULTI DEVICE', sub: '5 DEVICES CONNECTED',
+                desc: 'Access your vault on any device.',
+                onClick: () => navigate('/features/multi-device')
+              },
+              {
+                icon: FaBell, label: 'ALERTS', sub: `${dashboardStats.securityIncidents} ACTIVE`,
+                desc: 'Security notifications & breach alerts.',
+                onClick: () => navigate('/features/alerts'),
+                urgent: dashboardStats.securityIncidents > 0
+              },
+              {
+                icon: FaFileContract, label: 'PASS SHARING', sub: `${dashboardStats.credentialsShared} SHARED`,
+                desc: 'Securely share credentials.',
+                onClick: () => navigate('/features/sharing')
+              },
+            ].map(({ icon: Icon, label, sub, desc, onClick, urgent }) => (
+              <motion.button
+                key={label}
+                whileTap={{ scale: 0.98 }}
+                onClick={onClick}
+                className={`p-6 text-left flex items-start gap-4 hover:bg-[#E5E5E0] transition-colors group
+                  hover:shadow-[inset_4px_0px_0px_0px_#111111]`}
               >
-                <div className="p-5">
-                  <div className="flex items-start space-x-4">
-                    <div className={`p-3 rounded-xl ${
-                      activity.severity === 'high' ? 'bg-red-100 text-red-600' : 
-                      activity.severity === 'medium' ? 'bg-amber-100 text-amber-600' : 
-                      activity.type === 'login' ? 'bg-blue-100 text-blue-600' :
-                      activity.type === 'password_change' ? 'bg-green-100 text-green-600' :
-                      activity.type === 'security_alert' ? 'bg-red-100 text-red-600' :
-                      activity.type === 'sync' ? 'bg-purple-100 text-purple-600' :
-                      'bg-indigo-100 text-indigo-600'
-                    } shadow-sm`}>
-                      <activity.icon className="w-5 h-5" />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-gray-900">{activity.title}</h4>
-                            {activity.severity === 'high' && (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                <FaExclamationCircle className="mr-1" size={10} />
-                                High Priority
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                <div className={`p-3 border-2 flex-shrink-0 ${urgent ? 'border-[#CC0000] text-[#CC0000]' : 'border-[#111111] text-[#111111]'}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black uppercase tracking-widest text-[#111111]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {label}
+                  </h4>
+                  <p className="text-xs text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>{desc}</p>
+                  <span className={`text-[9px] font-black uppercase tracking-widest mt-2 block ${urgent ? 'text-[#CC0000]' : 'text-[#A3A3A3]'
+                    }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {sub}
+                  </span>
+                </div>
+                <FaArrowRight className="ml-auto text-[#A3A3A3] group-hover:text-[#111111] flex-shrink-0 mt-1" />
+              </motion.button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── PASSWORD STATUS STATS ── */}
+      {customizationSettings.showPasswordStats && (
+        <section className="border-b-4 border-[#111111]">
+          <div className="bg-[#E5E5E0] border-b-4 border-[#111111] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#111111]"></div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#111111]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                PASSWORD STATUS
+              </h2>
+            </div>
+            <button
+              className="flex items-center gap-1 text-xs font-black uppercase tracking-widest text-[#111111] hover:text-[#CC0000] transition-colors"
+              onClick={() => onNavigate('passwords')}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              MANAGE ALL <FaChevronRight className="ml-1" size={10} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x-0 lg:divide-x-2 divide-y-2 lg:divide-y-0 divide-[#111111]">
+            <StatsCard
+              title="Total Passwords"
+              value={dashboardStats.totalPasswords}
+              icon={FaKey}
+              description="5 categories"
+              trend={5}
+            />
+            <StatsCard
+              title="Strong Passwords"
+              value={dashboardStats.strongPasswords}
+              icon={FaShieldAlt}
+              description="Secure & robust"
+            />
+            <StatsCard
+              title="Weak Passwords"
+              value={dashboardStats.weakPasswords}
+              icon={FaExclamationTriangle}
+              description="Need attention"
+              trend={-2}
+              alert={dashboardStats.weakPasswords > 0}
+            />
+            <StatsCard
+              title="Reused Passwords"
+              value={dashboardStats.reusedPasswords}
+              icon={FaSync}
+              description="Multiple accounts"
+              trend={2}
+              alert={dashboardStats.reusedPasswords > 0}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* ── SECURITY STATUS + BACKUP ── */}
+      {customizationSettings.showSecurityAlerts && (
+        <section className="border-b-4 border-[#111111]">
+          <div className="bg-[#E5E5E0] border-b-4 border-[#111111] px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#CC0000]"></div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#111111]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                SECURITY STATUS
+              </h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y-2 md:divide-y-0 md:divide-x-2 divide-[#111111]">
+            {/* Security Alerts Panel */}
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 border-2 ${dashboardStats.securityIncidents > 0 ? 'border-[#CC0000] text-[#CC0000]' : 'border-[#111111] text-[#111111]'}`}>
+                    <FaExclamationCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      Security Alerts
+                    </h3>
+                    <p className="text-xs text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
+                      Risk assessment & threats
+                    </p>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 ${dashboardStats.securityIncidents > 0
+                  ? 'border-[#CC0000] text-[#CC0000]'
+                  : 'border-[#111111] text-[#111111]'
+                  }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  {dashboardStats.securityIncidents > 0 ? 'ACTION NEEDED' : 'ALL CLEAR'}
+                </span>
+              </div>
+
+              <div className="flex items-end gap-3 mb-6">
+                <span className={`text-5xl font-black ${dashboardStats.securityIncidents > 0 ? 'text-[#CC0000]' : 'text-[#111111]'}`}
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {dashboardStats.securityIncidents}
+                </span>
+                <span className="text-base font-black text-[#525252] pb-1"
+                  style={{ fontFamily: "'Lora', serif" }}>
+                  incidents
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {dashboardStats.breachedAccounts > 0 && (
+                  <div className="border-l-4 border-[#CC0000] p-4 bg-[#F9F9F7] border border-[#CC0000]">
+                    <div className="flex items-start gap-3">
+                      <FaExclamation className="text-[#CC0000] mt-0.5 flex-shrink-0" />
+                      <div className="flex-1">
+                        <div className="font-black text-[#CC0000] text-sm"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          DATA BREACH ALERT
                         </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-400 whitespace-nowrap">{activity.timestamp}</span>
-                          <button className="p-1 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600">
-                            <FaEllipsis size={12} />
-                          </button>
+                        <p className="text-xs text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>
+                          {dashboardStats.breachedAccounts} {dashboardStats.breachedAccounts === 1 ? 'account' : 'accounts'} found in data breaches
+                        </p>
+                      </div>
+                      <button className="text-xs font-black uppercase tracking-widest text-[#CC0000] hover:underline flex-shrink-0"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        REVIEW →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {dashboardStats.securityIncidents === 0 && (
+                  <div className="border-l-4 border-[#111111] p-4 bg-[#F9F9F7] border border-[#E5E5E0]">
+                    <div className="flex items-start gap-3">
+                      <FaCheckCircle className="text-[#111111] mt-0.5 flex-shrink-0" />
+                      <div>
+                        <div className="font-black text-[#111111] text-sm"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          ALL SECURE
+                        </div>
+                        <p className="text-xs text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>
+                          No security incidents detected in the last 30 days
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Backup Panel */}
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 border-2 border-[#111111] text-[#111111]">
+                    <FaDatabase className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      Latest Backup
+                    </h3>
+                    <p className="text-xs text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
+                      Automatic cloud protection
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 border-[#111111] flex items-center gap-1.5 text-[#111111]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  <FaCheckCircle className="text-[#111111]" />
+                  AUTO-BACKUP ON
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2 mb-6">
+                <div className="text-2xl font-black text-[#111111]"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {dashboardStats.lastBackup}
+                </div>
+                <span className="text-xs text-[#525252]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  NEXT BACKUP SCHEDULED IN 22 HOURS
+                </span>
+              </div>
+
+              <div className="border-2 border-[#111111] p-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <div>
+                    <div className="font-black text-[#111111] text-sm"
+                      style={{ fontFamily: "'Playfair Display', serif" }}>
+                      Backup Protection
+                    </div>
+                    <p className="text-xs text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>
+                      AES-256 encrypted, stored securely in the cloud.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleBackupNowClick}
+                    className="px-6 py-3 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7]
+                      transition-colors flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest whitespace-nowrap"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    <FaSync />
+                    BACKUP NOW
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── PROFILE COMPLETION ── */}
+      {customizationSettings.showProfileCompletion && (
+        <section className="border-b-4 border-[#111111]">
+          <div className="bg-[#E5E5E0] border-b-4 border-[#111111] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#111111]"></div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#111111]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                PROFILE STATUS
+              </h2>
+            </div>
+            <button
+              onClick={() => onNavigate('user-profile')}
+              className="text-xs font-black uppercase tracking-widest text-[#111111] hover:text-[#CC0000] transition-colors"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              COMPLETE PROFILE →
+            </button>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              {/* Completion bar */}
+              <div className="md:col-span-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#525252]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    COMPLETION
+                  </span>
+                  <span className="text-2xl font-black text-[#111111]"
+                    style={{ fontFamily: "'Playfair Display', serif" }}>
+                    {dashboardStats.profileCompletion}%
+                  </span>
+                </div>
+                <div className="w-full h-4 border-2 border-[#111111] bg-[#F9F9F7]">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${dashboardStats.profileCompletion}%` }}
+                    transition={{ duration: 1 }}
+                    className="h-full bg-[#111111]"
+                  />
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-[#CC0000]"></div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#525252]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    PREMIUM ACTIVE
+                  </span>
+                </div>
+              </div>
+
+              {/* Status items */}
+              <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {[
+                  {
+                    icon: FaCheckCircle,
+                    label: 'TWO-FACTOR AUTH',
+                    status: dashboardStats.twoFactorEnabled ? 'ENABLED' : 'NOT SET',
+                    ok: dashboardStats.twoFactorEnabled
+                  },
+                  {
+                    icon: FaCheckCircle,
+                    label: 'RECOVERY EMAIL',
+                    status: 'VERIFIED',
+                    ok: true
+                  },
+                  {
+                    icon: FaKey,
+                    label: 'MASTER PASSWORD',
+                    status: `${dashboardStats.masterPasswordStrength}% STRENGTH`,
+                    ok: dashboardStats.masterPasswordStrength > 70
+                  },
+                ].map(({ icon: Icon, label, status, ok }) => (
+                  <div key={label} className={`p-4 border-2 ${ok ? 'border-[#111111]' : 'border-[#CC0000]'}`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 border ${ok ? 'border-[#111111] text-[#111111]' : 'border-[#CC0000] text-[#CC0000]'}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black uppercase tracking-widest text-[#111111]"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          {label}
+                        </div>
+                        <div className={`text-xs font-black mt-1 ${ok ? 'text-[#525252]' : 'text-[#CC0000]'}`}
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          {status}
                         </div>
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── RECENT ACTIVITY ── */}
+      {customizationSettings.showRecentActivity && (
+        <section className="border-b-4 border-[#111111]">
+          <div className="bg-[#E5E5E0] border-b-4 border-[#111111] px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-[#111111]"></div>
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#111111]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                RECENT ACTIVITY
+              </h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative border-2 border-[#111111]">
+                <select
+                  className="appearance-none bg-[#F9F9F7] text-[#111111] py-2 px-4 pr-8 text-xs font-black uppercase tracking-widest focus:outline-none"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  <option value="all">ALL ACTIVITY</option>
+                  <option value="login">LOGINS</option>
+                  <option value="security">SECURITY</option>
+                  <option value="changes">CHANGES</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[#111111]">
+                  <FaChevronDown size={10} />
                 </div>
+              </div>
+              <button
+                className="px-4 py-2 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7]
+                  transition-colors text-xs font-black uppercase tracking-widest flex items-center gap-1"
+                onClick={() => onNavigate('history')}
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                VIEW ALL <FaChevronRight size={10} className="ml-1" />
+              </button>
+            </div>
+          </div>
+
+          <motion.div
+            variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } } }}
+            initial="hidden"
+            animate="show"
+          >
+            {recentActivities.slice(0, 4).map((activity) => (
+              <motion.div
+                key={activity.id}
+                variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
+              >
+                <ActivityFeedItem activity={activity} />
               </motion.div>
             ))}
           </motion.div>
-          
-          <div className="p-5 bg-gray-50 border-t border-gray-100 text-center">
-            <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center justify-center gap-1 mx-auto">
-              View all activity
-              <FaChevronRight size={10} />
+
+          {recentActivities.length === 0 && (
+            <div className="p-12 text-center border-4 border-dashed border-[#E5E5E0] m-6">
+              <FaHistory className="mx-auto text-4xl text-[#E5E5E0] mb-4" />
+              <p className="text-xs font-black uppercase tracking-widest text-[#A3A3A3]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                NO RECENT ACTIVITY
+              </p>
+            </div>
+          )}
+
+          <div className="p-4 border-t-2 border-[#111111] bg-[#E5E5E0] text-center">
+            <button
+              className="text-xs font-black uppercase tracking-widest text-[#111111] hover:text-[#CC0000] transition-colors flex items-center justify-center gap-1 mx-auto"
+              onClick={() => onNavigate('history')}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              VIEW ALL ACTIVITY <FaChevronRight size={10} className="ml-1" />
             </button>
           </div>
-        </div>
-      </motion.section>
+        </section>
+      )}
 
-      {/* Customization Modal */}
+      {/* ── CUSTOMIZATION MODAL ── */}
       <AnimatePresence>
         {showCustomizeModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-[#111111]/80 flex items-center justify-center p-4 z-50"
             onClick={() => setShowCustomizeModal(false)}
           >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
             >
               {/* Modal Header */}
-              <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 p-6 flex justify-between items-center">
+              <div className="bg-[#111111] p-6 flex justify-between items-start border-b-4 border-[#CC0000]">
                 <div>
-                  <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-                    <FaPalette className="text-indigo-200" />
-                    Customize Dashboard
-                  </h3>
-                  <p className="text-indigo-100 text-sm mt-1">Personalize your dashboard experience</p>
+                  <div className="flex items-center gap-3 mb-1">
+                    <FaPalette className="text-[#CC0000]" />
+                    <h3 className="text-lg font-black uppercase tracking-widest text-[#F9F9F7]"
+                      style={{ fontFamily: "'Playfair Display', serif" }}>
+                      CUSTOMIZE DASHBOARD
+                    </h3>
+                  </div>
+                  <p className="text-xs text-[#A3A3A3]" style={{ fontFamily: "'Lora', serif" }}>
+                    Personalize your dashboard layout and appearance
+                  </p>
                 </div>
-                <button 
+                <button
                   onClick={() => setShowCustomizeModal(false)}
-                  className="text-white bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition-colors"
+                  className="text-[#F9F9F7] hover:text-[#CC0000] p-2 border-2 border-[#525252] hover:border-[#CC0000] transition-colors"
                 >
-                  <FaTimes size={20} />
+                  <FaTimes size={18} />
                 </button>
               </div>
-              
-              {/* Modal Content */}
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto flex-1">
                 <div className="space-y-6">
-                  {/* Layout Sections */}
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaEye className="text-indigo-600" />
-                      Visible Sections
-                    </h4>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Show Quick Actions */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Quick Actions</h5>
-                          <p className="text-sm text-gray-600">Show quick action buttons</p>
-                        </div>
-                        <button
-                          onClick={() => handleCustomizationToggle('showQuickActions')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            customizationSettings.showQuickActions ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {customizationSettings.showQuickActions ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
 
-                      {/* Show Password Stats */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Password Statistics</h5>
-                          <p className="text-sm text-gray-600">Display password stats cards</p>
+                  {/* Visible Sections */}
+                  <div className="border-2 border-[#111111]">
+                    <div className="bg-[#E5E5E0] p-4 border-b-2 border-[#111111]">
+                      <h4 className="font-black text-[#111111] uppercase tracking-widest flex items-center gap-2 text-sm"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        <FaEye /> VISIBLE SECTIONS
+                      </h4>
+                    </div>
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { key: 'showQuickActions', label: 'QUICK ACTIONS', desc: 'Show quick action buttons' },
+                        { key: 'showPasswordStats', label: 'PASSWORD STATS', desc: 'Display password stats cards' },
+                        { key: 'showSecurityAlerts', label: 'SECURITY ALERTS', desc: 'Show security status cards' },
+                        { key: 'showProfileCompletion', label: 'PROFILE STATUS', desc: 'Display profile completion' },
+                        { key: 'showRecentActivity', label: 'RECENT ACTIVITY', desc: 'Show activity timeline' },
+                      ].map(({ key, label, desc }) => (
+                        <div key={key} className="flex items-center justify-between p-4 border-2 border-[#E5E5E0] hover:border-[#111111] transition-colors">
+                          <div>
+                            <div className="text-xs font-black uppercase tracking-widest text-[#111111]"
+                              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                              {label}
+                            </div>
+                            <p className="text-xs text-[#525252] mt-0.5" style={{ fontFamily: "'Lora', serif" }}>
+                              {desc}
+                            </p>
+                          </div>
+                          <Switch
+                            checked={customizationSettings[key as keyof typeof customizationSettings] as boolean}
+                            onChange={() => handleCustomizationToggle(key as keyof typeof customizationSettings)}
+                          />
                         </div>
-                        <button
-                          onClick={() => handleCustomizationToggle('showPasswordStats')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            customizationSettings.showPasswordStats ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {customizationSettings.showPasswordStats ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Show Security Alerts */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Security Alerts</h5>
-                          <p className="text-sm text-gray-600">Show security status cards</p>
-                        </div>
-                        <button
-                          onClick={() => handleCustomizationToggle('showSecurityAlerts')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            customizationSettings.showSecurityAlerts ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {customizationSettings.showSecurityAlerts ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Show Profile Completion */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Profile Completion</h5>
-                          <p className="text-sm text-gray-600">Display profile status widget</p>
-                        </div>
-                        <button
-                          onClick={() => handleCustomizationToggle('showProfileCompletion')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            customizationSettings.showProfileCompletion ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {customizationSettings.showProfileCompletion ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Show Recent Activity */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Recent Activity</h5>
-                          <p className="text-sm text-gray-600">Show activity timeline</p>
-                        </div>
-                        <button
-                          onClick={() => handleCustomizationToggle('showRecentActivity')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            customizationSettings.showRecentActivity ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {customizationSettings.showRecentActivity ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Appearance Settings */}
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaPalette className="text-purple-600" />
-                      Appearance & Layout
-                    </h4>
-                    
-                    <div className="space-y-4">
+                  {/* Layout & Appearance */}
+                  <div className="border-2 border-[#111111]">
+                    <div className="bg-[#E5E5E0] p-4 border-b-2 border-[#111111]">
+                      <h4 className="font-black text-[#111111] uppercase tracking-widest flex items-center gap-2 text-sm"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        <FaPalette /> APPEARANCE & LAYOUT
+                      </h4>
+                    </div>
+                    <div className="p-4 space-y-4">
                       {/* Quick Actions Layout */}
-                      <div className="p-4 bg-white rounded-lg border border-gray-200">
-                        <h5 className="font-semibold text-gray-800 mb-3">Quick Actions Layout</h5>
+                      <div className="border-2 border-[#E5E5E0] p-4">
+                        <div className="text-xs font-black uppercase tracking-widest text-[#111111] mb-3"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          QUICK ACTIONS LAYOUT
+                        </div>
                         <div className="flex gap-3">
-                          <button
-                            onClick={() => handleLayoutChange('grid')}
-                            className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                              customizationSettings.quickActionsLayout === 'grid'
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="grid grid-cols-2 gap-1 mb-2">
-                              <div className="h-8 bg-gray-300 rounded"></div>
-                              <div className="h-8 bg-gray-300 rounded"></div>
-                              <div className="h-8 bg-gray-300 rounded"></div>
-                              <div className="h-8 bg-gray-300 rounded"></div>
-                            </div>
-                            <span className="text-sm font-medium">Grid View</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => handleLayoutChange('list')}
-                            className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                              customizationSettings.quickActionsLayout === 'list'
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="space-y-1 mb-2">
-                              <div className="h-3 bg-gray-300 rounded"></div>
-                              <div className="h-3 bg-gray-300 rounded"></div>
-                              <div className="h-3 bg-gray-300 rounded"></div>
-                              <div className="h-3 bg-gray-300 rounded"></div>
-                            </div>
-                            <span className="text-sm font-medium">List View</span>
-                          </button>
+                          {[
+                            { value: 'grid', label: 'GRID', preview: 'grid' },
+                            { value: 'list', label: 'LIST', preview: 'list' },
+                          ].map(({ value, label, preview }) => (
+                            <button
+                              key={value}
+                              onClick={() => handleLayoutChange(value as 'grid' | 'list')}
+                              className={`flex-1 p-4 border-2 transition-all ${customizationSettings.quickActionsLayout === value
+                                ? 'border-[#CC0000] bg-[#111111] text-[#F9F9F7]'
+                                : 'border-[#E5E5E0] hover:border-[#111111]'
+                                }`}
+                            >
+                              <div className={`mb-2 ${preview === 'grid' ? 'grid grid-cols-2 gap-1' : 'space-y-1'}`}>
+                                {[1, 2, 3, 4].map((i) => (
+                                  <div key={i} className={`${customizationSettings.quickActionsLayout === value ? 'bg-[#525252]' : 'bg-[#E5E5E0]'
+                                    } ${preview === 'grid' ? 'h-6' : 'h-2 w-full'}`} />
+                                ))}
+                              </div>
+                              <span className="text-[10px] font-black uppercase tracking-widest"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                                {label}
+                              </span>
+                            </button>
+                          ))}
                         </div>
                       </div>
 
-                      {/* Theme Selection */}
-                      <div className="p-4 bg-white rounded-lg border border-gray-200">
-                        <h5 className="font-semibold text-gray-800 mb-3">Color Theme</h5>
-                        <div className="grid grid-cols-3 gap-3">
-                          <button
-                            onClick={() => handleThemeChange('default')}
-                            className={`p-4 rounded-lg border-2 transition-all ${
-                              customizationSettings.theme === 'default'
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="flex gap-1 mb-2">
-                              <div className="w-4 h-8 bg-indigo-500 rounded"></div>
-                              <div className="w-4 h-8 bg-purple-500 rounded"></div>
-                              <div className="w-4 h-8 bg-blue-500 rounded"></div>
+                      {/* Additional toggles */}
+                      {[
+                        { key: 'compactMode', label: 'COMPACT MODE', desc: 'Reduce spacing for more content' },
+                        { key: 'animationsEnabled', label: 'ANIMATIONS', desc: 'Enable motion & transitions' },
+                      ].map(({ key, label, desc }) => (
+                        <div key={key} className="flex items-center justify-between p-4 border-2 border-[#E5E5E0] hover:border-[#111111] transition-colors">
+                          <div>
+                            <div className="text-xs font-black uppercase tracking-widest text-[#111111]"
+                              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                              {label}
                             </div>
-                            <span className="text-sm font-medium">Default</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => handleThemeChange('minimal')}
-                            className={`p-4 rounded-lg border-2 transition-all ${
-                              customizationSettings.theme === 'minimal'
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="flex gap-1 mb-2">
-                              <div className="w-4 h-8 bg-gray-400 rounded"></div>
-                              <div className="w-4 h-8 bg-gray-500 rounded"></div>
-                              <div className="w-4 h-8 bg-gray-600 rounded"></div>
-                            </div>
-                            <span className="text-sm font-medium">Minimal</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => handleThemeChange('vibrant')}
-                            className={`p-4 rounded-lg border-2 transition-all ${
-                              customizationSettings.theme === 'vibrant'
-                                ? 'border-indigo-500 bg-indigo-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                          >
-                            <div className="flex gap-1 mb-2">
-                              <div className="w-4 h-8 bg-pink-500 rounded"></div>
-                              <div className="w-4 h-8 bg-yellow-500 rounded"></div>
-                              <div className="w-4 h-8 bg-green-500 rounded"></div>
-                            </div>
-                            <span className="text-sm font-medium">Vibrant</span>
-                          </button>
+                            <p className="text-xs text-[#525252] mt-0.5" style={{ fontFamily: "'Lora', serif" }}>{desc}</p>
+                          </div>
+                          <Switch
+                            checked={customizationSettings[key as keyof typeof customizationSettings] as boolean}
+                            onChange={() => handleCustomizationToggle(key as keyof typeof customizationSettings)}
+                          />
                         </div>
-                      </div>
-
-                      {/* Compact Mode */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Compact Mode</h5>
-                          <p className="text-sm text-gray-600">Reduce spacing for more content</p>
-                        </div>
-                        <button
-                          onClick={() => handleCustomizationToggle('compactMode')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            customizationSettings.compactMode ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {customizationSettings.compactMode ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Animations */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Animations</h5>
-                          <p className="text-sm text-gray-600">Enable smooth transitions and effects</p>
-                        </div>
-                        <button
-                          onClick={() => handleCustomizationToggle('animationsEnabled')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            customizationSettings.animationsEnabled ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {customizationSettings.animationsEnabled ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
+                      ))}
                     </div>
                   </div>
-
-                  {/* Info Box */}
-                  {settingsChanged && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3"
-                    >
-                      <FaInfoCircle className="text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-blue-800 mb-1">Unsaved Changes</h5>
-                        <p className="text-sm text-blue-700">You have unsaved customization changes. Click "Save Customization" to apply them.</p>
-                      </div>
-                    </motion.div>
-                  )}
                 </div>
               </div>
-              
+
               {/* Modal Footer */}
-              <div className="bg-gray-50 border-t border-gray-200 p-6 flex justify-between items-center">
+              <div className="p-6 border-t-4 border-[#111111] bg-[#E5E5E0] flex flex-wrap justify-between items-center gap-4">
                 <button
                   onClick={handleResetCustomization}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
+                  className="px-6 py-3 border-2 border-[#111111] text-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] font-black uppercase text-xs tracking-widest transition-colors"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  Reset to Default
+                  RESET TO DEFAULT
                 </button>
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                   <button
                     onClick={() => setShowCustomizeModal(false)}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
+                    className="px-6 py-3 border-2 border-[#111111] text-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] font-black uppercase text-xs tracking-widest transition-colors"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
                   >
-                    Cancel
+                    CANCEL
                   </button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  <button
                     onClick={handleSaveCustomization}
                     disabled={!settingsChanged}
-                    className={`px-6 py-3 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2 ${
-                      settingsChanged
-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
+                    className="px-8 py-3 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
                   >
                     <FaSave />
-                    Save Customization
-                  </motion.button>
+                    SAVE CHANGES
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -1674,14 +1335,16 @@ const DashboardHome: React.FC<{
   );
 };
 
+// ─── Main Dashboard Component ─────────────────────────────────────────────────
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('mockAuth') === 'true';
-  });
-  
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() =>
+    localStorage.getItem('mockAuth') === 'true'
+  );
+
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState({
     id: '',
@@ -1691,7 +1354,7 @@ const Dashboard = () => {
     avatar: 'https://via.placeholder.com/150',
     lastLogin: new Date().toISOString()
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1716,16 +1379,12 @@ const Dashboard = () => {
     credentialsShared: 0
   });
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
-
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 1024) {
-        setIsExpanded(false);
-      }
+      if (window.innerWidth <= 1024) setIsExpanded(false);
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -1736,51 +1395,14 @@ const Dashboard = () => {
   };
 
   const sidebarItems: NavItem[] = [
-    { 
-      icon: FaHome,
-      label: 'Dashboard',
-      path: 'dashboard',
-      description: 'Overview and quick actions',
-      component: <div className="p-6">Dashboard Component</div>,
-    },
-    { 
-      icon: FaLock, 
-      label: 'Passwords', 
-      path: 'passwords',
-      description: 'Manage your stored passwords',
-      component: <Passwords />,
-    },
-    { 
-      icon: FaBell, 
-      label: 'Notifications', 
-      path: 'notifications',
-      description: 'View alerts and updates',
-      notification: 3, 
-      component: <Notifications />,
-    },
-    { 
-      icon: FaShieldVirus, 
-      label: 'Monitoring', 
-      path: 'monitoring',
-      description: 'Real-time breach monitoring',
-      component: <Monitoring />,
-    },
+    { icon: FaHome, label: 'Dashboard', path: 'dashboard', description: 'Overview and quick actions', component: <div className="p-6">Dashboard Component</div> },
+    { icon: FaLock, label: 'Passwords', path: 'passwords', description: 'Manage your stored passwords', component: <Passwords /> },
+    { icon: FaBell, label: 'Notifications', path: 'notifications', description: 'View alerts and updates', notification: 3, component: <Notifications /> },
+    { icon: FaShieldVirus, label: 'Monitoring', path: 'monitoring', description: 'Real-time breach monitoring', component: <Monitoring /> },
     { icon: FaHistory, label: 'History', path: 'history', component: <History /> },
     { icon: FaCog, label: 'Settings', path: 'settings', component: <Settings /> },
-    { 
-      icon: FaFileImport, 
-      label: 'Transactions', 
-      path: 'transactions',
-      description: 'View your transactions',
-      component: <Transactions />
-    },
-    { 
-      icon: FaDatabase, 
-      label: 'Backup', 
-      path: 'backup',
-      description: 'Manage your data backups',
-      component: <BackUp />,
-    }
+    { icon: FaFileImport, label: 'Transactions', path: 'transactions', description: 'View your transactions', component: <Transactions /> },
+    { icon: FaDatabase, label: 'Backup', path: 'backup', description: 'Manage your data backups', component: <BackUp /> }
   ];
 
   const handleNavigation = (path: string) => {
@@ -1791,27 +1413,18 @@ const Dashboard = () => {
   const handleProfileClick = () => {
     setCurrentFeature('user-profile');
     getCurrentComponent();
-    if (window.innerWidth <= 1024) {
-      setIsExpanded(false);
-    }
+    if (window.innerWidth <= 1024) setIsExpanded(false);
   };
 
   const getCurrentComponent = () => {
-    if (currentFeature === 'user-profile') {
-      return <UserProfile />;
-    }
+    if (currentFeature === 'user-profile') return <UserProfile />;
     const item = sidebarItems.find(item => item.path === currentFeature);
     return item?.component || <div className="p-6">Dashboard Component</div>;
   };
 
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: 'User',
-    email: '',
-    role: 'Free User'
-  });
+  const [userProfile, setUserProfile] = useState<UserProfile>({ name: 'User', email: '', role: 'Free User' });
 
   useEffect(() => {
-    // Get user data from localStorage
     const userData = localStorage.getItem('userData');
     if (userData) {
       try {
@@ -1819,16 +1432,16 @@ const Dashboard = () => {
         setUserProfile({
           name: parsedData.name || 'User',
           email: parsedData.email || '',
-          role: parsedData.subscription?.plan === 'premium' ? 'Premium User' : 
-                parsedData.subscription?.plan === 'enterprise' ? 'Enterprise User' : 'Free User'
+          role: parsedData.subscription?.plan === 'premium' ? 'Premium User' :
+            parsedData.subscription?.plan === 'enterprise' ? 'Enterprise User' : 'Free User'
         });
         setUser(prev => ({
           ...prev,
           id: parsedData.id || parsedData._id || '',
           name: parsedData.name || 'User',
           email: parsedData.email || '',
-          role: parsedData.subscription?.plan === 'premium' ? 'Premium User' : 
-                parsedData.subscription?.plan === 'enterprise' ? 'Enterprise User' : 'Free User'
+          role: parsedData.subscription?.plan === 'premium' ? 'Premium User' :
+            parsedData.subscription?.plan === 'enterprise' ? 'Enterprise User' : 'Free User'
         }));
       } catch (e) {
         console.error('Error parsing user data:', e);
@@ -1838,16 +1451,15 @@ const Dashboard = () => {
 
   const initializeDashboard = useCallback(async () => {
     try {
-      // Check all possible authentication keys that might be set
       const mockAuth = localStorage.getItem('mockAuth') === 'true';
       const isAuthenticatedToken = localStorage.getItem('isAuthenticated') === 'true';
       const userToken = localStorage.getItem('userToken');
-      const token = localStorage.getItem('token'); // Added to match AuthenticatedNavbar
+      const token = localStorage.getItem('token');
       const accessToken = localStorage.getItem('accessToken');
-      
+
       const authStatus = mockAuth || isAuthenticatedToken || !!userToken || !!token || !!accessToken;
       setIsAuthenticated(authStatus);
-      
+
       if (!authStatus) {
         navigate('/signin', { replace: true });
         return;
@@ -1855,21 +1467,17 @@ const Dashboard = () => {
 
       setError(null);
 
-      // Try all possible user data sources
       const userData = localStorage.getItem('userData');
       const mockUser = localStorage.getItem('mockUser');
-      
+
       if (userData || mockUser) {
         try {
-          // Prefer userData because it is the canonical source after signup/signin
           const parsedUser = JSON.parse(userData || mockUser || '{}');
           setUserProfile({
             name: parsedUser.name || parsedUser.username || 'User',
             email: parsedUser.email || '',
             role: parsedUser.role || 'Free User'
           });
-          
-          // Update user state as well
           setUser(prev => ({
             ...prev,
             name: parsedUser.name || parsedUser.username || 'User',
@@ -1881,47 +1489,36 @@ const Dashboard = () => {
       }
 
       try {
-        // Fetch real dashboard data from API
         const dashboardResponse = await monitoringAPI.getDashboard('week');
         const userData = localStorage.getItem('userData');
         const parsedUserData = userData ? JSON.parse(userData) : {};
-        
-        // Fetch additional data in parallel
+
         const [devicesResponse, sharingResponse, passwordStatsResponse, expiringPasswordsResponse] = await Promise.allSettled([
           deviceAPI.getDeviceStats().catch(() => null),
           sharingAPI.getStats().catch(() => null),
           passwordAPI.getStats().catch(() => null),
           passwordAPI.getExpiring(30).catch(() => null),
         ]);
-        
+
         if (dashboardResponse.data?.data) {
           const apiData = dashboardResponse.data.data;
-          
-          // Calculate profile completion based on user data
+
           let profileCompletion = 0;
           if (parsedUserData.name) profileCompletion += 20;
           if (parsedUserData.email) profileCompletion += 20;
           if (parsedUserData.twoFactorEnabled) profileCompletion += 20;
           if (parsedUserData.recoveryEmail) profileCompletion += 20;
           if (parsedUserData.masterPassword) profileCompletion += 20;
-          
-          // Calculate strong passwords percentage
+
           const totalPasswords = apiData.overview?.totalPasswords || 0;
           const strongCount = Math.round((apiData.security?.score || 0) / 100 * totalPasswords);
-          
-          // Get device stats from response
-          let devicesStats = { activeDevices: 0, totalDevices: 0 };
-          if (devicesResponse.status === 'fulfilled' && devicesResponse.value?.data) {
-            devicesStats = devicesResponse.value.data;
-          }
-          
-          // Get sharing stats from response
-          let sharingStats = { sharedCount: 0 };
-          if (sharingResponse.status === 'fulfilled' && sharingResponse.value?.data) {
-            sharingStats = sharingResponse.value.data;
-          }
 
-          // Get password stats from response
+          let devicesStats = { activeDevices: 0, totalDevices: 0 };
+          if (devicesResponse.status === 'fulfilled' && devicesResponse.value?.data) devicesStats = devicesResponse.value.data;
+
+          let sharingStats = { sharedCount: 0 };
+          if (sharingResponse.status === 'fulfilled' && sharingResponse.value?.data) sharingStats = sharingResponse.value.data;
+
           let passwordStats = {
             total: totalPasswords,
             strong: strongCount,
@@ -1930,6 +1527,7 @@ const Dashboard = () => {
             reused: apiData.security?.reusedPasswords || 0,
             compromised: apiData.security?.breachedAccounts || 0,
           };
+
           if (passwordStatsResponse.status === 'fulfilled' && passwordStatsResponse.value?.data?.data?.overall) {
             const overall = passwordStatsResponse.value.data.data.overall;
             passwordStats = {
@@ -1946,7 +1544,7 @@ const Dashboard = () => {
             expiringPasswordsResponse.status === 'fulfilled' && expiringPasswordsResponse.value?.data?.data?.passwords
               ? expiringPasswordsResponse.value.data.data.passwords.length
               : apiData.security?.expiredPasswords || 0;
-          
+
           setDashboardStats({
             totalPasswords: passwordStats.total,
             strongPasswords: passwordStats.strong,
@@ -1970,9 +1568,8 @@ const Dashboard = () => {
       }
 
       try {
-        // Fetch real recent activities from history API
         const historyResponse = await historyAPI.getRecent(6);
-        
+
         if (historyResponse.data?.data?.items) {
           const activities: ActivityItem[] = historyResponse.data.data.items.map((item: any, index: number) => {
             const iconMap: { [key: string]: any } = {
@@ -1991,10 +1588,10 @@ const Dashboard = () => {
               type: item.type || 'login',
               title: item.title || 'Activity',
               description: item.description || 'Recent activity',
-              timestamp: item.timestamp ? new Date(item.timestamp).toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
+              timestamp: item.timestamp ? new Date(item.timestamp).toLocaleTimeString('en-US', {
+                hour: '2-digit',
                 minute: '2-digit',
-                hour12: true 
+                hour12: true
               }) : 'Recently',
               icon: iconMap[item.type] || FaHistory,
               severity: item.severity || 'low'
@@ -2004,11 +1601,10 @@ const Dashboard = () => {
         }
       } catch (historyError) {
         console.error('Failed to fetch activity history:', historyError);
-        // Don't show error for history as it's secondary data
       }
 
       setCurrentFeature('dashboard');
-      
+
     } catch (error) {
       console.error('Dashboard initialization error:', error);
       setError('Error loading dashboard. Please try again later.');
@@ -2019,26 +1615,21 @@ const Dashboard = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Check all possible auth keys
     const mockAuth = localStorage.getItem('mockAuth') === 'true';
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     const userToken = localStorage.getItem('userToken');
     const token = localStorage.getItem('token');
     const accessToken = localStorage.getItem('accessToken');
-    
+
     if (!mockAuth && !isAuthenticated && !userToken && !token && !accessToken) {
       navigate('/signin', { replace: true });
       return;
     }
-    
     initializeDashboard();
   }, [initializeDashboard, navigate]);
 
   useEffect(() => {
-    // Check authentication status on mount and when it changes
     initializeDashboard();
-    
-    // Listen for changes in authentication status
     const handleStorageChange = () => {
       const authStatus =
         localStorage.getItem('mockAuth') === 'true' ||
@@ -2046,101 +1637,128 @@ const Dashboard = () => {
         !!localStorage.getItem('userToken') ||
         !!localStorage.getItem('token') ||
         !!localStorage.getItem('accessToken');
-
       setIsAuthenticated(authStatus);
-      if (!authStatus) {
-        navigate('/signin', { replace: true });
-      }
+      if (!authStatus) navigate('/signin', { replace: true });
     };
-    
     window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, [initializeDashboard, navigate]);
 
   const handleLogout = () => {
-    // Clear all possible authentication keys
     localStorage.removeItem('mockAuth');
     localStorage.removeItem('mockUser');
     localStorage.removeItem('userToken');
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userData');
-    localStorage.removeItem('token'); // Added to match AuthenticatedNavbar
+    localStorage.removeItem('token');
     setIsAuthenticated(false);
-    
-    // Dispatch storage event to notify other components
     window.dispatchEvent(new Event('storage'));
-    
     navigate('/signin', { replace: true });
   };
 
+  // ─── Loading Screen ──────────────────────────────────────────────────────────
+
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-sky-50 via-indigo-50 to-purple-50">
+      <div className="flex items-center justify-center h-screen bg-[#F9F9F7]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+        }}>
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-          <p className="text-indigo-700">Loading your dashboard...</p>
+          <div className="inline-block border-4 border-[#111111] border-t-[#CC0000] w-12 h-12 animate-spin mb-6"></div>
+          <div className="text-xs font-black uppercase tracking-[0.3em] text-[#525252]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            LOADING VAULT...
+          </div>
         </div>
       </div>
     );
   }
 
+  // ─── Main Render ─────────────────────────────────────────────────────────────
+
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50">
+    <div className="min-h-screen flex flex-col bg-[#F9F9F7]"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+      }}>
       <Navbar />
-      
+
       <div className="h-20"></div>
-      
+
+      {/* Error toast */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="fixed top-24 right-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 z-50 shadow-lg max-w-md backdrop-blur-sm"
+          className="fixed top-24 right-4 p-4 border-2 border-[#CC0000] bg-[#F9F9F7] text-[#111111] z-50 max-w-md"
         >
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-red-100 text-red-600">
-              <FaExclamationCircle size={20} />
+            <div className="p-2 border border-[#CC0000] text-[#CC0000]">
+              <FaExclamationCircle size={18} />
             </div>
-            <span className="font-medium">{error}</span>
+            <span className="text-xs font-black uppercase tracking-widest"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              {error}
+            </span>
           </div>
-          <button 
+          <button
             onClick={() => setError(null)}
-            className="absolute top-2 right-2 p-1 rounded-full text-red-400 hover:text-red-700 hover:bg-red-100"
+            className="absolute top-2 right-2 p-1 text-[#525252] hover:text-[#CC0000] transition-colors"
           >
-            <FaTimes size={16} />
+            <FaTimes size={14} />
           </button>
         </motion.div>
       )}
-    
+
+      {/* Sidebar toggle */}
       <div className="fixed top-24 left-4 z-50">
         <SidebarToggle isExpanded={isExpanded} onClick={toggleSidebar} />
       </div>
 
+      {/* Sidebar */}
       <motion.nav
         initial={false}
         animate={{
           width: isExpanded ? '280px' : '0px',
           opacity: isExpanded ? 1 : 0,
-          transition: { duration: 0.3 }
+          transition: { duration: 0.25 }
         }}
-        className="fixed left-0 top-20 h-[calc(100%-5rem)] bg-white/90 backdrop-blur-xl border-r border-indigo-100 shadow-2xl z-40 overflow-hidden"
+        className="fixed left-0 top-20 h-[calc(100%-5rem)] bg-[#F9F9F7] border-r-4 border-[#111111] z-40 overflow-hidden"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+        }}
       >
-        <div className="p-6 h-full flex flex-col w-[280px]">
-          <div className="mb-8">
-            <div className="h-12 flex items-center">
-              <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-200/50">
-                  <FaSquarePollHorizontal className="text-white text-xl" />
+        <div className="p-0 h-full flex flex-col w-[280px]">
+
+          {/* Sidebar masthead */}
+          <div className="bg-[#111111] p-6 border-b-4 border-[#CC0000]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 border-2 border-[#F9F9F7] flex items-center justify-center">
+                <FaSquarePollHorizontal className="text-[#F9F9F7] text-xl" />
+              </div>
+              <div>
+                <div className="text-sm font-black uppercase tracking-widest text-[#F9F9F7]"
+                  style={{ fontFamily: "'Playfair Display', serif" }}>
+                  VAULT
+                </div>
+                <div className="text-[9px] font-black uppercase tracking-[0.2em] text-[#A3A3A3]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  SECURE DASHBOARD
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-transparent hover:scrollbar-thumb-indigo-300">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider pl-3 mb-2">Main Menu</div>
-            
+          {/* Nav sections */}
+          <div className="flex-1 overflow-y-auto py-4 border-b-2 border-[#E5E5E0]">
+            <div className="px-4 mb-2">
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#A3A3A3]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                MAIN MENU
+              </span>
+            </div>
             {sidebarItems.slice(0, 3).map((item, index) => (
               <SidebarItem
                 key={index}
@@ -2152,8 +1770,12 @@ const Dashboard = () => {
               />
             ))}
 
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider pl-3 mb-2 mt-6">Management</div>
-            
+            <div className="px-4 mt-6 mb-2">
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[#A3A3A3]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                MANAGEMENT
+              </span>
+            </div>
             {sidebarItems.slice(3).map((item, index) => (
               <SidebarItem
                 key={index + 3}
@@ -2166,38 +1788,41 @@ const Dashboard = () => {
             ))}
           </div>
 
-          <SidebarProfile 
-            profile={userProfile} 
-            onClick={handleProfileClick} 
-            isActive={currentFeature === 'user-profile'}
-            onLogout={handleLogout}
-          />
+          <div className="p-4">
+            <SidebarProfile
+              profile={userProfile}
+              onClick={handleProfileClick}
+              isActive={currentFeature === 'user-profile'}
+              onLogout={handleLogout}
+            />
+          </div>
         </div>
       </motion.nav>
 
-      <main className={`flex-1 transition-all duration-300 pt-4 px-6 md:px-10 pb-8 ${isExpanded ? 'lg:pl-[300px]' : 'pl-6'} mt-16`}>
-        <div className="max-w-7xl mx-auto">
-          <div className="h-full flex flex-col">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentFeature}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                {currentFeature === 'dashboard' 
-                  ? <DashboardHome 
-                      dashboardStats={dashboardStats} 
-                      searchQuery={searchQuery} 
-                      setSearchQuery={setSearchQuery}
-                      recentActivities={recentActivities}
-                      onNavigate={handleNavigation}
-                    />
-                  : getCurrentComponent()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+      {/* Main content */}
+      <main className={`flex-1 transition-all duration-300 pt-4 px-4 md:px-8 pb-8 ${isExpanded ? 'lg:pl-[296px]' : 'pl-4'
+        } mt-16`}>
+        <div className="max-w-screen-xl mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentFeature}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+            >
+              {currentFeature === 'dashboard'
+                ? <DashboardHome
+                  dashboardStats={dashboardStats}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  recentActivities={recentActivities}
+                  onNavigate={handleNavigation}
+                />
+                : getCurrentComponent()
+              }
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
