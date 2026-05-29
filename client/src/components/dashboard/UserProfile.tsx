@@ -357,9 +357,9 @@ const PersonalInfoCard: React.FC<{ info: IUserProfile['personalInfo'] }> = ({ in
 );
 
 const AddressCard: React.FC<{ address: IUserProfile['address'] }> = ({ address }) => (
-  <div className="p-5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-md transition-all">
+  <div className="p-5 bg-[#F9F9F7] border-2 border-[#111111] transition-all">
     <div className="flex items-start gap-4">
-      <div className="p-3 bg-indigo-100 rounded-xl text-indigo-600">
+      <div className="p-3 border-2 border-[#111111] bg-[#E5E5E0] text-[#111111]">
         <FaMapMarkerAlt className="w-6 h-6" />
       </div>
       <div>
@@ -382,9 +382,9 @@ const AddressCard: React.FC<{ address: IUserProfile['address'] }> = ({ address }
 
 const ProfessionalInfoCard: React.FC<{ info: IUserProfile['professionalInfo'] }> = ({ info }) => (
   <div className="space-y-6">
-    <div className="p-5 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+    <div className="p-5 bg-[#F9F9F7] border-2 border-[#111111]">
       <div className="flex items-center gap-4 mb-4">
-        <div className="p-3 bg-white shadow-sm rounded-xl text-indigo-600">
+        <div className="p-3 border-2 border-[#111111] bg-[#E5E5E0] text-[#111111]">
           <FaBriefcase className="w-6 h-6" />
         </div>
         <div>

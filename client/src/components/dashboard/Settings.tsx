@@ -320,7 +320,7 @@ const Settings: React.FC = () => {
       </div>
 
       {/* Redesigned tab navigation */}
-      <div className="bg-white rounded-xl shadow-md">
+      <div className="bg-[#F9F9F7] border-2 border-[#111111]">
         <div className="flex overflow-x-auto px-2">
           <button 
             onClick={() => setActiveTab('general')}
@@ -377,7 +377,7 @@ const Settings: React.FC = () => {
           </button>
           
           <div className="ml-auto flex items-center pr-4">
-            <button className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <button className="p-2 text-[#111111] hover:bg-[#E5E5E0] transition-colors">
               <FaBars />
             </button>
           </div>

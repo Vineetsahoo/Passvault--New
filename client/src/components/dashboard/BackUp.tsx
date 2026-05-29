@@ -1854,7 +1854,7 @@ const BackUp: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 -mt-4"> {/* Increased spacing between sections and brought content up */}
+    <div className="border-4 border-[#111111] bg-[#F9F9F7] p-6 space-y-8"> {/* Newsprint wrapper */}
       <BackupHeader />
       <BackupSummary />
       <SyncProgress />
@@ -1882,21 +1882,21 @@ const BackUp: React.FC = () => {
               className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-5 flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-                  <FaCloudUploadAlt className="text-white" />
+              <div className="p-5 flex justify-between items-center bg-[#111111] text-[#F9F9F7]">
+                <h3 className="text-xl font-black flex items-center gap-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <FaCloudUploadAlt />
                   {syncProgress.current >= 100 ? 'Backup Complete' : 'Backing Up Data'}
                 </h3>
                 <button 
                   onClick={() => !isLoading && setShowBackupModal(false)}
-                  className="text-white bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
+                  className="p-2 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors"
                   disabled={isLoading}
                 >
                   <FaTimes />
                 </button>
               </div>
               
-              <div className="p-6">
+              <div className="p-6 bg-[#F9F9F7] border-2 border-[#111111]">
                 {isLoading ? (
                   <div className="space-y-6">
                     <div className="text-center">
@@ -1907,12 +1907,6 @@ const BackUp: React.FC = () => {
                       >
                         <FaCloudUploadAlt className="text-3xl text-blue-600" />
                       </motion.div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-2">Backing Up Your Data...</h4>
-                      <p className="text-gray-600">Please wait while we securely backup your information.</p>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-700 font-medium">Progress</span>
                         <span className="text-blue-600 font-semibold">{Math.round(syncProgress.current)}%</span>

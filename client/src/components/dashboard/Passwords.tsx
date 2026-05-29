@@ -565,7 +565,7 @@ const Passwords = () => {
         </div>
       </div>
 
-    {/* Enhanced password generator */}
+    
       <AnimatePresence>
         {showPasswordGenerator && (
           <motion.div

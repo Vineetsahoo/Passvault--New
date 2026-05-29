@@ -291,11 +291,8 @@ const Transactions: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 -mt-4">
-      <div className="relative overflow-hidden bg-gradient-to-br from-teal-600 via-cyan-600 to-emerald-600 rounded-2xl shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-teal-300 opacity-10 rounded-full translate-y-1/3"></div>
-        
+    <div className="border-4 border-[#111111] bg-[#F9F9F7] p-6 space-y-8">
+      <div className="relative overflow-hidden bg-[#111111]">
         <div className="relative z-10 p-7">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -304,7 +301,7 @@ const Transactions: React.FC = () => {
                 <span className="text-xs font-medium text-teal-50">Financial Overview</span>
               </div>
               
-              <h2 className="text-3xl font-bold text-white flex flex-wrap items-center gap-3">
+              <h2 className="text-3xl font-black text-[#F9F9F7] flex flex-wrap items-center gap-3" style={{ fontFamily: "'Playfair Display', serif" }}>
                 <FaMoneyBillWave className="text-teal-200" /> 
                 <span>Financial Transactions</span>
               </h2>
@@ -319,7 +316,7 @@ const Transactions: React.FC = () => {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={exportTransactions}
-                className="px-4 py-2.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium rounded-lg transition-all flex items-center gap-2 border border-white/20"
+                className="px-4 py-2.5 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black transition-all flex items-center gap-2"
               >
                 <FaFileExport className="text-teal-200" /> Export Data
               </motion.button>
@@ -350,11 +347,11 @@ const Transactions: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <motion.div
-          whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
+          whileHover={{ y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
+          className="bg-[#F9F9F7] border-2 border-[#111111] overflow-hidden"
         >
-          <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-indigo-100 p-4 border-b border-gray-100">
+          <div className="p-4 border-b-2 border-[#111111]">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-800">Net Balance</h3>
               <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
@@ -379,11 +376,11 @@ const Transactions: React.FC = () => {
         </motion.div>
 
         <motion.div
-          whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
+          whileHover={{ y: -5 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
+          className="bg-[#F9F9F7] border-2 border-[#111111] overflow-hidden"
         >
-          <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-green-100 p-4 border-b border-gray-100">
+          <div className="p-4 border-b-2 border-[#111111]">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-800">Total Income</h3>
               <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
