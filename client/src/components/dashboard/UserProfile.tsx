@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  FaShieldAlt, FaCreditCard, FaBell, FaKey, FaUserCog, 
+import {
+  FaShieldAlt, FaCreditCard, FaBell, FaKey, FaUserCog,
   FaHistory, FaCrown, FaFingerprint, FaCamera, FaEnvelope,
   FaLanguage, FaMoon, FaLock, FaTrash, FaDownload, FaArrowLeft,
-  FaBriefcase, FaMapMarkerAlt, FaPhoneAlt, FaGlobe, 
+  FaBriefcase, FaMapMarkerAlt, FaPhoneAlt, FaGlobe,
   FaLinkedin, FaGithub, FaTwitter, FaCalendarAlt,
   FaGraduationCap, FaIdCard, FaBirthdayCake, FaPassport,
   FaUserTie, FaBuilding, FaAddressCard,
   FaUser, FaCheckCircle, FaFileInvoiceDollar, FaReceipt, FaFilePdf,
   FaCcVisa, FaCcMastercard, FaFileSignature, FaFileContract,
   FaFileAlt, FaFileMedical, FaQrcode, FaListAlt, FaEdit,
-  FaUserSecret, FaUsers, FaShieldVirus, FaFileExport, FaEllipsisH, 
+  FaUserSecret, FaUsers, FaShieldVirus, FaFileExport, FaEllipsisH,
   FaExclamationTriangle, FaChevronRight, FaCog, FaSave, FaSpinner, FaUpload, FaTimes
 } from 'react-icons/fa';
 import { HiOutlineUserCircle } from 'react-icons/hi';
@@ -22,70 +22,27 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Country to phone code mapping
 const COUNTRY_PHONE_CODES: Record<string, string> = {
-  'india': '+91',
-  'united states': '+1',
-  'usa': '+1',
-  'united kingdom': '+44',
-  'uk': '+44',
-  'canada': '+1',
-  'australia': '+61',
-  'germany': '+49',
-  'france': '+33',
-  'japan': '+81',
-  'china': '+86',
-  'brazil': '+55',
-  'russia': '+7',
-  'south korea': '+82',
-  'spain': '+34',
-  'italy': '+39',
-  'mexico': '+52',
-  'indonesia': '+62',
-  'netherlands': '+31',
-  'saudi arabia': '+966',
-  'turkey': '+90',
-  'switzerland': '+41',
-  'poland': '+48',
-  'belgium': '+32',
-  'sweden': '+46',
-  'norway': '+47',
-  'austria': '+43',
-  'denmark': '+45',
-  'finland': '+358',
-  'singapore': '+65',
-  'malaysia': '+60',
-  'thailand': '+66',
-  'philippines': '+63',
-  'vietnam': '+84',
-  'pakistan': '+92',
-  'bangladesh': '+880',
-  'egypt': '+20',
-  'nigeria': '+234',
-  'south africa': '+27',
-  'argentina': '+54',
-  'colombia': '+57',
-  'chile': '+56',
-  'peru': '+51',
-  'uae': '+971',
-  'united arab emirates': '+971',
-  'israel': '+972',
-  'greece': '+30',
-  'portugal': '+351',
-  'new zealand': '+64',
-  'ireland': '+353',
-  'czech republic': '+420',
-  'romania': '+40',
-  'hungary': '+36',
+  'india': '+91', 'united states': '+1', 'usa': '+1', 'united kingdom': '+44',
+  'uk': '+44', 'canada': '+1', 'australia': '+61', 'germany': '+49',
+  'france': '+33', 'japan': '+81', 'china': '+86', 'brazil': '+55',
+  'russia': '+7', 'south korea': '+82', 'spain': '+34', 'italy': '+39',
+  'mexico': '+52', 'indonesia': '+62', 'netherlands': '+31', 'saudi arabia': '+966',
+  'turkey': '+90', 'switzerland': '+41', 'poland': '+48', 'belgium': '+32',
+  'sweden': '+46', 'norway': '+47', 'austria': '+43', 'denmark': '+45',
+  'finland': '+358', 'singapore': '+65', 'malaysia': '+60', 'thailand': '+66',
+  'philippines': '+63', 'vietnam': '+84', 'pakistan': '+92', 'bangladesh': '+880',
+  'egypt': '+20', 'nigeria': '+234', 'south africa': '+27', 'argentina': '+54',
+  'colombia': '+57', 'chile': '+56', 'peru': '+51', 'uae': '+971',
+  'united arab emirates': '+971', 'israel': '+972', 'greece': '+30',
+  'portugal': '+351', 'new zealand': '+64', 'ireland': '+353',
+  'czech republic': '+420', 'romania': '+40', 'hungary': '+36',
 };
 
 interface IUserProfile {
   name: string;
   email: string;
   role: string;
-  preferences: {
-    theme: string;
-    notifications: boolean;
-    language: string;
-  };
+  preferences: { theme: string; notifications: boolean; language: string; };
   avatar: string;
   memberSince: string;
   lastLogin: string;
@@ -94,231 +51,51 @@ interface IUserProfile {
   totalDevices: number;
   activeSubscription: string;
   nextBilling: string;
-  personalInfo: {
-    dateOfBirth: string;
-    phoneNumber: string;
-    nationality: string;
-    maritalStatus: string;
-    gender: string;
-  };
+  personalInfo: { dateOfBirth: string; phoneNumber: string; nationality: string; maritalStatus: string; gender: string; };
   professionalInfo: {
-    occupation: string;
-    company: string;
-    department: string;
-    employeeId: string;
-    experience: string;
-    education: {
-      degree: string;
-      institution: string;
-      year: string;
-    }[];
+    occupation: string; company: string; department: string;
+    employeeId: string; experience: string;
+    education: { degree: string; institution: string; year: string; }[];
   };
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    country: string;
-    postalCode: string;
-  };
-  socialProfiles: {
-    linkedin: string;
-    github: string;
-    twitter: string;
-    website: string;
-  };
-  identityDocuments: {
-    type: string;
-    number: string;
-    expiryDate: string;
-  }[];
-  bankingInfo: {
-    accountHolder: string;
-    accountType: string;
-    lastFourDigits: string;
-  };
+  address: { street: string; city: string; state: string; country: string; postalCode: string; };
+  socialProfiles: { linkedin: string; github: string; twitter: string; website: string; };
+  identityDocuments: { type: string; number: string; expiryDate: string; }[];
+  bankingInfo: { accountHolder: string; accountType: string; lastFourDigits: string; };
   security: {
-    lastPasswordChange: string;
-    loginAttempts: number;
-    securityQuestions: number;
+    lastPasswordChange: string; loginAttempts: number; securityQuestions: number;
     activeDevices: number;
-    loginHistory: Array<{
-      device: string;
-      browser?: string;
-      location: string;
-      timestamp?: string;
-      time?: string;
-      status: 'success' | 'failed';
-    }>;
-    recoveryEmail?: string;
-    backupCodes: number;
+    loginHistory: Array<{ device: string; browser?: string; location: string; timestamp?: string; time?: string; status: 'success' | 'failed'; }>;
+    recoveryEmail?: string; backupCodes: number;
   };
   documents: {
-    identity: Array<{
-      id?: string;
-      type: string;
-      number?: string;
-      expiryDate?: string;
-      status?: 'active' | 'expired';
-      fileName?: string;
-      fileSize?: number;
-      mimeType?: string;
-      uploadedAt?: string;
-    }>;
-    financial: Array<{
-      id?: string;
-      type: string;
-      institution?: string;
-      lastUpdated?: string;
-      fileName?: string;
-      fileSize?: number;
-      mimeType?: string;
-      uploadedAt?: string;
-    }>;
+    identity: Array<{ id?: string; type: string; number?: string; expiryDate?: string; status?: 'active' | 'expired'; fileName?: string; fileSize?: number; mimeType?: string; uploadedAt?: string; }>;
+    financial: Array<{ id?: string; type: string; institution?: string; lastUpdated?: string; fileName?: string; fileSize?: number; mimeType?: string; uploadedAt?: string; }>;
   };
   billing: {
-    paymentMethods: Array<{
-      id?: string;
-      type: 'credit' | 'debit';
-      provider: string;
-      lastFour: string;
-      expiryDate: string;
-      isDefault: boolean;
-      cardHolderName?: string;
-      addedAt?: string;
-    }>;
-    invoices: Array<{
-      id: string;
-      invoiceId?: string;
-      date: string;
-      amount: number;
-      status: 'paid' | 'pending';
-      description?: string;
-      downloadUrl: string;
-    }>;
-    subscriptionHistory: Array<{
-      id?: string;
-      plan: string;
-      startDate: string;
-      endDate: string;
-      amount: number;
-      status: 'active' | 'expired';
-    }>;
+    paymentMethods: Array<{ id?: string; type: 'credit' | 'debit'; provider: string; lastFour: string; expiryDate: string; isDefault: boolean; cardHolderName?: string; addedAt?: string; }>;
+    invoices: Array<{ id: string; invoiceId?: string; date: string; amount: number; status: 'paid' | 'pending'; description?: string; downloadUrl: string; }>;
+    subscriptionHistory: Array<{ id?: string; plan: string; startDate: string; endDate: string; amount: number; status: 'active' | 'expired'; }>;
   };
 }
 
-const UserProfileHeader: React.FC<{ 
-  profile: IUserProfile; 
-  onEditClick: () => void;
-}> = ({ profile, onEditClick }) => (
-  <div className="relative border-4 border-[#111111] bg-[#111111] mb-8">
-    <div className="relative p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6">
-      <div className="relative group">
-        <div className="w-28 h-28 border-4 border-[#111111] bg-[#E5E5E0]">
-          <img
-            src={profile.avatar}
-            alt={profile.name}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        <button
-          onClick={onEditClick}
-          className="absolute bottom-0 right-0 p-2 bg-[#F9F9F7] text-[#111111] border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all"
-        >
-          <FaCamera className="w-4 h-4" />
-        </button>
-      </div>
-      
-      <div className="text-left text-[#F9F9F7] md:text-left">
-        <h1 className="text-3xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.name}</h1>
-        <p className="text-[#E5E5E0] text-lg" style={{ fontFamily: "'Lora', serif" }}>{profile.email}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <span className="px-4 py-1.5 bg-[#F9F9F7] text-[#111111] text-sm font-black uppercase tracking-widest border-2 border-[#111111]">
-            {profile.role}
-          </span>
-          {profile.twoFactorEnabled && (
-            <span className="px-4 py-1.5 bg-[#CC0000] text-[#F9F9F7] text-sm font-black uppercase tracking-widest border-2 border-[#111111] flex items-center gap-1.5">
-              <FaShieldAlt size={12} /> 2FA Enabled
-            </span>
-          )}
-        </div>
-      </div>
-      
-      <div className="ml-auto hidden lg:flex items-center gap-6 text-[#F9F9F7]">
-        <div className="flex flex-col items-center text-center">
-          <span className="text-xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.securityScore}%</span>
-          <span className="text-xs uppercase tracking-widest font-mono">Security Score</span>
-        </div>
-        <div className="h-12 w-1 bg-[#E5E5E0]"></div>
-        <div className="flex flex-col items-center text-center">
-          <span className="text-xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.totalDevices}</span>
-          <span className="text-xs uppercase tracking-widest font-mono">Devices</span>
-        </div>
-        <div className="h-12 w-1 bg-[#E5E5E0]"></div>
-        <div className="flex flex-col items-center text-center">
-          <span className="text-xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>{profile.memberSince}</span>
-          <span className="text-xs uppercase tracking-widest font-mono">Member Since</span>
-        </div>
-      </div>
-    </div>
-    
-    <div className="bg-[#F9F9F7] flex items-center justify-between px-6 sm:px-8 py-3 border-t-4 border-[#111111]">
-      <div className="text-[#525252] text-sm flex items-center gap-2 font-mono">
-        <FaHistory size={12} /> Last login: {profile.lastLogin}
-      </div>
-      <div className="flex items-center">
-        <button
-          onClick={onEditClick}
-          className="p-2 text-[#111111] hover:bg-[#E5E5E0] transition-all"
-          title="Edit Profile"
-        >
-          <FaEdit className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  </div>
-);
+// ─── Shared Newsprint Input/Label classes ─────────────────────────────────────
+const npInput = (hasError?: boolean) =>
+  `w-full px-4 py-2.5 border-2 ${hasError ? 'border-[#CC0000]' : 'border-[#111111]'} bg-[#F9F9F7] text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] transition-all`;
+const npLabel = `block text-xs font-black uppercase tracking-widest text-[#111111] mb-2`;
+const npSelect = (hasError?: boolean) =>
+  `w-full px-4 py-2.5 border-2 ${hasError ? 'border-[#CC0000]' : 'border-[#111111]'} bg-[#F9F9F7] text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#111111] transition-all appearance-none`;
 
-const ProfileSection: React.FC<{ title: string; icon?: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.4 }}
-    className="bg-[#F9F9F7] border-4 border-[#111111] overflow-hidden"
-  >
-    <div className="p-5 border-b-4 border-[#111111] flex items-center justify-between bg-[#E5E5E0]">
-      <div className="flex items-center gap-3">
-        {icon}
-        <h2 className="text-xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</h2>
-      </div>
-    </div>
-    <div className="p-6">{children}</div>
-  </motion.div>
-);
-
-const InfoCard: React.FC<{ label: string; value: string; icon?: React.ReactNode }> = ({ label, value, icon }) => (
-  <div 
-    className="p-4 bg-[#E5E5E0] hover:bg-[#F9F9F7] border-2 border-[#111111] transition-all"
-  >
-    <div className="flex items-center gap-3">
-      {icon && <div className="text-[#111111]">{icon}</div>}
-      <div className="flex-1">
-        <p className="text-sm text-[#525252] mb-1 font-mono">{label}</p>
-        <p className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{value}</p>
-      </div>
-    </div>
-  </div>
-);
-
-// Validation Error Component
+// ─── ValidationError ──────────────────────────────────────────────────────────
 const ValidationError: React.FC<{ message?: string }> = ({ message }) => {
   if (!message) return null;
   return (
     <motion.p
-      initial={{ opacity: 0, y: -5 }}
+      initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="text-red-600 text-sm mt-1 flex items-center gap-1"
+      className="text-[#CC0000] text-xs mt-1.5 flex items-center gap-1 font-black uppercase tracking-wider"
+      style={{ fontFamily: "'JetBrains Mono', monospace" }}
     >
-      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
       </svg>
       {message}
@@ -326,149 +103,258 @@ const ValidationError: React.FC<{ message?: string }> = ({ message }) => {
   );
 };
 
-const PersonalInfoCard: React.FC<{ info: IUserProfile['personalInfo'] }> = ({ info }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <InfoCard 
-      label="Date of Birth" 
-      value={info.dateOfBirth}
-      icon={<FaBirthdayCake />}
-    />
-    <InfoCard 
-      label="Phone Number" 
-      value={info.phoneNumber}
-      icon={<FaPhoneAlt />}
-    />
-    <InfoCard 
-      label="Nationality" 
-      value={info.nationality}
-      icon={<FaPassport />}
-    />
-    <InfoCard 
-      label="Marital Status" 
-      value={info.maritalStatus}
-      icon={<FaUsers />}
-    />
-    <InfoCard 
-      label="Gender" 
-      value={info.gender}
-      icon={<FaUserSecret />}
-    />
+// ─── UserProfileHeader ────────────────────────────────────────────────────────
+const UserProfileHeader: React.FC<{ profile: IUserProfile; onEditClick: () => void; }> = ({ profile, onEditClick }) => (
+  <div className="relative border-4 border-[#111111] bg-[#111111] mb-8">
+    <div className="relative p-6 sm:p-8 flex flex-col md:flex-row items-center gap-6">
+      {/* Avatar */}
+      <div className="relative group flex-shrink-0">
+        <div className="w-28 h-28 border-4 border-[#F9F9F7] bg-[#E5E5E0] overflow-hidden">
+          <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
+        </div>
+        <button
+          onClick={onEditClick}
+          className="absolute bottom-0 right-0 p-2 bg-[#F9F9F7] text-[#111111] border-2 border-[#F9F9F7] hover:bg-[#CC0000] hover:text-[#F9F9F7] hover:border-[#CC0000] transition-all"
+          aria-label="Edit avatar"
+        >
+          <FaCamera className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Identity */}
+      <div className="text-center md:text-left text-[#F9F9F7]">
+        <div className="text-xs font-black uppercase tracking-widest text-[#E5E5E0] mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          USER PROFILE
+        </div>
+        <h1 className="text-3xl font-black leading-tight text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>
+          {profile.name}
+        </h1>
+        <p className="text-[#E5E5E0] mt-1" style={{ fontFamily: "'Lora', serif" }}>{profile.email}</p>
+        <div className="mt-3 flex flex-wrap gap-2 justify-center md:justify-start">
+          <span className="px-3 py-1 bg-[#F9F9F7] text-[#111111] text-xs font-black uppercase tracking-widest border border-[#F9F9F7]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            {profile.role}
+          </span>
+          {profile.twoFactorEnabled && (
+            <span className="px-3 py-1 bg-[#CC0000] text-[#F9F9F7] text-xs font-black uppercase tracking-widest border border-[#CC0000] flex items-center gap-1.5"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              <FaShieldAlt size={10} /> 2FA ACTIVE
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="ml-auto hidden lg:flex items-stretch divide-x-2 divide-[#E5E5E0] border-l-2 border-[#E5E5E0] pl-8">
+        {[
+          { value: `${profile.securityScore}%`, label: 'SECURITY SCORE' },
+          { value: String(profile.totalDevices), label: 'DEVICES' },
+          { value: profile.memberSince, label: 'MEMBER SINCE' },
+        ].map((stat, i) => (
+          <div key={i} className="flex flex-col items-center justify-center px-8 first:pl-0">
+            <span className="text-2xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>
+              {stat.value}
+            </span>
+            <span className="text-[0.6rem] font-black uppercase tracking-widest text-[#A3A3A3] mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              {stat.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Footer bar */}
+    <div className="bg-[#F9F9F7] flex items-center justify-between px-6 sm:px-8 py-2.5 border-t-4 border-[#111111]">
+      <div className="text-[#525252] text-xs flex items-center gap-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        <FaHistory size={11} /> LAST LOGIN: {profile.lastLogin}
+      </div>
+      <button
+        onClick={onEditClick}
+        className="p-2 text-[#111111] hover:bg-[#E5E5E0] transition-all"
+        title="Edit Profile"
+        aria-label="Edit profile"
+      >
+        <FaEdit className="w-4 h-4" />
+      </button>
+    </div>
   </div>
 );
 
-const AddressCard: React.FC<{ address: IUserProfile['address'] }> = ({ address }) => (
-  <div className="p-5 bg-[#F9F9F7] border-2 border-[#111111] transition-all">
-    <div className="flex items-start gap-4">
-      <div className="p-3 border-2 border-[#111111] bg-[#E5E5E0] text-[#111111]">
-        <FaMapMarkerAlt className="w-6 h-6" />
-      </div>
-      <div>
-        <h3 className="font-medium text-lg text-gray-900 mb-1">{address.street}</h3>
-        <p className="text-gray-600">{`${address.city}, ${address.state}`}</p>
-        <p className="text-gray-600">{`${address.country} - ${address.postalCode}`}</p>
-      </div>
-      <div className="ml-auto">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-2 rounded-full hover:bg-gray-200 text-gray-500"
-        >
-          <FaEdit />
-        </motion.button>
+// ─── ProfileSection ───────────────────────────────────────────────────────────
+const ProfileSection: React.FC<{ title: string; icon?: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 16 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+    className="bg-[#F9F9F7] border-4 border-[#111111] overflow-hidden"
+  >
+    <div className="p-4 sm:p-5 border-b-4 border-[#111111] flex items-center gap-3 bg-[#E5E5E0]">
+      {icon && <span className="text-[#111111]">{icon}</span>}
+      <h2 className="text-xl font-black text-[#111111] uppercase tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+        {title}
+      </h2>
+    </div>
+    <div className="p-5 sm:p-6">{children}</div>
+  </motion.div>
+);
+
+// ─── InfoCard ─────────────────────────────────────────────────────────────────
+const InfoCard: React.FC<{ label: string; value: string; icon?: React.ReactNode }> = ({ label, value, icon }) => (
+  <div className="p-4 bg-[#E5E5E0] hover:bg-[#F9F9F7] border-2 border-[#111111] transition-all group">
+    <div className="flex items-start gap-3">
+      {icon && <div className="text-[#111111] mt-0.5 flex-shrink-0">{icon}</div>}
+      <div className="flex-1 min-w-0">
+        <p className="text-[0.65rem] font-black uppercase tracking-widest text-[#525252] mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          {label}
+        </p>
+        <p className="font-black text-[#111111] truncate" style={{ fontFamily: "'Playfair Display', serif" }}>{value || '—'}</p>
       </div>
     </div>
   </div>
 );
 
+// ─── PersonalInfoCard ─────────────────────────────────────────────────────────
+const PersonalInfoCard: React.FC<{ info: IUserProfile['personalInfo'] }> = ({ info }) => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <InfoCard label="Date of Birth" value={info.dateOfBirth} icon={<FaBirthdayCake />} />
+    <InfoCard label="Phone Number" value={info.phoneNumber} icon={<FaPhoneAlt />} />
+    <InfoCard label="Nationality" value={info.nationality} icon={<FaPassport />} />
+    <InfoCard label="Marital Status" value={info.maritalStatus} icon={<FaUsers />} />
+    <InfoCard label="Gender" value={info.gender} icon={<FaUserSecret />} />
+  </div>
+);
+
+// ─── AddressCard ──────────────────────────────────────────────────────────────
+const AddressCard: React.FC<{ address: IUserProfile['address'] }> = ({ address }) => (
+  <div className="p-5 bg-[#F9F9F7] border-2 border-[#111111]">
+    <div className="flex items-start gap-4">
+      <div className="p-3 border-2 border-[#111111] bg-[#E5E5E0] text-[#111111] flex-shrink-0">
+        <FaMapMarkerAlt className="w-5 h-5" />
+      </div>
+      <div className="flex-1">
+        <p className="font-black text-[#111111] text-lg" style={{ fontFamily: "'Playfair Display', serif" }}>
+          {address.street}
+        </p>
+        <p className="text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>
+          {address.city}, {address.state}
+        </p>
+        <p className="text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
+          {address.country} — {address.postalCode}
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── ProfessionalInfoCard ─────────────────────────────────────────────────────
 const ProfessionalInfoCard: React.FC<{ info: IUserProfile['professionalInfo'] }> = ({ info }) => (
   <div className="space-y-6">
-    <div className="p-5 bg-[#F9F9F7] border-2 border-[#111111]">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="p-3 border-2 border-[#111111] bg-[#E5E5E0] text-[#111111]">
-          <FaBriefcase className="w-6 h-6" />
+    {/* Role block */}
+    <div className="p-5 bg-[#111111] border-2 border-[#111111]">
+      <div className="flex items-center gap-4">
+        <div className="p-3 border-2 border-[#F9F9F7] bg-transparent text-[#F9F9F7]">
+          <FaBriefcase className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-medium text-lg text-gray-900">{info.occupation}</h3>
-          <p className="text-indigo-600">{`${info.company}`}</p>
+          <h3 className="font-black text-xl text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>
+            {info.occupation}
+          </h3>
+          <p className="text-[#E5E5E0] text-sm mt-0.5" style={{ fontFamily: "'Lora', serif" }}>
+            {info.company}
+          </p>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div className="p-3 bg-white/60 backdrop-blur-sm rounded-lg">
-          <p className="text-gray-500 mb-1">Department</p>
-          <p className="font-medium">{info.department}</p>
-        </div>
-        <div className="p-3 bg-white/60 backdrop-blur-sm rounded-lg">
-          <p className="text-gray-500 mb-1">Employee ID</p>
-          <p className="font-medium">{info.employeeId}</p>
-        </div>
-        <div className="p-3 bg-white/60 backdrop-blur-sm rounded-lg">
-          <p className="text-gray-500 mb-1">Experience</p>
-          <p className="font-medium">{info.experience}</p>
-        </div>
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {[
+          { label: 'DEPARTMENT', value: info.department },
+          { label: 'EMPLOYEE ID', value: info.employeeId },
+          { label: 'EXPERIENCE', value: info.experience },
+        ].map((item) => (
+          <div key={item.label} className="border border-[#E5E5E0] p-3">
+            <p className="text-[0.6rem] font-black uppercase tracking-widest text-[#A3A3A3] mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              {item.label}
+            </p>
+            <p className="font-black text-[#F9F9F7] text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+              {item.value || '—'}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
-    
-    <h3 className="font-medium text-gray-800 mt-6 mb-3 flex items-center gap-2">
-      <FaGraduationCap />
-      Education
-    </h3>
-    
-    <div className="space-y-4">
-      {info.education.map((edu, index) => (
-        <motion.div 
-          key={index} 
-          whileHover={{ y: -3 }}
-          transition={{ type: "spring", stiffness: 300 }}
-          className="p-4 bg-white shadow-sm rounded-xl border border-gray-100 hover:shadow-md transition-all"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-12 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full"></div>
-            <div>
-              <h4 className="font-semibold text-gray-800">{edu.degree}</h4>
-              <p className="text-gray-600">{edu.institution}</p>
-              <p className="text-sm text-indigo-600 mt-1">{edu.year}</p>
+
+    {/* Education */}
+    <div>
+      <h3 className="text-xs font-black uppercase tracking-widest text-[#525252] mb-3 flex items-center gap-2"
+        style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        <FaGraduationCap /> EDUCATION
+      </h3>
+      <div className="space-y-3">
+        {info.education.map((edu, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.08 }}
+            className="flex items-stretch border-2 border-[#111111] hover:shadow-[4px_4px_0px_0px_#111111] transition-all"
+          >
+            <div className="w-1.5 bg-[#111111] flex-shrink-0" />
+            <div className="p-4 flex-1">
+              <p className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                {edu.degree}
+              </p>
+              <p className="text-[#525252] text-sm mt-0.5" style={{ fontFamily: "'Lora', serif" }}>
+                {edu.institution}
+              </p>
+              <p className="text-xs font-black uppercase tracking-widest text-[#525252] mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                CLASS OF {edu.year}
+              </p>
             </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ─── SocialProfilesCard ───────────────────────────────────────────────────────
+const SocialProfilesCard: React.FC<{ profiles: IUserProfile['socialProfiles'] }> = ({ profiles }) => {
+  const platformConfig: Record<string, { icon: React.ReactNode; label: string }> = {
+    linkedin: { icon: <FaLinkedin />, label: 'LINKEDIN' },
+    github: { icon: <FaGithub />, label: 'GITHUB' },
+    twitter: { icon: <FaTwitter />, label: 'TWITTER / X' },
+    website: { icon: <FaGlobe />, label: 'WEBSITE' },
+  };
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {Object.entries(profiles).map(([platform, url]) => (
+        <a
+          key={platform}
+          href={url || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 p-4 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all group"
+        >
+          <div className="p-2.5 border-2 border-[#111111] bg-[#E5E5E0] text-[#111111] group-hover:border-[#F9F9F7] group-hover:bg-[#F9F9F7] group-hover:text-[#111111] transition-all">
+            {platformConfig[platform]?.icon}
           </div>
-        </motion.div>
+          <div className="flex-1 min-w-0">
+            <span className="text-[0.6rem] font-black uppercase tracking-widest block mb-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              {platformConfig[platform]?.label || platform.toUpperCase()}
+            </span>
+            <span className="text-sm block truncate" style={{ fontFamily: "'Lora', serif" }}>
+              {url ? url.replace(/^https?:\/\//, '') : 'Not set'}
+            </span>
+          </div>
+          <FaChevronRight className="flex-shrink-0 opacity-40 group-hover:opacity-100" />
+        </a>
       ))}
     </div>
-  </div>
-);
+  );
+};
 
-const SocialProfilesCard: React.FC<{ profiles: IUserProfile['socialProfiles'] }> = ({ profiles }) => (
-  <div className="grid grid-cols-2 gap-4">
-    {Object.entries(profiles).map(([platform, url]) => (
-      <motion.a
-        key={platform}
-        whileHover={{ y: -3, backgroundColor: "#fff" }}
-        transition={{ type: "spring", stiffness: 300 }}
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3 hover:shadow-md transition-all"
-      >
-        <div className="p-2.5 rounded-lg" style={{ 
-          backgroundColor: 
-            platform === 'linkedin' ? '#E8F0FE' : 
-            platform === 'github' ? '#F6F8FA' : 
-            platform === 'twitter' ? '#E8F5FE' : 
-            '#E6F5EB'
-        }}>
-          {platform === 'linkedin' && <FaLinkedin className="text-blue-600 w-6 h-6" />}
-          {platform === 'github' && <FaGithub className="text-gray-900 w-6 h-6" />}
-          {platform === 'twitter' && <FaTwitter className="text-blue-400 w-6 h-6" />}
-          {platform === 'website' && <FaGlobe className="text-green-600 w-6 h-6" />}
-        </div>
-        <div>
-          <span className="font-medium capitalize block">{platform}</span>
-          <span className="text-sm text-gray-500 block truncate max-w-[120px]">{url.replace(/^https?:\/\//, '')}</span>
-        </div>
-      </motion.a>
-    ))}
-  </div>
-);
-
-const SecuritySection: React.FC<{ 
+// ─── SecuritySection ──────────────────────────────────────────────────────────
+const SecuritySection: React.FC<{
   security: IUserProfile['security'];
   onUpdateRecoveryEmail: (email: string) => Promise<boolean>;
   onGenerateBackupCodes: () => Promise<boolean>;
@@ -481,150 +367,131 @@ const SecuritySection: React.FC<{
       alert('Please enter a valid email address');
       return;
     }
-
     const success = await onUpdateRecoveryEmail(recoveryEmail);
-    if (success) {
-      setShowRecoveryEmail(false);
-    }
+    if (success) setShowRecoveryEmail(false);
   };
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 border-2 border-[#111111] divide-x-2 divide-[#111111]">
         {[
-          { icon: <FaLock className="w-5 h-5" />, label: 'Last Password Change', value: security.lastPasswordChange, color: 'bg-blue-100 text-blue-600' },
-          { icon: <FaQrcode className="w-5 h-5" />, label: 'Backup Codes', value: `${security.backupCodes} remaining`, color: 'bg-green-100 text-green-600' },
-          { icon: <FaCheckCircle className="w-5 h-5" />, label: 'Security Questions', value: `${security.securityQuestions} set`, color: 'bg-yellow-100 text-yellow-600' },
-          { icon: <FaUserCog className="w-5 h-5" />, label: 'Active Devices', value: security.activeDevices.toString(), color: 'bg-purple-100 text-purple-600' }
-        ].map((item, index) => (
-          <motion.div 
-            key={index} 
-            whileHover={{ y: -3 }}
-            className="p-4 bg-white shadow-sm rounded-xl border border-gray-100 flex flex-col items-center text-center"
-          >
-            <div className={`p-3 rounded-full mb-3 ${item.color.split(' ')[0]}`}>
-              <div className={item.color.split(' ')[1]}>{item.icon}</div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-1">{item.label}</p>
-              <p className="font-semibold">{item.value}</p>
-            </div>
-          </motion.div>
+          { icon: <FaLock />, label: 'LAST PWD CHANGE', value: security.lastPasswordChange },
+          { icon: <FaQrcode />, label: 'BACKUP CODES', value: `${security.backupCodes} LEFT` },
+          { icon: <FaCheckCircle />, label: 'SECURITY Q&A', value: `${security.securityQuestions} SET` },
+          { icon: <FaUserCog />, label: 'ACTIVE DEVICES', value: String(security.activeDevices) },
+        ].map((item, i) => (
+          <div key={i} className="p-4 flex flex-col items-center text-center bg-[#F9F9F7] hover:bg-[#E5E5E0] transition-colors">
+            <div className="text-[#111111] text-lg mb-2">{item.icon}</div>
+            <p className="text-[0.6rem] font-black uppercase tracking-widest text-[#525252] mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              {item.label}
+            </p>
+            <p className="font-black text-[#111111] text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>{item.value}</p>
+          </div>
         ))}
       </div>
 
-      {/* Recovery Email Section */}
-      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
-        <div className="flex items-center justify-between">
+      {/* Recovery Email */}
+      <div className="border-2 border-[#111111]">
+        <div className="p-4 border-b-2 border-[#111111] bg-[#E5E5E0] flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h4 className="font-medium text-gray-800 flex items-center gap-2">
-              <FaEnvelope className="text-yellow-600" /> Recovery Email
-            </h4>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              <FaEnvelope className="inline mr-2" />RECOVERY EMAIL
+            </p>
+            <p className="text-sm mt-1 text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
               {security.recoveryEmail || 'No recovery email set'}
             </p>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={() => setShowRecoveryEmail(!showRecoveryEmail)}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+            className="px-4 py-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] text-xs font-black uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            <FaEdit className="inline mr-2" />
-            Update
-          </motion.button>
+            <FaEdit className="inline mr-2" /> UPDATE
+          </button>
         </div>
-
-        {showRecoveryEmail && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mt-4 flex gap-2"
-          >
-            <input
-              type="email"
-              value={recoveryEmail}
-              onChange={(e) => setRecoveryEmail(e.target.value)}
-              placeholder="recovery@example.com"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
-            />
-            <button
-              onClick={handleUpdateEmail}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+        <AnimatePresence>
+          {showRecoveryEmail && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
             >
-              Save
-            </button>
-            <button
-              onClick={() => setShowRecoveryEmail(false)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
-          </motion.div>
-        )}
+              <div className="p-4 flex gap-3">
+                <input
+                  type="email"
+                  value={recoveryEmail}
+                  onChange={(e) => setRecoveryEmail(e.target.value)}
+                  placeholder="recovery@example.com"
+                  className={npInput()}
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                />
+                <button onClick={handleUpdateEmail}
+                  className="px-4 py-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] font-black text-xs uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all whitespace-nowrap"
+                  style={{ fontFamily: "'Inter', sans-serif" }}>
+                  SAVE
+                </button>
+                <button onClick={() => setShowRecoveryEmail(false)}
+                  className="px-4 py-2 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#E5E5E0] transition-all"
+                  style={{ fontFamily: "'Inter', sans-serif" }}>
+                  CANCEL
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Backup Codes Section */}
-      <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between">
+      {/* Backup Codes */}
+      <div className="border-2 border-[#111111] p-4 flex items-center justify-between flex-wrap gap-4 bg-[#F9F9F7]">
         <div>
-          <h4 className="font-medium text-gray-800 flex items-center gap-2">
-            <FaQrcode className="text-green-600" /> Backup Codes
-          </h4>
-          <p className="text-sm text-gray-600 mt-1">
-            You have {security.backupCodes} backup codes remaining
+          <p className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaQrcode className="inline mr-2" />BACKUP CODES
+          </p>
+          <p className="text-sm mt-1 text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
+            {security.backupCodes} backup codes remaining
           </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+        <button
           onClick={onGenerateBackupCodes}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+          className="px-5 py-2.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] text-xs font-black uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all"
+          style={{ fontFamily: "'Inter', sans-serif" }}
         >
-          Generate New
-        </motion.button>
+          GENERATE NEW
+        </button>
       </div>
 
-      <div className="mt-6">
-        <h3 className="font-medium text-gray-800 mb-4 flex items-center gap-2">
-          <FaHistory className="text-indigo-600" /> Recent Login Activity
+      {/* Login History */}
+      <div>
+        <h3 className="text-xs font-black uppercase tracking-widest text-[#525252] mb-3 flex items-center gap-2"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          <FaHistory /> RECENT LOGIN ACTIVITY
         </h3>
-        <div className="space-y-3">
+        <div className="border-2 border-[#111111] divide-y-2 divide-[#111111]">
           {security.loginHistory && security.loginHistory.length > 0 ? (
             security.loginHistory.map((login, index) => (
-              <motion.div 
-                key={index}
-                whileHover={{ x: 3 }}
-                className={`flex items-center justify-between p-4 rounded-xl border ${
-                  login.status === 'success' 
-                    ? 'border-green-100 bg-green-50' 
-                    : 'border-red-100 bg-red-50'
-                }`}
-              >
+              <div key={index} className={`flex items-center justify-between p-4 ${login.status === 'success' ? 'bg-[#F9F9F7]' : 'bg-[#FFF5F5]'} hover:bg-[#E5E5E0] transition-colors`}>
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-full ${
-                    login.status === 'success' ? 'bg-green-100' : 'bg-red-100'
-                  }`}>
-                    <div className={login.status === 'success' ? 'text-green-600' : 'text-red-600'}>
-                      {login.status === 'success' ? <FaCheckCircle /> : <FaExclamationTriangle />}
-                    </div>
-                  </div>
+                  <div className={`w-2.5 h-2.5 border-2 flex-shrink-0 ${login.status === 'success' ? 'bg-[#111111] border-[#111111]' : 'bg-[#CC0000] border-[#CC0000]'}`} />
                   <div>
-                    <p className="font-medium">{login.device}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                      <FaMapMarkerAlt size={10} />
+                    <p className="font-black text-[#111111] text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>{login.device}</p>
+                    <div className="flex items-center gap-2 text-xs text-[#525252] mt-0.5" style={{ fontFamily: "'Lora', serif" }}>
+                      <FaMapMarkerAlt size={9} />
                       <span>{login.location}</span>
-                      <span className="block w-1 h-1 rounded-full bg-gray-300"></span>
+                      <span>·</span>
                       <span>{login.time || new Date(login.timestamp || '').toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
-                <div className={`text-xs px-2 py-1 rounded-full font-medium uppercase ${login.status === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                <span className={`text-[0.6rem] px-2.5 py-1 border font-black uppercase tracking-widest flex-shrink-0 ${login.status === 'success' ? 'border-[#111111] text-[#111111]' : 'border-[#CC0000] text-[#CC0000]'}`}
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                   {login.status}
-                </div>
-              </motion.div>
+                </span>
+              </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-10 text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
               No login history available
             </div>
           )}
@@ -634,7 +501,8 @@ const SecuritySection: React.FC<{
   );
 };
 
-const DocumentsSection: React.FC<{ 
+// ─── DocumentsSection ─────────────────────────────────────────────────────────
+const DocumentsSection: React.FC<{
   documents: IUserProfile['documents'];
   onDocumentUpload: (category: 'identity' | 'financial', formData: FormData) => Promise<void>;
   onDocumentDelete: (category: 'identity' | 'financial', documentId: string) => Promise<void>;
@@ -645,34 +513,22 @@ const DocumentsSection: React.FC<{
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadFormData, setUploadFormData] = useState({
-    documentType: '',
-    number: '',
-    expiryDate: '',
-    status: 'active',
-    institution: '',
-    lastUpdated: ''
+    documentType: '', number: '', expiryDate: '', status: 'active', institution: '', lastUpdated: ''
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadFile(e.target.files[0]);
-    }
+    if (e.target.files && e.target.files[0]) setUploadFile(e.target.files[0]);
   };
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadFile) {
-      alert('Please select a file');
-      return;
-    }
-
+    if (!uploadFile) { alert('Please select a file'); return; }
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append('document', uploadFile);
       formData.append('category', uploadCategory);
       formData.append('documentType', uploadFormData.documentType);
-      
       if (uploadCategory === 'identity') {
         formData.append('number', uploadFormData.number);
         formData.append('expiryDate', uploadFormData.expiryDate);
@@ -681,20 +537,10 @@ const DocumentsSection: React.FC<{
         formData.append('institution', uploadFormData.institution);
         formData.append('lastUpdated', uploadFormData.lastUpdated || new Date().toLocaleDateString());
       }
-
       await onDocumentUpload(uploadCategory, formData);
-      
-      // Reset form
       setShowUploadModal(false);
       setUploadFile(null);
-      setUploadFormData({
-        documentType: '',
-        number: '',
-        expiryDate: '',
-        status: 'active',
-        institution: '',
-        lastUpdated: ''
-      });
+      setUploadFormData({ documentType: '', number: '', expiryDate: '', status: 'active', institution: '', lastUpdated: '' });
     } catch (error) {
       console.error('Upload error:', error);
     } finally {
@@ -710,79 +556,69 @@ const DocumentsSection: React.FC<{
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  const DocRow: React.FC<{
+    doc: any;
+    category: 'identity' | 'financial';
+    icon: React.ReactNode;
+  }> = ({ doc, category, icon }) => (
+    <div className="flex items-center gap-4 p-4 border-2 border-[#111111] bg-[#F9F9F7] hover:bg-[#E5E5E0] transition-all group">
+      <div className="p-3 border-2 border-[#111111] bg-[#E5E5E0] text-[#111111] flex-shrink-0">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <p className="font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{doc.type}</p>
+          {doc.status && (
+            <span className={`text-[0.6rem] px-2 py-0.5 border font-black uppercase tracking-widest ${doc.status === 'active' ? 'border-[#111111] text-[#111111]' : 'border-[#CC0000] text-[#CC0000]'}`}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              {doc.status}
+            </span>
+          )}
+        </div>
+        {doc.number && <p className="text-xs text-[#525252]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>No. {doc.number}</p>}
+        {doc.expiryDate && <p className="text-xs text-[#525252]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>EXP: {doc.expiryDate}</p>}
+        {doc.fileName && <p className="text-xs text-[#525252] truncate" style={{ fontFamily: "'Lora', serif" }}>{doc.fileName} {doc.fileSize ? `· ${formatFileSize(doc.fileSize)}` : ''}</p>}
+      </div>
+      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button onClick={() => onDocumentDownload(category, doc.id, doc.fileName)}
+          className="p-2 border-2 border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all"
+          title="Download" aria-label="Download">
+          <FaDownload className="w-3.5 h-3.5" />
+        </button>
+        <button onClick={() => onDocumentDelete(category, doc.id)}
+          className="p-2 border-2 border-[#CC0000] text-[#CC0000] hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-all"
+          title="Delete" aria-label="Delete">
+          <FaTrash className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-8">
       {/* Identity Documents */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-800 flex items-center gap-2">
-            <FaIdCard className="text-indigo-600" /> Identity Documents
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-black uppercase tracking-widest text-[#111111] flex items-center gap-2"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaIdCard /> IDENTITY DOCUMENTS
           </h3>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setUploadCategory('identity');
-              setShowUploadModal(true);
-            }}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm"
+          <button
+            onClick={() => { setUploadCategory('identity'); setShowUploadModal(true); }}
+            className="px-4 py-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] text-xs font-black uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all flex items-center gap-2"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            <FaUpload className="w-4 h-4" />
-            Upload
-          </motion.button>
+            <FaUpload className="w-3.5 h-3.5" /> UPLOAD
+          </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
           {documents.identity.map((doc: any, index) => (
-            <motion.div 
-              key={doc.id || index} 
-              whileHover={{ y: -3 }}
-              className="flex items-center p-4 bg-white shadow-sm rounded-xl border border-gray-100"
-            >
-              <div className="p-3 rounded-xl bg-indigo-50 mr-4">
-                <FaIdCard className="w-6 h-6 text-indigo-600" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-medium text-gray-900">{doc.type}</h4>
-                  {doc.status && (
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      doc.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {doc.status}
-                    </span>
-                  )}
-                </div>
-                {doc.number && <p className="text-sm text-gray-500">Number: {doc.number}</p>}
-                {doc.expiryDate && <p className="text-sm text-gray-500">Expires: {doc.expiryDate}</p>}
-                {doc.fileName && <p className="text-xs text-gray-400 mt-1">{doc.fileName}</p>}
-                {doc.fileSize && <p className="text-xs text-gray-400">{formatFileSize(doc.fileSize)}</p>}
-              </div>
-              <div className="ml-4 flex gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => onDocumentDownload('identity', doc.id, doc.fileName)}
-                  className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
-                  title="Download"
-                >
-                  <FaDownload className="w-5 h-5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => onDocumentDelete('identity', doc.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                  title="Delete"
-                >
-                  <FaTrash className="w-4 h-4" />
-                </motion.button>
-              </div>
-            </motion.div>
+            <DocRow key={doc.id || index} doc={doc} category="identity" icon={<FaIdCard />} />
           ))}
           {documents.identity.length === 0 && (
-            <div className="col-span-2 text-center py-8 text-gray-400">
-              <FaIdCard className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No identity documents uploaded yet</p>
+            <div className="p-10 border-4 border-dashed border-[#111111] text-center">
+              <FaIdCard className="mx-auto text-4xl text-[#111111] mb-3 opacity-30" />
+              <p className="text-xs font-black uppercase tracking-widest text-[#525252]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                NO IDENTITY DOCUMENTS
+              </p>
             </div>
           )}
         </div>
@@ -790,66 +626,29 @@ const DocumentsSection: React.FC<{
 
       {/* Financial Documents */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-800 flex items-center gap-2">
-            <FaFileInvoiceDollar className="text-indigo-600" /> Financial Documents
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-black uppercase tracking-widest text-[#111111] flex items-center gap-2"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaFilePdf /> FINANCIAL DOCUMENTS
           </h3>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setUploadCategory('financial');
-              setShowUploadModal(true);
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm"
+          <button
+            onClick={() => { setUploadCategory('financial'); setShowUploadModal(true); }}
+            className="px-4 py-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] text-xs font-black uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all flex items-center gap-2"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            <FaUpload className="w-4 h-4" />
-            Upload
-          </motion.button>
+            <FaUpload className="w-3.5 h-3.5" /> UPLOAD
+          </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-2">
           {documents.financial.map((doc: any, index) => (
-            <motion.div 
-              key={doc.id || index} 
-              whileHover={{ y: -3 }}
-              className="flex items-center p-4 bg-white shadow-sm rounded-xl border border-gray-100"
-            >
-              <div className="p-3 rounded-xl bg-green-50 mr-4">
-                <FaFileInvoiceDollar className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-medium text-gray-900">{doc.type}</h4>
-                {doc.institution && <p className="text-sm text-gray-500">{doc.institution}</p>}
-                {doc.lastUpdated && <p className="text-xs text-gray-400 mt-1">Updated {doc.lastUpdated}</p>}
-                {doc.fileName && <p className="text-xs text-gray-400">{doc.fileName}</p>}
-                {doc.fileSize && <p className="text-xs text-gray-400">{formatFileSize(doc.fileSize)}</p>}
-              </div>
-              <div className="ml-4 flex gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => onDocumentDownload('financial', doc.id, doc.fileName)}
-                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                  title="Download"
-                >
-                  <FaDownload className="w-5 h-5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => onDocumentDelete('financial', doc.id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                  title="Delete"
-                >
-                  <FaTrash className="w-4 h-4" />
-                </motion.button>
-              </div>
-            </motion.div>
+            <DocRow key={doc.id || index} doc={doc} category="financial" icon={<FaFileAlt />} />
           ))}
           {documents.financial.length === 0 && (
-            <div className="col-span-2 text-center py-8 text-gray-400">
-              <FaFileInvoiceDollar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No financial documents uploaded yet</p>
+            <div className="p-10 border-4 border-dashed border-[#111111] text-center">
+              <FaFileAlt className="mx-auto text-4xl text-[#111111] mb-3 opacity-30" />
+              <p className="text-xs font-black uppercase tracking-widest text-[#525252]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                NO FINANCIAL DOCUMENTS
+              </p>
             </div>
           )}
         </div>
@@ -862,160 +661,95 @@ const DocumentsSection: React.FC<{
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-            onClick={() => !uploading && setShowUploadModal(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/70"
+            onClick={() => setShowUploadModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
               onClick={(e) => e.stopPropagation()}
+              className="bg-[#F9F9F7] border-4 border-[#111111] w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                  <FaUpload className="text-indigo-600" />
-                  Upload {uploadCategory === 'identity' ? 'Identity' : 'Financial'} Document
+              <div className="p-5 border-b-4 border-[#111111] bg-[#111111] flex items-center justify-between">
+                <h3 className="text-lg font-black text-[#F9F9F7] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  UPLOAD {uploadCategory.toUpperCase()} DOCUMENT
                 </h3>
-                <button
-                  onClick={() => !uploading && setShowUploadModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                  disabled={uploading}
-                >
-                  <FaTimes className="w-5 h-5" />
+                <button onClick={() => setShowUploadModal(false)}
+                  className="p-2 text-[#F9F9F7] hover:text-[#CC0000] transition-colors">
+                  <FaTimes />
                 </button>
               </div>
-
-              <form onSubmit={handleUploadSubmit} className="space-y-4">
-                {/* File Input */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select File *
-                  </label>
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-                    required
-                    disabled={uploading}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Supported: PDF, Images, Office documents (Max 10MB)
-                  </p>
-                </div>
-
-                {/* Document Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Document Type *
-                  </label>
-                  <input
-                    type="text"
-                    value={uploadFormData.documentType}
-                    onChange={(e) => setUploadFormData({...uploadFormData, documentType: e.target.value})}
-                    placeholder={uploadCategory === 'identity' ? 'e.g., Passport, Driver License' : 'e.g., Bank Statement, Tax Return'}
-                    required
-                    disabled={uploading}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
-
-                {/* Category-specific fields */}
-                {uploadCategory === 'identity' ? (
-                  <>
+              <div className="p-6 overflow-y-auto flex-1">
+                <form onSubmit={handleUploadSubmit} className="space-y-4">
+                  {/* File Input */}
+                  <div>
+                    <label className={npLabel}>SELECT FILE *</label>
+                    <input type="file" onChange={handleFileChange} required disabled={uploading}
+                      className={`${npInput()} file:mr-4 file:py-1 file:px-4 file:border-0 file:bg-[#111111] file:text-[#F9F9F7] file:text-xs file:font-black file:uppercase file:tracking-widest file:cursor-pointer`} />
+                  </div>
+                  <div>
+                    <label className={npLabel}>DOCUMENT TYPE *</label>
+                    <input type="text"
+                      value={uploadFormData.documentType}
+                      onChange={(e) => setUploadFormData({ ...uploadFormData, documentType: e.target.value })}
+                      placeholder={uploadCategory === 'identity' ? 'e.g., Passport, Driver License' : 'e.g., Bank Statement'}
+                      required disabled={uploading}
+                      className={npInput()}
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                  </div>
+                  {uploadCategory === 'identity' ? (
+                    <>
+                      <div>
+                        <label className={npLabel}>DOCUMENT NUMBER</label>
+                        <input type="text" value={uploadFormData.number}
+                          onChange={(e) => setUploadFormData({ ...uploadFormData, number: e.target.value })}
+                          placeholder="e.g., A1234567" disabled={uploading}
+                          className={npInput()}
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                      </div>
+                      <div>
+                        <label className={npLabel}>EXPIRY DATE</label>
+                        <input type="text" value={uploadFormData.expiryDate}
+                          onChange={(e) => setUploadFormData({ ...uploadFormData, expiryDate: e.target.value })}
+                          placeholder="e.g., 2028" disabled={uploading}
+                          className={npInput()}
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                      </div>
+                      <div>
+                        <label className={npLabel}>STATUS</label>
+                        <select value={uploadFormData.status}
+                          onChange={(e) => setUploadFormData({ ...uploadFormData, status: e.target.value })}
+                          disabled={uploading} className={npSelect()}>
+                          <option value="active">Active</option>
+                          <option value="expired">Expired</option>
+                        </select>
+                      </div>
+                    </>
+                  ) : (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Document Number
-                      </label>
-                      <input
-                        type="text"
-                        value={uploadFormData.number}
-                        onChange={(e) => setUploadFormData({...uploadFormData, number: e.target.value})}
-                        placeholder="e.g., A1234567"
-                        disabled={uploading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      />
+                      <label className={npLabel}>INSTITUTION</label>
+                      <input type="text" value={uploadFormData.institution}
+                        onChange={(e) => setUploadFormData({ ...uploadFormData, institution: e.target.value })}
+                        placeholder="e.g., HDFC Bank" disabled={uploading}
+                        className={npInput()}
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }} />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="text"
-                        value={uploadFormData.expiryDate}
-                        onChange={(e) => setUploadFormData({...uploadFormData, expiryDate: e.target.value})}
-                        placeholder="e.g., 2028"
-                        disabled={uploading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Status
-                      </label>
-                      <select
-                        value={uploadFormData.status}
-                        onChange={(e) => setUploadFormData({...uploadFormData, status: e.target.value})}
-                        disabled={uploading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      >
-                        <option value="active">Active</option>
-                        <option value="expired">Expired</option>
-                      </select>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Institution
-                      </label>
-                      <input
-                        type="text"
-                        value={uploadFormData.institution}
-                        onChange={(e) => setUploadFormData({...uploadFormData, institution: e.target.value})}
-                        placeholder="e.g., HDFC Bank"
-                        disabled={uploading}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Submit Buttons */}
-                <div className="flex gap-3 mt-6">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowUploadModal(false)}
-                    disabled={uploading}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={uploading}
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {uploading ? (
-                      <>
-                        <FaSpinner className="animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <FaUpload />
-                        Upload
-                      </>
-                    )}
-                  </motion.button>
-                </div>
-              </form>
+                  )}
+                  <div className="flex gap-3 pt-2">
+                    <button type="button" onClick={() => setShowUploadModal(false)} disabled={uploading}
+                      className="flex-1 px-4 py-3 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#E5E5E0] transition-all disabled:opacity-50"
+                      style={{ fontFamily: "'Inter', sans-serif" }}>
+                      CANCEL
+                    </button>
+                    <button type="submit" disabled={uploading}
+                      className="flex-1 px-4 py-3 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      style={{ fontFamily: "'Inter', sans-serif" }}>
+                      {uploading ? <><FaSpinner className="animate-spin" /> UPLOADING…</> : <><FaUpload /> UPLOAD</>}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1024,367 +758,247 @@ const DocumentsSection: React.FC<{
   );
 };
 
-const BillingSection: React.FC<{ 
-  billing: IUserProfile['billing']; 
+// ─── BillingSection ───────────────────────────────────────────────────────────
+const BillingSection: React.FC<{
+  billing: IUserProfile['billing'];
   onAddPaymentMethod: (data: any) => Promise<boolean>;
   onDeletePaymentMethod: (methodId: string) => void;
-  userName: string; // Add userName prop
+  userName: string;
 }> = ({ billing, onAddPaymentMethod, onDeletePaymentMethod, userName }) => {
   const [showAddCard, setShowAddCard] = useState(false);
   const [cardData, setCardData] = useState({
-    type: 'credit',
-    provider: 'visa',
-    lastFour: '',
-    expiryDate: '',
-    cardHolderName: userName, // Auto-fill with user's name
-    isDefault: false
+    type: 'credit', provider: 'visa', lastFour: '', expiryDate: '',
+    cardHolderName: userName, isDefault: false
   });
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
 
-  // Auto-fill cardholder name when userName changes or card form opens
   useEffect(() => {
     if (showAddCard && userName) {
-      setCardData(prev => ({
-        ...prev,
-        cardHolderName: userName
-      }));
+      setCardData(prev => ({ ...prev, cardHolderName: userName }));
     }
   }, [showAddCard, userName]);
 
-  // Validation functions
   const validateCardHolderName = (name: string): string | null => {
-    if (!name || name.trim() === '') {
-      return 'Cardholder name is required';
-    }
-    if (name.length < 3 || name.length > 50) {
-      return 'Name must be between 3 and 50 characters';
-    }
-    if (!/^[a-zA-Z\s'-]+$/.test(name)) {
-      return 'Name can only contain letters, spaces, hyphens, and apostrophes';
-    }
+    if (!name || name.trim() === '') return 'Cardholder name is required';
+    if (name.length < 3 || name.length > 50) return 'Name must be between 3 and 50 characters';
+    if (!/^[a-zA-Z\s'-]+$/.test(name)) return 'Name can only contain letters, spaces, hyphens, and apostrophes';
     return null;
   };
-
   const validateLastFourDigits = (digits: string): string | null => {
-    if (!digits || digits.trim() === '') {
-      return 'Last 4 digits are required';
-    }
-    if (!/^\d{4}$/.test(digits)) {
-      return 'Must be exactly 4 digits';
-    }
+    if (!digits || digits.trim() === '') return 'Last 4 digits are required';
+    if (!/^\d{4}$/.test(digits)) return 'Must be exactly 4 digits';
     return null;
   };
-
   const validateExpiryDate = (expiry: string): string | null => {
-    if (!expiry || expiry.trim() === '') {
-      return 'Expiry date is required';
-    }
-    
-    // Check format MM/YY
+    if (!expiry || expiry.trim() === '') return 'Expiry date is required';
     const expiryPattern = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
-    if (!expiryPattern.test(expiry)) {
-      return 'Invalid format. Use MM/YY (e.g., 12/25)';
-    }
-
-    // Check if card is not expired
+    if (!expiryPattern.test(expiry)) return 'Invalid format. Use MM/YY (e.g., 12/25)';
     const [month, year] = expiry.split('/').map(Number);
     const currentDate = new Date();
-    const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits
+    const currentYear = currentDate.getFullYear() % 100;
     const currentMonth = currentDate.getMonth() + 1;
-
-    if (year < currentYear || (year === currentYear && month < currentMonth)) {
-      return 'Card has expired';
-    }
-
-    // Check if expiry is not too far in future (max 20 years)
-    if (year > currentYear + 20) {
-      return 'Expiry date is too far in the future';
-    }
-
+    if (year < currentYear || (year === currentYear && month < currentMonth)) return 'Card has expired';
+    if (year > currentYear + 20) return 'Expiry date is too far in the future';
     return null;
   };
-
-  // Format expiry date as user types
   const handleExpiryChange = (value: string) => {
-    // Remove all non-digit characters
-    let cleaned = value.replace(/\D/g, '');
-    
-    // Limit to 4 digits (MMYY)
-    cleaned = cleaned.slice(0, 4);
-    
-    // Auto-format with slash
-    if (cleaned.length >= 2) {
-      cleaned = cleaned.slice(0, 2) + '/' + cleaned.slice(2);
-    }
-    
+    let cleaned = value.replace(/\D/g, '').slice(0, 4);
+    if (cleaned.length >= 2) cleaned = cleaned.slice(0, 2) + '/' + cleaned.slice(2);
     setCardData({ ...cardData, expiryDate: cleaned });
-    
-    // Clear error when user starts typing
-    if (cardErrors.expiryDate) {
-      setCardErrors(prev => ({ ...prev, expiryDate: '' }));
-    }
+    if (cardErrors.expiryDate) setCardErrors(prev => ({ ...prev, expiryDate: '' }));
   };
-
-  // Clear error when field is changed
-  const clearError = (field: string) => {
-    setCardErrors(prev => ({ ...prev, [field]: '' }));
-  };
-
+  const clearError = (field: string) => setCardErrors(prev => ({ ...prev, [field]: '' }));
   const validateCardForm = (): boolean => {
     const errors: Record<string, string> = {};
-
     const nameError = validateCardHolderName(cardData.cardHolderName);
     if (nameError) errors.cardHolderName = nameError;
-
     const lastFourError = validateLastFourDigits(cardData.lastFour);
     if (lastFourError) errors.lastFour = lastFourError;
-
     const expiryError = validateExpiryDate(cardData.expiryDate);
     if (expiryError) errors.expiryDate = expiryError;
-
     setCardErrors(errors);
-
-    if (Object.keys(errors).length > 0) {
-      console.log('❌ Card validation failed:', errors);
-      return false;
-    }
-
-    console.log('✅ Card validation passed');
-    return true;
+    return Object.keys(errors).length === 0;
   };
-
   const handleAddCard = async () => {
-    console.log('🔍 Validating card form...');
-    
-    if (!validateCardForm()) {
-      alert('⚠️ Please fix the validation errors before adding the card');
-      return;
-    }
-
+    if (!validateCardForm()) { alert('⚠️ Please fix the validation errors before adding the card'); return; }
     const success = await onAddPaymentMethod(cardData);
     if (success) {
       setShowAddCard(false);
-      setCardData({
-        type: 'credit',
-        provider: 'visa',
-        lastFour: '',
-        expiryDate: '',
-        cardHolderName: userName, // Reset to user's name
-        isDefault: false
-      });
-      setCardErrors({}); // Clear errors
+      setCardData({ type: 'credit', provider: 'visa', lastFour: '', expiryDate: '', cardHolderName: userName, isDefault: false });
+      setCardErrors({});
     }
   };
 
   return (
     <div className="space-y-8">
+      {/* Payment Methods */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-800 flex items-center gap-2">
-            <FaCreditCard className="text-indigo-600" /> Payment Methods
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-black uppercase tracking-widest text-[#111111] flex items-center gap-2"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaCreditCard /> PAYMENT METHODS
           </h3>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowAddCard(!showAddCard)}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm"
-          >
-            <FaCreditCard className="w-4 h-4" />
-            Add Card
-          </motion.button>
+          <button onClick={() => setShowAddCard(!showAddCard)}
+            className="px-4 py-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] text-xs font-black uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all flex items-center gap-2"
+            style={{ fontFamily: "'Inter', sans-serif" }}>
+            <FaCreditCard className="w-3.5 h-3.5" /> ADD CARD
+          </button>
         </div>
 
-        {showAddCard && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mb-4 p-4 bg-indigo-50 rounded-xl border border-indigo-200"
-          >
-            <h4 className="font-medium text-gray-800 mb-3">Add New Payment Method</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Card Type</label>
-                <select
-                  value={cardData.type}
-                  onChange={(e) => setCardData({ ...cardData, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="credit">Credit</option>
-                  <option value="debit">Debit</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
-                <select
-                  value={cardData.provider}
-                  onChange={(e) => setCardData({ ...cardData, provider: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="visa">Visa</option>
-                  <option value="mastercard">Mastercard</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Card Holder Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={cardData.cardHolderName}
-                  onChange={(e) => {
-                    setCardData({ ...cardData, cardHolderName: e.target.value });
-                    clearError('cardHolderName');
-                  }}
-                  placeholder="John Doe"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                    cardErrors.cardHolderName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {cardErrors.cardHolderName && (
-                  <ValidationError message={cardErrors.cardHolderName} />
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last 4 Digits <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={cardData.lastFour}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setCardData({ ...cardData, lastFour: val });
-                    clearError('lastFour');
-                  }}
-                  placeholder="1234"
-                  maxLength={4}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                    cardErrors.lastFour ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {cardErrors.lastFour && (
-                  <ValidationError message={cardErrors.lastFour} />
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Expiry Date (MM/YY) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={cardData.expiryDate}
-                  onChange={(e) => handleExpiryChange(e.target.value)}
-                  placeholder="12/25"
-                  maxLength={5}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                    cardErrors.expiryDate ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {cardErrors.expiryDate && (
-                  <ValidationError message={cardErrors.expiryDate} />
-                )}
-              </div>
-              <div className="flex items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={cardData.isDefault}
-                    onChange={(e) => setCardData({ ...cardData, isDefault: e.target.checked })}
-                    className="w-4 h-4 text-indigo-600"
-                  />
-                  <span className="text-sm text-gray-700">Set as default</span>
-                </label>
-              </div>
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button
-                onClick={handleAddCard}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                Add Card
-              </button>
-              <button
-                onClick={() => setShowAddCard(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {billing.paymentMethods.map((method, index) => (
-            <motion.div 
-              key={method.id || index} 
-              whileHover={{ y: -3 }}
-              className={`p-4 bg-white shadow-sm rounded-xl border ${method.isDefault ? 'border-indigo-200' : 'border-gray-100'} relative group`}
+        {/* Add Card Form */}
+        <AnimatePresence>
+          {showAddCard && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
             >
+              <div className="mb-4 p-5 border-2 border-[#111111] bg-[#E5E5E0]">
+                <h4 className="text-xs font-black uppercase tracking-widest text-[#111111] mb-4" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  NEW PAYMENT METHOD
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={npLabel}>CARD TYPE</label>
+                    <select value={cardData.type} onChange={(e) => setCardData({ ...cardData, type: e.target.value })}
+                      className={npSelect()}>
+                      <option value="credit">Credit</option>
+                      <option value="debit">Debit</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={npLabel}>PROVIDER</label>
+                    <select value={cardData.provider} onChange={(e) => setCardData({ ...cardData, provider: e.target.value })}
+                      className={npSelect()}>
+                      <option value="visa">Visa</option>
+                      <option value="mastercard">Mastercard</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={npLabel}>CARDHOLDER NAME *</label>
+                    <input type="text" value={cardData.cardHolderName}
+                      onChange={(e) => { setCardData({ ...cardData, cardHolderName: e.target.value }); clearError('cardHolderName'); }}
+                      placeholder="John Doe"
+                      className={npInput(!!cardErrors.cardHolderName)}
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                    <ValidationError message={cardErrors.cardHolderName} />
+                  </div>
+                  <div>
+                    <label className={npLabel}>LAST 4 DIGITS *</label>
+                    <input type="text" value={cardData.lastFour}
+                      onChange={(e) => { const val = e.target.value.replace(/\D/g, '').slice(0, 4); setCardData({ ...cardData, lastFour: val }); clearError('lastFour'); }}
+                      placeholder="1234" maxLength={4}
+                      className={npInput(!!cardErrors.lastFour)}
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                    <ValidationError message={cardErrors.lastFour} />
+                  </div>
+                  <div>
+                    <label className={npLabel}>EXPIRY (MM/YY) *</label>
+                    <input type="text" value={cardData.expiryDate}
+                      onChange={(e) => handleExpiryChange(e.target.value)}
+                      placeholder="12/25" maxLength={5}
+                      className={npInput(!!cardErrors.expiryDate)}
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                    <ValidationError message={cardErrors.expiryDate} />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" checked={cardData.isDefault}
+                      onChange={(e) => setCardData({ ...cardData, isDefault: e.target.checked })}
+                      className="w-5 h-5 border-2 border-[#111111] bg-[#F9F9F7] checked:bg-[#111111] appearance-none flex-shrink-0" />
+                    <label className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                      SET AS DEFAULT
+                    </label>
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-5">
+                  <button onClick={handleAddCard}
+                    className="px-6 py-2.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all"
+                    style={{ fontFamily: "'Inter', sans-serif" }}>
+                    ADD CARD
+                  </button>
+                  <button onClick={() => setShowAddCard(false)}
+                    className="px-6 py-2.5 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all"
+                    style={{ fontFamily: "'Inter', sans-serif" }}>
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Cards grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {billing.paymentMethods.map((method, index) => (
+            <div key={method.id || index}
+              className={`relative p-4 border-2 ${method.isDefault ? 'border-[#111111] bg-[#111111] text-[#F9F9F7]' : 'border-[#111111] bg-[#F9F9F7] text-[#111111]'} group hover:shadow-[4px_4px_0px_0px_#111111] transition-all`}>
               <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${
-                  method.provider === 'visa' ? 'bg-blue-50' : 'bg-orange-50'
-                }`}>
-                  {method.provider === 'visa' ? (
-                    <FaCcVisa className="w-8 h-8 text-blue-600" />
-                  ) : (
-                    <FaCcMastercard className="w-8 h-8 text-orange-600" />
-                  )}
+                <div className={`p-3 border-2 ${method.isDefault ? 'border-[#F9F9F7]' : 'border-[#111111] bg-[#E5E5E0]'}`}>
+                  {method.provider === 'visa'
+                    ? <FaCcVisa className={`w-8 h-8 ${method.isDefault ? 'text-[#F9F9F7]' : 'text-[#111111]'}`} />
+                    : <FaCcMastercard className={`w-8 h-8 ${method.isDefault ? 'text-[#F9F9F7]' : 'text-[#111111]'}`} />}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">{method.type.charAt(0).toUpperCase() + method.type.slice(1)} Card</h4>
+                    <p className="font-black uppercase tracking-wide text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      {method.type.charAt(0).toUpperCase() + method.type.slice(1)} Card
+                    </p>
                     {method.isDefault && (
-                      <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
-                        Default
-                      </span>
+                      <span className="text-[0.6rem] px-2 py-0.5 border border-[#F9F9F7] font-black uppercase tracking-widest"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}>DEFAULT</span>
                     )}
                   </div>
-                  <p className="text-gray-600 mt-1">•••• {method.lastFour}</p>
-                  <p className="text-sm text-gray-500 mt-1">Expires {method.expiryDate}</p>
+                  <p className="mt-0.5 font-mono text-sm opacity-80">•••• {method.lastFour}</p>
+                  <p className="text-xs opacity-60 mt-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>EXP {method.expiryDate}</p>
                 </div>
               </div>
-              <button
-                onClick={() => method.id && onDeletePaymentMethod(method.id)}
-                className="absolute top-2 right-2 p-2 bg-red-50 text-red-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"
-              >
+              <button onClick={() => method.id && onDeletePaymentMethod(method.id)}
+                className="absolute top-2 right-2 p-2 border-2 border-[#CC0000] text-[#CC0000] opacity-0 group-hover:opacity-100 hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-all"
+                aria-label="Delete card">
                 <FaTrash className="w-3 h-3" />
               </button>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
 
+      {/* Invoices Table */}
       <div>
-        <h3 className="font-medium text-gray-800 mb-4 flex items-center gap-2">
-          <FaFileInvoiceDollar className="text-indigo-600" /> Recent Invoices
+        <h3 className="text-xs font-black uppercase tracking-widest text-[#111111] mb-3 flex items-center gap-2"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          <FaFileInvoiceDollar /> RECENT INVOICES
         </h3>
-        <div className="bg-gray-50 rounded-xl overflow-hidden">
+        <div className="border-2 border-[#111111] overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="text-left font-medium text-gray-600 p-3">Invoice ID</th>
-                <th className="text-left font-medium text-gray-600 p-3">Date</th>
-                <th className="text-left font-medium text-gray-600 p-3">Amount</th>
-                <th className="text-left font-medium text-gray-600 p-3">Status</th>
-                <th className="text-left font-medium text-gray-600 p-3"></th>
+              <tr className="bg-[#111111]">
+                {['INVOICE ID', 'DATE', 'AMOUNT', 'STATUS', ''].map((h, i) => (
+                  <th key={i} className="text-left text-[0.6rem] font-black uppercase tracking-widest text-[#E5E5E0] p-3"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y-2 divide-[#111111]">
               {billing.invoices.map((invoice, index) => (
-                <tr key={invoice.id || index} className="hover:bg-white transition-colors">
-                  <td className="p-3 text-gray-900 font-medium">{invoice.invoiceId || invoice.id}</td>
-                  <td className="p-3 text-gray-600">{invoice.date}</td>
-                  <td className="p-3 text-gray-900">₹{invoice.amount}</td>
+                <tr key={invoice.id || index} className="hover:bg-[#E5E5E0] transition-colors bg-[#F9F9F7]">
+                  <td className="p-3 font-black text-[#111111] text-sm" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {invoice.invoiceId || invoice.id}
+                  </td>
+                  <td className="p-3 text-[#525252] text-sm" style={{ fontFamily: "'Lora', serif" }}>{invoice.date}</td>
+                  <td className="p-3 font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>₹{invoice.amount}</td>
                   <td className="p-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      invoice.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
+                    <span className={`text-[0.6rem] px-2.5 py-1 border font-black uppercase tracking-widest ${invoice.status === 'paid' ? 'border-[#111111] bg-[#111111] text-[#F9F9F7]' : 'border-[#111111] text-[#111111]'}`}
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                       {invoice.status}
                     </span>
                   </td>
                   <td className="p-3">
-                    <button className="p-1.5 hover:bg-gray-100 rounded-lg">
-                      <FaDownload className="w-4 h-4 text-gray-600" />
+                    <button className="p-1.5 border-2 border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all"
+                      aria-label="Download invoice">
+                      <FaDownload className="w-3.5 h-3.5" />
                     </button>
                   </td>
                 </tr>
@@ -1397,6 +1011,7 @@ const BillingSection: React.FC<{
   );
 };
 
+// ─── Main UserProfile Component ───────────────────────────────────────────────
 const UserProfile: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('personal');
@@ -1407,575 +1022,288 @@ const UserProfile: React.FC = () => {
   const [editFormData, setEditFormData] = useState<IUserProfile | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  
+
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
-  
+
   const [userProfile, setUserProfile] = useState<IUserProfile>({
-    name: '',
-    email: '',
-    role: 'Free User',
-    preferences: {
-      theme: 'auto',
-      notifications: true,
-      language: 'English'
-    },
+    name: '', email: '', role: 'Free User',
+    preferences: { theme: 'auto', notifications: true, language: 'English' },
     avatar: 'https://via.placeholder.com/150',
-    memberSince: 'Just now',
-    lastLogin: 'Just now',
-    securityScore: 50,
-    twoFactorEnabled: false,
-    totalDevices: 0,
-    activeSubscription: 'Free Plan',
-    nextBilling: 'N/A',
-    personalInfo: {
-      dateOfBirth: "15 March 1990",
-      phoneNumber: "+91 98765 43210",
-      nationality: "Indian",
-      maritalStatus: "Married",
-      gender: "Male"
-    },
+    memberSince: 'Just now', lastLogin: 'Just now', securityScore: 50,
+    twoFactorEnabled: false, totalDevices: 0, activeSubscription: 'Free Plan', nextBilling: 'N/A',
+    personalInfo: { dateOfBirth: '15 March 1990', phoneNumber: '+91 98765 43210', nationality: 'Indian', maritalStatus: 'Married', gender: 'Male' },
     professionalInfo: {
-      occupation: "Senior Software Engineer",
-      company: "Tech Innovations Ltd",
-      department: "Engineering",
-      employeeId: "EMP123456",
-      experience: "8+ years",
+      occupation: 'Senior Software Engineer', company: 'Tech Innovations Ltd',
+      department: 'Engineering', employeeId: 'EMP123456', experience: '8+ years',
       education: [
-        {
-          degree: "Master of Computer Applications",
-          institution: "Delhi University",
-          year: "2012"
-        },
-        {
-          degree: "Bachelor of Computer Science",
-          institution: "Mumbai University",
-          year: "2009"
-        }
+        { degree: 'Master of Computer Applications', institution: 'Delhi University', year: '2012' },
+        { degree: 'Bachelor of Computer Science', institution: 'Mumbai University', year: '2009' },
       ]
     },
-    address: {
-      street: "123 Cyber City, Phase 1",
-      city: "Gurugram",
-      state: "Haryana",
-      country: "India",
-      postalCode: "122002"
-    },
+    address: { street: '123 Cyber City, Phase 1', city: 'Gurugram', state: 'Haryana', country: 'India', postalCode: '122002' },
     socialProfiles: {
-      linkedin: "https://linkedin.com/in/rahulsingh",
-      github: "https://github.com/rahulsingh",
-      twitter: "https://twitter.com/rahulsingh",
-      website: "https://rahulsingh.dev"
+      linkedin: 'https://linkedin.com/in/rahulsingh', github: 'https://github.com/rahulsingh',
+      twitter: 'https://twitter.com/rahulsingh', website: 'https://rahulsingh.dev'
     },
     identityDocuments: [
-      {
-        type: "Passport",
-        number: "********1234",
-        expiryDate: "2028"
-      },
-      {
-        type: "National ID",
-        number: "********5678",
-        expiryDate: "2025"
-      }
+      { type: 'Passport', number: '********1234', expiryDate: '2028' },
+      { type: 'National ID', number: '********5678', expiryDate: '2025' },
     ],
-    bankingInfo: {
-      accountHolder: "Rahul Singh",
-      accountType: "Savings", 
-      lastFourDigits: "4321"
-    },
+    bankingInfo: { accountHolder: 'Rahul Singh', accountType: 'Savings', lastFourDigits: '4321' },
     security: {
-      lastPasswordChange: '1 month ago',
-      loginAttempts: 5,
-      securityQuestions: 3,
+      lastPasswordChange: '1 month ago', loginAttempts: 5, securityQuestions: 3,
       activeDevices: 2,
       loginHistory: [
         { device: 'iPhone 12', location: 'New Delhi, India', time: '2 hours ago', status: 'success' },
         { device: 'MacBook Pro', location: 'Gurugram, India', time: '1 day ago', status: 'success' },
-        { device: 'Windows PC', location: 'Mumbai, India', time: '3 days ago', status: 'failed' }
+        { device: 'Windows PC', location: 'Mumbai, India', time: '3 days ago', status: 'failed' },
       ],
-      recoveryEmail: 'RahulSingh05.recovery@gmail.com',
-      backupCodes: 5
+      recoveryEmail: 'RahulSingh05.recovery@gmail.com', backupCodes: 5
     },
-    documents: {
-      identity: [],
-      financial: []
-    },
+    documents: { identity: [], financial: [] },
     billing: {
       paymentMethods: [
         { type: 'credit', provider: 'visa', lastFour: '1234', expiryDate: '12/24', isDefault: true },
-        { type: 'debit', provider: 'mastercard', lastFour: '5678', expiryDate: '11/23', isDefault: false }
+        { type: 'debit', provider: 'mastercard', lastFour: '5678', expiryDate: '11/23', isDefault: false },
       ],
       invoices: [
         { id: 'INV001', date: '01/01/2023', amount: 7999, status: 'paid', downloadUrl: '#' },
-        { id: 'INV002', date: '02/01/2023', amount: 7999, status: 'pending', downloadUrl: '#' }
+        { id: 'INV002', date: '02/01/2023', amount: 7999, status: 'pending', downloadUrl: '#' },
       ],
       subscriptionHistory: [
         { plan: 'Basic Plan', startDate: '01/01/2022', endDate: '12/31/2022', amount: 3999, status: 'expired' },
-        { plan: 'Premium Plan', startDate: '01/01/2023', endDate: '12/31/2023', amount: 7999, status: 'active' }
+        { plan: 'Premium Plan', startDate: '01/01/2023', endDate: '12/31/2023', amount: 7999, status: 'active' },
       ]
     }
   });
 
-  // ==================== PHONE FORMATTING FUNCTIONS ====================
-  
-  // Get country code from nationality
+  // ── Phone formatting ────────────────────────────────────────────────────────
   const getCountryCode = (nationality: string): string => {
     if (!nationality) return '';
-    const normalizedNationality = nationality.toLowerCase().trim();
-    return COUNTRY_PHONE_CODES[normalizedNationality] || '';
+    return COUNTRY_PHONE_CODES[nationality.toLowerCase().trim()] || '';
   };
-
-  // Format phone number with spacing after every 5 digits
   const formatPhoneNumber = (phone: string, countryCode: string): string => {
-    // If input is empty or just spaces, return empty
     if (!phone || phone.trim() === '') return '';
-    
-    // Remove all non-digit characters except +
     let cleaned = phone.replace(/[^\d+]/g, '');
-    
-    // Extract or use country code
-    let code = '';
-    let phoneDigits = '';
-    
+    let code = ''; let phoneDigits = '';
     if (cleaned.startsWith('+')) {
-      // If starts with +, extract the country code we know
       if (countryCode) {
-        // Use the known country code
         code = countryCode;
-        // Remove the country code part and get remaining digits
         phoneDigits = cleaned.substring(countryCode.length).replace(/\D/g, '');
       } else {
-        // Try to extract country code (1-3 digits after +)
         const match = cleaned.match(/^(\+\d{1,3})(.*)$/);
-        if (match) {
-          code = match[1];
-          phoneDigits = match[2].replace(/\D/g, '');
-        }
+        if (match) { code = match[1]; phoneDigits = match[2].replace(/\D/g, ''); }
       }
     } else {
-      // No + at start
-      if (countryCode) {
-        code = countryCode;
-        phoneDigits = cleaned.replace(/\D/g, '');
-      } else {
-        // No country code, just return cleaned digits
-        return cleaned;
-      }
+      if (countryCode) { code = countryCode; phoneDigits = cleaned.replace(/\D/g, ''); }
+      else return cleaned;
     }
-    
-    // If no digits yet, just return country code with space
-    if (!phoneDigits) {
-      return code + ' ';
-    }
-    
-    // Split into groups of 5 digits
+    if (!phoneDigits) return code + ' ';
     const formatted = phoneDigits.match(/.{1,5}/g)?.join(' ') || phoneDigits;
     return `${code} ${formatted}`;
   };
 
-  // ==================== VALIDATION FUNCTIONS ====================
-  
-  // Validate name
+  // ── Validation ──────────────────────────────────────────────────────────────
   const validateName = (name: string): string | null => {
-    if (!name || name.trim() === '') {
-      return 'Name is required';
-    }
-    if (name.length < 2 || name.length > 50) {
-      return 'Name must be between 2 and 50 characters';
-    }
-    if (!/^[a-zA-Z\s'-]+$/.test(name)) {
-      return 'Name can only contain letters, spaces, hyphens, and apostrophes';
-    }
+    if (!name || name.trim() === '') return 'Name is required';
+    if (name.length < 2 || name.length > 50) return 'Name must be between 2 and 50 characters';
+    if (!/^[a-zA-Z\s'-]+$/.test(name)) return 'Name can only contain letters, spaces, hyphens, and apostrophes';
     return null;
   };
-
-  // Validate phone number
   const validatePhoneNumber = (phone: string): string | null => {
-    if (!phone) return null; // Optional field
-    if (!/^\+?[\d\s-()]+$/.test(phone)) {
-      return 'Phone number format is invalid';
-    }
+    if (!phone) return null;
+    if (!/^\+?[\d\s-()]+$/.test(phone)) return 'Phone number format is invalid';
     const digitsOnly = phone.replace(/\D/g, '');
-    if (digitsOnly.length < 10 || digitsOnly.length > 15) {
-      return 'Phone number must be between 10 and 15 digits';
-    }
+    if (digitsOnly.length < 10 || digitsOnly.length > 15) return 'Phone number must be between 10 and 15 digits';
     return null;
   };
-
-  // Validate date of birth
   const validateDateOfBirth = (dob: string): string | null => {
-    if (!dob) return null; // Optional field
+    if (!dob) return null;
     const date = new Date(dob);
     const now = new Date();
     const age = now.getFullYear() - date.getFullYear();
-    if (age < 13) {
-      return 'You must be at least 13 years old';
-    }
-    if (age > 120) {
-      return 'Please enter a valid date of birth';
-    }
+    if (age < 13) return 'You must be at least 13 years old';
+    if (age > 120) return 'Please enter a valid date of birth';
     return null;
   };
-
-  // Validate URL
   const validateURL = (url: string, fieldName: string): string | null => {
-    if (!url) return null; // Optional field
+    if (!url) return null;
     try {
       new URL(url);
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        return `${fieldName} must start with http:// or https://`;
-      }
+      if (!url.startsWith('http://') && !url.startsWith('https://')) return `${fieldName} must start with http:// or https://`;
       return null;
-    } catch {
-      return `${fieldName} is not a valid URL`;
-    }
+    } catch { return `${fieldName} is not a valid URL`; }
   };
-
-  // Validate postal code
   const validatePostalCode = (code: string): string | null => {
-    if (!code) return null; // Optional field
-    if (!/^[A-Z0-9\s-]+$/i.test(code)) {
-      return 'Postal code format is invalid';
-    }
-    if (code.length < 3 || code.length > 10) {
-      return 'Postal code must be between 3 and 10 characters';
-    }
+    if (!code) return null;
+    if (!/^[A-Z0-9\s-]+$/i.test(code)) return 'Postal code format is invalid';
+    if (code.length < 3 || code.length > 10) return 'Postal code must be between 3 and 10 characters';
     return null;
   };
-
-  // Validate employee ID
   const validateEmployeeId = (id: string): string | null => {
-    if (!id) return null; // Optional field
-    if (!/^[A-Za-z0-9-_]+$/.test(id)) {
-      return 'Employee ID can only contain letters, numbers, hyphens, and underscores';
-    }
-    if (id.length > 20) {
-      return 'Employee ID cannot exceed 20 characters';
-    }
+    if (!id) return null;
+    if (!/^[A-Za-z0-9-_]+$/.test(id)) return 'Employee ID can only contain letters, numbers, hyphens, and underscores';
+    if (id.length > 20) return 'Employee ID cannot exceed 20 characters';
     return null;
   };
-
-  // Validate city/state/country names
   const validateLocationName = (name: string, fieldName: string): string | null => {
-    if (!name) return null; // Optional field
-    if (name.length < 2 || name.length > 50) {
-      return `${fieldName} must be between 2 and 50 characters`;
-    }
-    if (!/^[a-zA-Z\s-]+$/.test(name)) {
-      return `${fieldName} can only contain letters, spaces, and hyphens`;
-    }
+    if (!name) return null;
+    if (name.length < 2 || name.length > 50) return `${fieldName} must be between 2 and 50 characters`;
+    if (!/^[a-zA-Z\s-]+$/.test(name)) return `${fieldName} can only contain letters, spaces, and hyphens`;
     return null;
   };
-
-  // Validate text length
   const validateLength = (text: string, fieldName: string, min: number, max: number): string | null => {
-    if (!text) return null; // Optional field
-    if (text.length < min || text.length > max) {
-      return `${fieldName} must be between ${min} and ${max} characters`;
-    }
+    if (!text) return null;
+    if (text.length < min || text.length > max) return `${fieldName} must be between ${min} and ${max} characters`;
     return null;
   };
-
-  // Comprehensive form validation
   const validateEditForm = (): boolean => {
     if (!editFormData) return false;
-
     const errors: Record<string, string> = {};
-
-    // Validate name (required)
     const nameError = validateName(editFormData.name);
     if (nameError) errors.name = nameError;
-
-    // Validate personal info (only if values are provided)
     if (editFormData.personalInfo) {
-      // Only validate phone if it has a value
-      if (editFormData.personalInfo.phoneNumber && editFormData.personalInfo.phoneNumber.trim()) {
-        const phoneError = validatePhoneNumber(editFormData.personalInfo.phoneNumber);
-        if (phoneError) errors['personalInfo.phoneNumber'] = phoneError;
+      if (editFormData.personalInfo.phoneNumber?.trim()) {
+        const e = validatePhoneNumber(editFormData.personalInfo.phoneNumber);
+        if (e) errors['personalInfo.phoneNumber'] = e;
       }
-
-      // Only validate DOB if it has a value
-      if (editFormData.personalInfo.dateOfBirth && editFormData.personalInfo.dateOfBirth.trim()) {
-        const dobError = validateDateOfBirth(editFormData.personalInfo.dateOfBirth);
-        if (dobError) errors['personalInfo.dateOfBirth'] = dobError;
+      if (editFormData.personalInfo.dateOfBirth?.trim()) {
+        const e = validateDateOfBirth(editFormData.personalInfo.dateOfBirth);
+        if (e) errors['personalInfo.dateOfBirth'] = e;
       }
-
-      // Only validate nationality if it has a value
-      if (editFormData.personalInfo.nationality && editFormData.personalInfo.nationality.trim()) {
-        const nationalityError = validateLength(editFormData.personalInfo.nationality, 'Nationality', 2, 50);
-        if (nationalityError) errors['personalInfo.nationality'] = nationalityError;
+      if (editFormData.personalInfo.nationality?.trim()) {
+        const e = validateLength(editFormData.personalInfo.nationality, 'Nationality', 2, 50);
+        if (e) errors['personalInfo.nationality'] = e;
       }
     }
-
-    // Validate professional info (only if values are provided)
     if (editFormData.professionalInfo) {
-      if (editFormData.professionalInfo.occupation && editFormData.professionalInfo.occupation.trim()) {
-        const occupationError = validateLength(editFormData.professionalInfo.occupation, 'Occupation', 2, 100);
-        if (occupationError) errors['professionalInfo.occupation'] = occupationError;
+      if (editFormData.professionalInfo.occupation?.trim()) {
+        const e = validateLength(editFormData.professionalInfo.occupation, 'Occupation', 2, 100);
+        if (e) errors['professionalInfo.occupation'] = e;
       }
-
-      if (editFormData.professionalInfo.company && editFormData.professionalInfo.company.trim()) {
-        const companyError = validateLength(editFormData.professionalInfo.company, 'Company', 2, 100);
-        if (companyError) errors['professionalInfo.company'] = companyError;
+      if (editFormData.professionalInfo.company?.trim()) {
+        const e = validateLength(editFormData.professionalInfo.company, 'Company', 2, 100);
+        if (e) errors['professionalInfo.company'] = e;
       }
-
-      if (editFormData.professionalInfo.department && editFormData.professionalInfo.department.trim()) {
-        const deptError = validateLength(editFormData.professionalInfo.department, 'Department', 0, 50);
-        if (deptError) errors['professionalInfo.department'] = deptError;
+      if (editFormData.professionalInfo.department?.trim()) {
+        const e = validateLength(editFormData.professionalInfo.department, 'Department', 0, 50);
+        if (e) errors['professionalInfo.department'] = e;
       }
-
-      if (editFormData.professionalInfo.employeeId && editFormData.professionalInfo.employeeId.trim()) {
-        const empIdError = validateEmployeeId(editFormData.professionalInfo.employeeId);
-        if (empIdError) errors['professionalInfo.employeeId'] = empIdError;
+      if (editFormData.professionalInfo.employeeId?.trim()) {
+        const e = validateEmployeeId(editFormData.professionalInfo.employeeId);
+        if (e) errors['professionalInfo.employeeId'] = e;
       }
-
-      if (editFormData.professionalInfo.experience && editFormData.professionalInfo.experience.trim()) {
-        const expError = validateLength(editFormData.professionalInfo.experience, 'Experience', 0, 50);
-        if (expError) errors['professionalInfo.experience'] = expError;
+      if (editFormData.professionalInfo.experience?.trim()) {
+        const e = validateLength(editFormData.professionalInfo.experience, 'Experience', 0, 50);
+        if (e) errors['professionalInfo.experience'] = e;
       }
     }
-
-    // Validate address (only if values are provided)
     if (editFormData.address) {
-      if (editFormData.address.street && editFormData.address.street.trim()) {
-        const streetError = validateLength(editFormData.address.street, 'Street address', 5, 200);
-        if (streetError) errors['address.street'] = streetError;
+      if (editFormData.address.street?.trim()) {
+        const e = validateLength(editFormData.address.street, 'Street address', 5, 200);
+        if (e) errors['address.street'] = e;
       }
-
-      if (editFormData.address.city && editFormData.address.city.trim()) {
-        const cityError = validateLocationName(editFormData.address.city, 'City');
-        if (cityError) errors['address.city'] = cityError;
-      }
-
-      if (editFormData.address.state && editFormData.address.state.trim()) {
-        const stateError = validateLocationName(editFormData.address.state, 'State');
-        if (stateError) errors['address.state'] = stateError;
-      }
-
-      if (editFormData.address.country && editFormData.address.country.trim()) {
-        const countryError = validateLocationName(editFormData.address.country, 'Country');
-        if (countryError) errors['address.country'] = countryError;
-      }
-
-      if (editFormData.address.postalCode && editFormData.address.postalCode.trim()) {
-        const postalError = validatePostalCode(editFormData.address.postalCode);
-        if (postalError) errors['address.postalCode'] = postalError;
-      }
+      if (editFormData.address.city?.trim()) { const e = validateLocationName(editFormData.address.city, 'City'); if (e) errors['address.city'] = e; }
+      if (editFormData.address.state?.trim()) { const e = validateLocationName(editFormData.address.state, 'State'); if (e) errors['address.state'] = e; }
+      if (editFormData.address.country?.trim()) { const e = validateLocationName(editFormData.address.country, 'Country'); if (e) errors['address.country'] = e; }
+      if (editFormData.address.postalCode?.trim()) { const e = validatePostalCode(editFormData.address.postalCode); if (e) errors['address.postalCode'] = e; }
     }
-
-    // Validate social profiles (only if values are provided)
     if (editFormData.socialProfiles) {
-      if (editFormData.socialProfiles.linkedin && editFormData.socialProfiles.linkedin.trim()) {
-        const linkedinError = validateURL(editFormData.socialProfiles.linkedin, 'LinkedIn URL');
-        if (linkedinError) errors['socialProfiles.linkedin'] = linkedinError;
-      }
-
-      if (editFormData.socialProfiles.github && editFormData.socialProfiles.github.trim()) {
-        const githubError = validateURL(editFormData.socialProfiles.github, 'GitHub URL');
-        if (githubError) errors['socialProfiles.github'] = githubError;
-      }
-
-      if (editFormData.socialProfiles.twitter && editFormData.socialProfiles.twitter.trim()) {
-        const twitterError = validateURL(editFormData.socialProfiles.twitter, 'Twitter URL');
-        if (twitterError) errors['socialProfiles.twitter'] = twitterError;
-      }
-
-      if (editFormData.socialProfiles.website && editFormData.socialProfiles.website.trim()) {
-        const websiteError = validateURL(editFormData.socialProfiles.website, 'Website URL');
-        if (websiteError) errors['socialProfiles.website'] = websiteError;
-      }
+      if (editFormData.socialProfiles.linkedin?.trim()) { const e = validateURL(editFormData.socialProfiles.linkedin, 'LinkedIn URL'); if (e) errors['socialProfiles.linkedin'] = e; }
+      if (editFormData.socialProfiles.github?.trim()) { const e = validateURL(editFormData.socialProfiles.github, 'GitHub URL'); if (e) errors['socialProfiles.github'] = e; }
+      if (editFormData.socialProfiles.twitter?.trim()) { const e = validateURL(editFormData.socialProfiles.twitter, 'Twitter URL'); if (e) errors['socialProfiles.twitter'] = e; }
+      if (editFormData.socialProfiles.website?.trim()) { const e = validateURL(editFormData.socialProfiles.website, 'Website URL'); if (e) errors['socialProfiles.website'] = e; }
     }
-
     setValidationErrors(errors);
-    
-    // Log validation results
-    if (Object.keys(errors).length > 0) {
-      console.log('❌ Validation failed:', errors);
-    } else {
-      console.log('✅ Validation passed');
-    }
-
     return Object.keys(errors).length === 0;
   };
-
-  // Clear validation error for a specific field
   const clearValidationError = (field: string) => {
-    setValidationErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[field];
-      return newErrors;
-    });
+    setValidationErrors(prev => { const n = { ...prev }; delete n[field]; return n; });
   };
 
-  // ==================== END VALIDATION FUNCTIONS ====================
-
-  // Fetch user profile data from backend
+  // ── Data fetching ───────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('accessToken');
-        
-        if (!token) {
-          navigate('/signin');
-          return;
-        }
-
-        const response = await axios.get(`${API_URL}/user/profile`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
+        if (!token) { navigate('/signin'); return; }
+        const response = await axios.get(`${API_URL}/user/profile`, { headers: { Authorization: `Bearer ${token}` } });
         if (response.data.success && response.data.data.user) {
           const userData = response.data.data.user;
-          
-          // Map backend data to frontend structure
           setUserProfile(prev => ({
             ...prev,
-            name: userData.name,
-            email: userData.email,
-            role: userData.subscription?.plan === 'premium' ? 'Premium User' : 
-                  userData.subscription?.plan === 'enterprise' ? 'Enterprise User' : 'Free User',
+            name: userData.name, email: userData.email,
+            role: userData.subscription?.plan === 'premium' ? 'Premium User' : userData.subscription?.plan === 'enterprise' ? 'Enterprise User' : 'Free User',
             avatar: userData.profile?.avatar || 'https://via.placeholder.com/150',
             memberSince: new Date(userData.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
             lastLogin: userData.lastLogin ? getTimeAgo(new Date(userData.lastLogin)) : 'Just now',
             securityScore: userData.profile?.securityScore || 50,
             twoFactorEnabled: userData.twoFactorEnabled || false,
             totalDevices: userData.profile?.totalDevices || 0,
-            activeSubscription: userData.subscription?.plan === 'premium' ? 'Premium Plan' : 
-                               userData.subscription?.plan === 'enterprise' ? 'Enterprise Plan' : 'Free Plan',
-            nextBilling: userData.subscription?.endDate ? 
-                        new Date(userData.subscription.endDate).toLocaleDateString() : 'N/A',
-            preferences: {
-              theme: userData.profile?.preferences?.theme || 'auto',
-              notifications: userData.profile?.preferences?.notifications?.email !== false,
-              language: userData.profile?.preferences?.language || 'English'
-            },
+            activeSubscription: userData.subscription?.plan === 'premium' ? 'Premium Plan' : userData.subscription?.plan === 'enterprise' ? 'Enterprise Plan' : 'Free Plan',
+            nextBilling: userData.subscription?.endDate ? new Date(userData.subscription.endDate).toLocaleDateString() : 'N/A',
+            preferences: { theme: userData.profile?.preferences?.theme || 'auto', notifications: userData.profile?.preferences?.notifications?.email !== false, language: userData.profile?.preferences?.language || 'English' },
             personalInfo: userData.profile?.personalInfo || prev.personalInfo,
             professionalInfo: userData.profile?.professionalInfo || prev.professionalInfo,
             address: userData.profile?.address || prev.address,
             socialProfiles: userData.profile?.socialProfiles || prev.socialProfiles,
-            security: {
-              ...prev.security,
-              lastPasswordChange: getTimeAgo(new Date(userData.updatedAt)),
-              activeDevices: userData.profile?.totalDevices || 0,
-              backupCodes: 5
-            }
+            security: { ...prev.security, lastPasswordChange: getTimeAgo(new Date(userData.updatedAt)), activeDevices: userData.profile?.totalDevices || 0, backupCodes: 5 }
           }));
         }
       } catch (error: any) {
         console.error('Error fetching profile:', error);
-        if (error.response?.status === 401) {
-          localStorage.clear();
-          navigate('/signin');
-        } else {
-          setError('Failed to load profile data');
-        }
-      } finally {
-        setLoading(false);
-      }
+        if (error.response?.status === 401) { localStorage.clear(); navigate('/signin'); }
+        else setError('Failed to load profile data');
+      } finally { setLoading(false); }
     };
-
     fetchUserProfile();
   }, [navigate]);
 
-  // Fetch documents on component mount
   useEffect(() => {
     const fetchDocs = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        
         if (!token) return;
-
-        const response = await axios.get(`${API_URL}/user/documents`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.data.success) {
-          setUserProfile(prev => ({
-            ...prev,
-            documents: response.data.data.documents
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching documents:', error);
-      }
+        const response = await axios.get(`${API_URL}/user/documents`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.data.success) setUserProfile(prev => ({ ...prev, documents: response.data.data.documents }));
+      } catch (error) { console.error('Error fetching documents:', error); }
     };
-    
     fetchDocs();
   }, []);
 
-  // Fetch billing information
   useEffect(() => {
     const fetchBilling = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        
         if (!token) return;
-
-        const response = await axios.get(`${API_URL}/user/billing`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.data.success) {
-          setUserProfile(prev => ({
-            ...prev,
-            billing: response.data.data.billing
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching billing:', error);
-      }
+        const response = await axios.get(`${API_URL}/user/billing`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.data.success) setUserProfile(prev => ({ ...prev, billing: response.data.data.billing }));
+      } catch (error) { console.error('Error fetching billing:', error); }
     };
-    
     fetchBilling();
   }, []);
 
-  // Fetch security information
   useEffect(() => {
     const fetchSecurity = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        
         if (!token) return;
-
-        const response = await axios.get(`${API_URL}/user/security`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.data.success) {
-          setUserProfile(prev => ({
-            ...prev,
-            security: {
-              ...prev.security,
-              ...response.data.data.security
-            }
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching security:', error);
-      }
+        const response = await axios.get(`${API_URL}/user/security`, { headers: { Authorization: `Bearer ${token}` } });
+        if (response.data.success) setUserProfile(prev => ({ ...prev, security: { ...prev.security, ...response.data.data.security } }));
+      } catch (error) { console.error('Error fetching security:', error); }
     };
-    
     fetchSecurity();
   }, []);
 
-  // Helper function to calculate time ago
+  // ── Helpers ─────────────────────────────────────────────────────────────────
   const getTimeAgo = (date: Date): string => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    
     if (seconds < 60) return 'Just now';
     if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
@@ -1983,293 +1311,179 @@ const UserProfile: React.FC = () => {
     return date.toLocaleDateString();
   };
 
-  // Handle profile update
-  const handleSaveProfile = async () => {
-    try {
-      setSaving(true);
-      const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.put(`${API_URL}/user/profile`, {
-        name: userProfile.name,
-        'profile.personalInfo': userProfile.personalInfo,
-        'profile.professionalInfo': userProfile.professionalInfo,
-        'profile.address': userProfile.address,
-        'profile.socialProfiles': userProfile.socialProfiles
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.data.success) {
-        alert('Profile updated successfully!');
-        setIsEditing(false);
-      }
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      alert(error.response?.data?.message || 'Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Handle add payment method
+  // ── Action handlers ─────────────────────────────────────────────────────────
   const handleAddPaymentMethod = async (paymentData: any): Promise<boolean> => {
     try {
       const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.post(`${API_URL}/user/billing/payment-method`, paymentData, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
+      const response = await axios.post(`${API_URL}/user/billing/payment-method`, paymentData, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data.success) {
-        // Refresh billing data
-        const billingResponse = await axios.get(`${API_URL}/user/billing`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (billingResponse.data.success) {
-          setUserProfile(prev => ({
-            ...prev,
-            billing: billingResponse.data.data.billing
-          }));
-        }
-        
+        const billingResponse = await axios.get(`${API_URL}/user/billing`, { headers: { Authorization: `Bearer ${token}` } });
+        if (billingResponse.data.success) setUserProfile(prev => ({ ...prev, billing: billingResponse.data.data.billing }));
         alert('Payment method added successfully!');
         return true;
       }
       return false;
-    } catch (error: any) {
-      console.error('Error adding payment method:', error);
-      alert(error.response?.data?.message || 'Failed to add payment method');
-      return false;
-    }
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to add payment method'); return false; }
   };
 
-  // Handle delete payment method
   const handleDeletePaymentMethod = async (methodId: string) => {
-    if (!confirm('Are you sure you want to delete this payment method?')) {
-      return;
-    }
-
+    if (!confirm('Are you sure you want to delete this payment method?')) return;
     try {
       const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.delete(`${API_URL}/user/billing/payment-method/${methodId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
+      const response = await axios.delete(`${API_URL}/user/billing/payment-method/${methodId}`, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data.success) {
-        // Update local state
-        setUserProfile(prev => ({
-          ...prev,
-          billing: {
-            ...prev.billing,
-            paymentMethods: prev.billing.paymentMethods.filter(m => m.id !== methodId)
-          }
-        }));
-        
+        setUserProfile(prev => ({ ...prev, billing: { ...prev.billing, paymentMethods: prev.billing.paymentMethods.filter(m => m.id !== methodId) } }));
         alert('Payment method deleted successfully!');
       }
-    } catch (error: any) {
-      console.error('Error deleting payment method:', error);
-      alert(error.response?.data?.message || 'Failed to delete payment method');
-    }
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to delete payment method'); }
   };
 
-  // Handle update recovery email
   const handleUpdateRecoveryEmail = async (email: string): Promise<boolean> => {
     try {
       const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.put(`${API_URL}/user/security/recovery-email`, 
-        { recoveryEmail: email },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-
+      const response = await axios.put(`${API_URL}/user/security/recovery-email`, { recoveryEmail: email }, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data.success) {
-        setUserProfile(prev => ({
-          ...prev,
-          security: {
-            ...prev.security,
-            recoveryEmail: email
-          }
-        }));
-        
+        setUserProfile(prev => ({ ...prev, security: { ...prev.security, recoveryEmail: email } }));
         alert('Recovery email updated successfully!');
         return true;
       }
       return false;
-    } catch (error: any) {
-      console.error('Error updating recovery email:', error);
-      alert(error.response?.data?.message || 'Failed to update recovery email');
-      return false;
-    }
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to update recovery email'); return false; }
   };
 
-  // Handle generate backup codes
   const handleGenerateBackupCodes = async (): Promise<boolean> => {
     try {
       const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.post(`${API_URL}/user/security/generate-backup-codes`, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
+      const response = await axios.post(`${API_URL}/user/security/generate-backup-codes`, {}, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data.success) {
-        setUserProfile(prev => ({
-          ...prev,
-          security: {
-            ...prev.security,
-            backupCodes: response.data.data.backupCodes
-          }
-        }));
-        
+        setUserProfile(prev => ({ ...prev, security: { ...prev.security, backupCodes: response.data.data.backupCodes } }));
         alert(`${response.data.data.backupCodes} backup codes generated successfully!`);
         return true;
       }
       return false;
-    } catch (error: any) {
-      console.error('Error generating backup codes:', error);
-      alert(error.response?.data?.message || 'Failed to generate backup codes');
-      return false;
-    }
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to generate backup codes'); return false; }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <FaSpinner className="animate-spin text-indigo-600 w-12 h-12 mx-auto mb-4" />
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-red-600">
-          <FaExclamationTriangle className="w-12 h-12 mx-auto mb-4" />
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const tabs = [
-    { id: 'personal', label: 'Personal Info', icon: <FaUser className="w-5 h-5" /> },
-    { id: 'professional', label: 'Professional', icon: <FaBriefcase className="w-5 h-5" /> },
-    { id: 'security', label: 'Security', icon: <FaShieldAlt className="w-5 h-5" /> },
-    { id: 'documents', label: 'Documents', icon: <FaIdCard className="w-5 h-5" /> },
-    { id: 'billing', label: 'Billing', icon: <FaCreditCard className="w-5 h-5" /> }
-  ];
-
-  const handleEditClick = () => {
-    setEditFormData({ ...userProfile });
-    setShowEditModal(true);
+  const handleDocumentUpload = async (category: 'identity' | 'financial', formData: FormData) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.post(`${API_URL}/user/documents/upload`, formData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } });
+      if (response.data.success) { alert('✅ Document uploaded successfully!'); fetchDocuments(); }
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to upload document'); throw error; }
   };
+
+  const handleDocumentDelete = async (category: 'identity' | 'financial', documentId: string) => {
+    if (!confirm('Are you sure you want to delete this document?')) return;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.delete(`${API_URL}/user/documents/${category}/${documentId}`, { headers: { Authorization: `Bearer ${token}` } });
+      if (response.data.success) { alert('✅ Document deleted successfully!'); fetchDocuments(); }
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to delete document'); }
+  };
+
+  const handleDocumentDownload = async (category: 'identity' | 'financial', documentId: string, fileName: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`${API_URL}/user/documents/${category}/${documentId}`, { headers: { Authorization: `Bearer ${token}` }, responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url; link.setAttribute('download', fileName);
+      document.body.appendChild(link); link.click(); link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch { alert('Failed to download document'); }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await axios.get(`${API_URL}/user/documents`, { headers: { Authorization: `Bearer ${token}` } });
+      if (response.data.success) setUserProfile(prev => ({ ...prev, documents: response.data.data.documents }));
+    } catch (error) { console.error('Error fetching documents:', error); }
+  };
+
+  const handleExportData = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      const response = await axios.get(`${API_URL}/user/export`, { headers: { Authorization: `Bearer ${token}` }, responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url; link.setAttribute('download', 'passvault-export.json');
+      document.body.appendChild(link); link.click(); link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch { alert('Failed to export data'); }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) { alert('Passwords do not match'); return; }
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      await axios.put(`${API_URL}/user/password`, { currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword, confirmPassword: passwordForm.confirmPassword }, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Password changed successfully. Please log in again.');
+      setShowPasswordModal(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      localStorage.removeItem('accessToken');
+      window.location.href = '/signin';
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to change password'); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (deleteConfirmText !== 'DELETE') { alert('Please type DELETE to confirm'); return; }
+    setActionLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      await axios.delete(`${API_URL}/user/account`, { data: { password: deletePassword, confirmDelete: deleteConfirmText }, headers: { Authorization: `Bearer ${token}` } });
+      alert('Account deleted successfully');
+      localStorage.removeItem('accessToken');
+      window.location.href = '/signin';
+    } catch (error: any) { alert(error.response?.data?.message || 'Failed to delete account'); setActionLoading(false); }
+  };
+
+  const handleEditClick = () => { setEditFormData({ ...userProfile }); setShowEditModal(true); };
 
   const handleEditChange = (section: string, field: string, value: any) => {
     if (!editFormData) return;
-    
     setEditFormData(prev => {
       if (!prev) return prev;
-      
       let updatedData = prev;
-      
       if (section === 'basic') {
         updatedData = { ...prev, [field]: value };
       } else {
         const sectionData = prev[section as keyof IUserProfile];
         if (typeof sectionData === 'object' && sectionData !== null) {
-          updatedData = {
-            ...prev,
-            [section]: {
-              ...(sectionData as any),
-              [field]: value
-            }
-          };
+          updatedData = { ...prev, [section]: { ...(sectionData as any), [field]: value } };
         }
       }
-
-      // Auto-format phone number when nationality changes
       if (section === 'personalInfo' && field === 'nationality') {
         const countryCode = getCountryCode(value);
         if (countryCode && updatedData.personalInfo.phoneNumber) {
-          const formattedPhone = formatPhoneNumber(updatedData.personalInfo.phoneNumber, countryCode);
-          updatedData = {
-            ...updatedData,
-            personalInfo: {
-              ...updatedData.personalInfo,
-              phoneNumber: formattedPhone
-            }
-          };
+          updatedData = { ...updatedData, personalInfo: { ...updatedData.personalInfo, phoneNumber: formatPhoneNumber(updatedData.personalInfo.phoneNumber, countryCode) } };
         } else if (countryCode && !updatedData.personalInfo.phoneNumber) {
-          // Just add country code if phone is empty
-          updatedData = {
-            ...updatedData,
-            personalInfo: {
-              ...updatedData.personalInfo,
-              phoneNumber: countryCode + ' '
-            }
-          };
+          updatedData = { ...updatedData, personalInfo: { ...updatedData.personalInfo, phoneNumber: countryCode + ' ' } };
         }
       }
-
-      // Auto-format phone number as user types
       if (section === 'personalInfo' && field === 'phoneNumber') {
         const countryCode = getCountryCode(updatedData.personalInfo.nationality);
-        const formattedPhone = formatPhoneNumber(value, countryCode);
-        updatedData = {
-          ...updatedData,
-          personalInfo: {
-            ...updatedData.personalInfo,
-            phoneNumber: formattedPhone
-          }
-        };
+        updatedData = { ...updatedData, personalInfo: { ...updatedData.personalInfo, phoneNumber: formatPhoneNumber(value, countryCode) } };
       }
-
       return updatedData;
     });
-
-    // Clear validation error when user starts typing
-    const errorKey = section === 'basic' ? field : `${section}.${field}`;
-    clearValidationError(errorKey);
+    clearValidationError(section === 'basic' ? field : `${section}.${field}`);
   };
 
   const handleSaveEdit = async () => {
     if (!editFormData) return;
-    
-    // Validate form before submitting
-    console.log('🔍 Starting form validation...');
     const isValid = validateEditForm();
-    
-    if (!isValid) {
-      console.log('❌ Form validation failed');
-      alert('⚠️ Please fix the validation errors before saving');
-      return;
-    }
-
-    console.log('✅ Form validation passed. Submitting to backend...');
-    
+    if (!isValid) { alert('⚠️ Please fix the validation errors before saving'); return; }
     try {
       setSaving(true);
       const token = localStorage.getItem('accessToken');
-      
       const response = await axios.put(`${API_URL}/user/profile`, {
         name: editFormData.name,
         'profile.personalInfo.dateOfBirth': editFormData.personalInfo.dateOfBirth,
@@ -2290,1009 +1504,633 @@ const UserProfile: React.FC = () => {
         'profile.socialProfiles.linkedin': editFormData.socialProfiles.linkedin,
         'profile.socialProfiles.github': editFormData.socialProfiles.github,
         'profile.socialProfiles.twitter': editFormData.socialProfiles.twitter,
-        'profile.socialProfiles.website': editFormData.socialProfiles.website
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
+        'profile.socialProfiles.website': editFormData.socialProfiles.website,
+      }, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data.success) {
-        console.log('✅ Profile updated successfully on backend');
         setUserProfile(editFormData);
-        
-        // Update localStorage
         const userData = JSON.parse(localStorage.getItem('userData') || '{}');
         userData.name = editFormData.name;
         localStorage.setItem('userData', JSON.stringify(userData));
-        
         alert('✅ Profile updated successfully!');
         setShowEditModal(false);
         setValidationErrors({});
       }
     } catch (error: any) {
-      console.error('❌ Error updating profile:', error);
-      console.error('Error response:', error.response?.data);
-      
-      // Handle backend validation errors
       if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
         const backendErrors: Record<string, string> = {};
-        error.response.data.errors.forEach((err: any) => {
-          backendErrors[err.field || err.param] = err.message;
-        });
+        error.response.data.errors.forEach((err: any) => { backendErrors[err.field || err.param] = err.message; });
         setValidationErrors(backendErrors);
         alert('⚠️ Validation errors: Please check the form and try again');
       } else {
-        const errorMessage = error.response?.data?.message 
-          || error.response?.data?.error 
-          || error.message 
-          || 'Failed to update profile';
-        alert(`❌ ${errorMessage}`);
+        alert(`❌ ${error.response?.data?.message || error.message || 'Failed to update profile'}`);
       }
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
-  // Document upload handler
-  const handleDocumentUpload = async (category: 'identity' | 'financial', formData: FormData) => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.post(`${API_URL}/user/documents/upload`, formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+  // ── Loading / Error states ─────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#F9F9F7]">
+        <div className="text-center border-4 border-[#111111] p-12 bg-[#F9F9F7]">
+          <FaSpinner className="animate-spin text-[#111111] w-10 h-10 mx-auto mb-5" />
+          <p className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            LOADING PROFILE…
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-      if (response.data.success) {
-        alert('✅ Document uploaded successfully!');
-        // Refresh documents
-        fetchDocuments();
-      }
-    } catch (error: any) {
-      console.error('Error uploading document:', error);
-      alert(error.response?.data?.message || 'Failed to upload document');
-      throw error;
-    }
-  };
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#F9F9F7]">
+        <div className="text-center border-4 border-[#CC0000] p-12 bg-[#F9F9F7]">
+          <FaExclamationTriangle className="text-[#CC0000] w-10 h-10 mx-auto mb-5" />
+          <p className="text-xs font-black uppercase tracking-widest text-[#CC0000]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            {error}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  // Document delete handler
-  const handleDocumentDelete = async (category: 'identity' | 'financial', documentId: string) => {
-    if (!confirm('Are you sure you want to delete this document?')) {
-      return;
-    }
+  const tabs = [
+    { id: 'personal', label: 'PERSONAL', icon: <FaUser /> },
+    { id: 'professional', label: 'PROFESSIONAL', icon: <FaBriefcase /> },
+    { id: 'security', label: 'SECURITY', icon: <FaShieldAlt /> },
+    { id: 'documents', label: 'DOCUMENTS', icon: <FaIdCard /> },
+    { id: 'billing', label: 'BILLING', icon: <FaCreditCard /> },
+  ];
 
-    try {
-      const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.delete(`${API_URL}/user/documents/${category}/${documentId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.data.success) {
-        alert('✅ Document deleted successfully!');
-        // Refresh documents
-        fetchDocuments();
-      }
-    } catch (error: any) {
-      console.error('Error deleting document:', error);
-      alert(error.response?.data?.message || 'Failed to delete document');
-    }
-  };
-
-  // Document download handler
-  const handleDocumentDownload = async (category: 'identity' | 'financial', documentId: string, fileName: string) => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.get(`${API_URL}/user/documents/${category}/${documentId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        responseType: 'blob'
-      });
-
-      // Create blob link to download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      console.error('Error downloading document:', error);
-      alert('Failed to download document');
-    }
-  };
-
-  // Fetch documents function (used after upload/delete)
-  const fetchDocuments = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      
-      const response = await axios.get(`${API_URL}/user/documents`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.data.success) {
-        setUserProfile(prev => ({
-          ...prev,
-          documents: response.data.data.documents
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-    }
-  };
-
-  // Action Handlers
-  const handleExportData = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
-      const response = await axios.get(`${API_URL}/user/export`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        responseType: 'blob'
-      });
-
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'passvault-export.json');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Export data error:', error);
-      alert('Failed to export data');
-    }
-  };
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-    
-    setActionLoading(true);
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
-      await axios.put(`${API_URL}/user/password`, {
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-        confirmPassword: passwordForm.confirmPassword
-      }, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      alert('Password changed successfully. Please log in again.');
-      setShowPasswordModal(false);
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      localStorage.removeItem('accessToken');
-      window.location.href = '/signin';
-    } catch (error: any) {
-      console.error('Change password error:', error);
-      alert(error.response?.data?.message || 'Failed to change password');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDeleteAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (deleteConfirmText !== 'DELETE') {
-      alert('Please type DELETE to confirm');
-      return;
-    }
-    
-    setActionLoading(true);
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
-      await axios.delete(`${API_URL}/user/account`, {
-        data: { password: deletePassword, confirmDelete: deleteConfirmText },
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      alert('Account deleted successfully');
-      localStorage.removeItem('accessToken');
-      window.location.href = '/signin';
-    } catch (error: any) {
-      console.error('Delete account error:', error);
-      alert(error.response?.data?.message || 'Failed to delete account');
-      setActionLoading(false);
-    }
-  };
+  // ── Security score label ────────────────────────────────────────────────────
+  const securityLabel = userProfile.securityScore >= 80 ? 'STRONG' : userProfile.securityScore >= 50 ? 'MODERATE' : 'WEAK';
+  const securityColor = userProfile.securityScore >= 80 ? 'text-[#111111]' : userProfile.securityScore >= 50 ? 'text-[#525252]' : 'text-[#CC0000]';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-      <UserProfileHeader profile={userProfile} onEditClick={handleEditClick} />
-      
-      {/* Modern Tabs Navigation */}
-      <div className="bg-white rounded-xl shadow-md mb-8">
-        <div className="flex overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          {tabs.map((tab) => (
-            <motion.button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 transition-colors whitespace-nowrap border-b-2 ${
-                activeTab === tab.id 
-                  ? 'border-indigo-600 text-indigo-600 font-medium' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-              }`}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </motion.button>
-          ))}
-        </div>
-      </div>
+    <div
+      className="min-h-screen bg-[#F9F9F7]"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+      }}
+    >
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-0">
 
-      {/* Tab Content with Modern Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content Area */}
-        <div className="lg:col-span-2 space-y-6">
-          <AnimatePresence mode="wait">
-            {activeTab === 'personal' && (
-              <motion.div
-                key="personal"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                <ProfileSection title="Personal Information" icon={<HiOutlineUserCircle className="w-6 h-6 text-indigo-600" />}>
-                  <PersonalInfoCard info={userProfile.personalInfo} />
-                </ProfileSection>
-                <ProfileSection title="Address" icon={<FaMapMarkerAlt className="w-5 h-5 text-indigo-600" />}>
-                  <AddressCard address={userProfile.address} />
-                </ProfileSection>
-                <ProfileSection title="Social Profiles" icon={<FaGlobe className="w-5 h-5 text-indigo-600" />}>
-                  <SocialProfilesCard profiles={userProfile.socialProfiles} />
-                </ProfileSection>
-              </motion.div>
-            )}
-            
-            {activeTab === 'professional' && (
-              <motion.div
-                key="professional"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ProfileSection title="Professional Information" icon={<FaBriefcase className="w-5 h-5 text-indigo-600" />}>
-                  <ProfessionalInfoCard info={userProfile.professionalInfo} />
-                </ProfileSection>
-              </motion.div>
-            )}
+        {/* Header */}
+        <UserProfileHeader profile={userProfile} onEditClick={handleEditClick} />
 
-            {activeTab === 'security' && (
-              <motion.div
-                key="security"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
+        {/* Tab Bar */}
+        <div className="border-4 border-[#111111] mb-8 overflow-x-auto">
+          <div className="flex min-w-max">
+            {tabs.map((tab, i) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-4 border-r-2 border-[#111111] last:border-r-0 transition-all whitespace-nowrap text-xs font-black uppercase tracking-widest ${activeTab === tab.id
+                    ? 'bg-[#111111] text-[#F9F9F7]'
+                    : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0]'
+                  }`}
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
               >
-                <ProfileSection title="Security Settings" icon={<FaShieldAlt className="w-5 h-5 text-indigo-600" />}>
-                  <SecuritySection 
-                    security={userProfile.security}
-                    onUpdateRecoveryEmail={handleUpdateRecoveryEmail}
-                    onGenerateBackupCodes={handleGenerateBackupCodes}
-                  />
-                </ProfileSection>
-              </motion.div>
-            )}
-
-            {activeTab === 'documents' && (
-              <motion.div
-                key="documents"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-                className="space-y-6"
-              >
-                <ProfileSection title="My Documents" icon={<FaFileAlt className="w-5 h-5 text-indigo-600" />}>
-                  <DocumentsSection 
-                    documents={userProfile.documents}
-                    onDocumentUpload={handleDocumentUpload}
-                    onDocumentDelete={handleDocumentDelete}
-                    onDocumentDownload={handleDocumentDownload}
-                  />
-                </ProfileSection>
-              </motion.div>
-            )}
-
-            {activeTab === 'billing' && (
-              <motion.div
-                key="billing"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ProfileSection title="Billing & Payments" icon={<FaCreditCard className="w-5 h-5 text-indigo-600" />}>
-                  <BillingSection 
-                    billing={userProfile.billing}
-                    onAddPaymentMethod={handleAddPaymentMethod}
-                    onDeletePaymentMethod={handleDeletePaymentMethod}
-                    userName={userProfile.name}
-                  />
-                </ProfileSection>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Right Sidebar - Enhanced */}
-        <div className="space-y-6">
-          <ProfileSection title="Subscription" icon={<FaCrown className="w-5 h-5 text-amber-500" />}>
-            <div className="space-y-6">
-              <div className="p-5 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl text-white shadow-md relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-x-10 -translate-y-10"></div>
-                <div className="absolute -bottom-5 -left-5 w-32 h-32 bg-white opacity-10 rounded-full"></div>
-                
-                <div className="relative flex items-start justify-between mb-4">
-                  <FaCrown className="w-10 h-10 text-amber-300" />
-                  <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">
-                    Active
-                  </div>
-                </div>
-                <p className="text-2xl font-bold mb-1">{userProfile.activeSubscription}</p>
-                <div className="flex items-center justify-between text-sm mt-4">
-                  <span className="opacity-90">Member since: {userProfile.memberSince}</span>
-                  <span className="opacity-90">Next billing: {userProfile.nextBilling}</span>
-                </div>
-              </div>
-              
-              <div className="flex flex-col space-y-2">
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-2.5 text-center bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-                >
-                  Manage Subscription
-                </motion.button>
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-2.5 text-center border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium"
-                >
-                  View Benefits
-                </motion.button>
-              </div>
-            </div>
-          </ProfileSection>
-
-          <ProfileSection title="Account Actions" icon={<FaCog className="w-5 h-5 text-indigo-600" />}>
-            <div className="space-y-3">
-              <motion.button
-                whileHover={{ scale: 1.02, x: 5 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleExportData}
-                className="w-full flex items-center justify-between p-3.5 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <FaFileExport className="text-indigo-500" />
-                  <span className="font-medium">Export Data</span>
-                </div>
-                <FaChevronRight className="text-gray-400" />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.02, x: 5 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowPasswordModal(true)}
-                className="w-full flex items-center justify-between p-3.5 bg-gray-50 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <FaKey className="text-indigo-500" />
-                  <span className="font-medium">Change Password</span>
-                </div>
-                <FaChevronRight className="text-gray-400" />
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.02, x: 5 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowDeleteModal(true)}
-                className="w-full flex items-center justify-between p-3.5 bg-gray-50 rounded-xl hover:bg-red-50 hover:text-red-700 transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <FaTrash className="text-red-500" />
-                  <span className="font-medium">Delete Account</span>
-                </div>
-                <FaChevronRight className="text-gray-400" />
-              </motion.button>
-            </div>
-          </ProfileSection>
-          
-          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-100">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-indigo-900">Security Score</h3>
-              <span className="text-sm px-2.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-full">Good</span>
-            </div>
-            <div className="w-full h-2.5 bg-gray-200 rounded-full mb-3">
-              <div 
-                className="h-full bg-gradient-to-r from-indigo-500 to-blue-600 rounded-full" 
-                style={{ width: `${userProfile.securityScore}%` }}
-              ></div>
-            </div>
-            <p className="text-3xl font-bold text-indigo-700">{userProfile.securityScore}%</p>
-            <p className="text-sm text-indigo-600 mt-1">2FA is enabled!</p>
-            <button className="mt-4 w-full p-2.5 bg-white text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors font-medium flex items-center justify-center gap-2">
-              <FaShieldAlt /> Improve Security
-            </button>
+                {tab.icon}
+                <span className="hidden sm:inline">{tab.label}</span>
+              </button>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Edit Profile Modal */}
-      <AnimatePresence>
-        {showEditModal && editFormData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowEditModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
-            >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FaEdit className="w-6 h-6" />
-                  <div>
-                    <h2 className="text-2xl font-bold">Edit Profile</h2>
-                    <p className="text-sm text-white/80 mt-1">Fill in as much or as little as you'd like - only your name is required</p>
-                  </div>
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            <AnimatePresence mode="wait">
+              {activeTab === 'personal' && (
+                <motion.div key="personal" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.2 }} className="space-y-6">
+                  <ProfileSection title="Personal Information" icon={<HiOutlineUserCircle className="w-6 h-6" />}>
+                    <PersonalInfoCard info={userProfile.personalInfo} />
+                  </ProfileSection>
+                  <ProfileSection title="Address" icon={<FaMapMarkerAlt />}>
+                    <AddressCard address={userProfile.address} />
+                  </ProfileSection>
+                  <ProfileSection title="Social Profiles" icon={<FaGlobe />}>
+                    <SocialProfilesCard profiles={userProfile.socialProfiles} />
+                  </ProfileSection>
+                </motion.div>
+              )}
+
+              {activeTab === 'professional' && (
+                <motion.div key="professional" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.2 }}>
+                  <ProfileSection title="Professional Information" icon={<FaBriefcase />}>
+                    <ProfessionalInfoCard info={userProfile.professionalInfo} />
+                  </ProfileSection>
+                </motion.div>
+              )}
+
+              {activeTab === 'security' && (
+                <motion.div key="security" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.2 }}>
+                  <ProfileSection title="Security Settings" icon={<FaShieldAlt />}>
+                    <SecuritySection security={userProfile.security} onUpdateRecoveryEmail={handleUpdateRecoveryEmail} onGenerateBackupCodes={handleGenerateBackupCodes} />
+                  </ProfileSection>
+                </motion.div>
+              )}
+
+              {activeTab === 'documents' && (
+                <motion.div key="documents" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.2 }}>
+                  <ProfileSection title="My Documents" icon={<FaFileAlt />}>
+                    <DocumentsSection documents={userProfile.documents} onDocumentUpload={handleDocumentUpload} onDocumentDelete={handleDocumentDelete} onDocumentDownload={handleDocumentDownload} />
+                  </ProfileSection>
+                </motion.div>
+              )}
+
+              {activeTab === 'billing' && (
+                <motion.div key="billing" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: 0.2 }}>
+                  <ProfileSection title="Billing & Payments" icon={<FaCreditCard />}>
+                    <BillingSection billing={userProfile.billing} onAddPaymentMethod={handleAddPaymentMethod} onDeletePaymentMethod={handleDeletePaymentMethod} userName={userProfile.name} />
+                  </ProfileSection>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+
+            {/* Subscription Card */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+              className="border-4 border-[#111111] overflow-hidden">
+              <div className="p-4 border-b-4 border-[#111111] bg-[#E5E5E0] flex items-center gap-3">
+                <FaCrown className="text-[#111111]" />
+                <h2 className="text-xl font-black text-[#111111] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>Subscription</h2>
+              </div>
+              <div className="p-5 bg-[#111111]">
+                <div className="flex items-start justify-between mb-4">
+                  <FaCrown className="text-[#F9F9F7] w-8 h-8 opacity-70" />
+                  <span className="text-[0.6rem] px-2.5 py-1 border border-[#F9F9F7] font-black uppercase tracking-widest text-[#F9F9F7]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>ACTIVE</span>
                 </div>
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                <p className="text-2xl font-black text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {userProfile.activeSubscription}
+                </p>
+                <div className="mt-4 pt-4 border-t border-[#E5E5E0]/30 space-y-1">
+                  <p className="text-[0.6rem] font-black uppercase tracking-widest text-[#A3A3A3]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    MEMBER SINCE: <span className="text-[#F9F9F7]">{userProfile.memberSince}</span>
+                  </p>
+                  <p className="text-[0.6rem] font-black uppercase tracking-widest text-[#A3A3A3]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    NEXT BILLING: <span className="text-[#F9F9F7]">{userProfile.nextBilling}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="p-4 space-y-2 bg-[#F9F9F7] border-t-4 border-[#111111]">
+                <button className="w-full py-3 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all"
+                  style={{ fontFamily: "'Inter', sans-serif" }}>
+                  MANAGE SUBSCRIPTION
+                </button>
+                <button className="w-full py-3 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all"
+                  style={{ fontFamily: "'Inter', sans-serif" }}>
+                  VIEW BENEFITS
                 </button>
               </div>
+            </motion.div>
 
-              {/* Modal Body */}
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-                {/* Info Banner */}
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-                  <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-blue-900 mb-1">Profile is Flexible</h4>
-                    <p className="text-sm text-blue-700">
-                      You can update your profile anytime! Fill in the information you want now, and come back to add more later. 
-                      Only your <strong>name</strong> is required - everything else is optional.
+            {/* Security Score */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}
+              className="border-4 border-[#111111] overflow-hidden">
+              <div className="p-4 border-b-4 border-[#111111] bg-[#E5E5E0] flex items-center gap-3">
+                <FaShieldAlt className="text-[#111111]" />
+                <h2 className="text-xl font-black text-[#111111] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>Security</h2>
+              </div>
+              <div className="p-5 bg-[#F9F9F7]">
+                <div className="flex items-end justify-between mb-3">
+                  <p className="text-5xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    {userProfile.securityScore}<span className="text-2xl">%</span>
+                  </p>
+                  <span className={`text-xs font-black uppercase tracking-widest border-2 px-2.5 py-1 ${securityColor} border-current`}
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {securityLabel}
+                  </span>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full h-3 border-2 border-[#111111] bg-[#E5E5E0] overflow-hidden">
+                  <div className="h-full bg-[#111111] transition-all duration-700" style={{ width: `${userProfile.securityScore}%` }} />
+                </div>
+                {userProfile.twoFactorEnabled && (
+                  <p className="text-[0.6rem] font-black uppercase tracking-widest text-[#525252] mt-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    ✓ 2FA ENABLED
+                  </p>
+                )}
+                <button className="mt-4 w-full py-2.5 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all flex items-center justify-center gap-2"
+                  style={{ fontFamily: "'Inter', sans-serif" }}>
+                  <FaShieldAlt /> IMPROVE SECURITY
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Account Actions */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}
+              className="border-4 border-[#111111] overflow-hidden">
+              <div className="p-4 border-b-4 border-[#111111] bg-[#E5E5E0] flex items-center gap-3">
+                <FaCog className="text-[#111111]" />
+                <h2 className="text-xl font-black text-[#111111] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>Account</h2>
+              </div>
+              <div className="bg-[#F9F9F7] divide-y-2 divide-[#111111]">
+                {[
+                  { icon: <FaFileExport />, label: 'EXPORT DATA', onClick: handleExportData, danger: false },
+                  { icon: <FaKey />, label: 'CHANGE PASSWORD', onClick: () => setShowPasswordModal(true), danger: false },
+                  { icon: <FaTrash />, label: 'DELETE ACCOUNT', onClick: () => setShowDeleteModal(true), danger: true },
+                ].map((action) => (
+                  <button key={action.label} onClick={action.onClick}
+                    className={`w-full flex items-center justify-between p-4 transition-all ${action.danger ? 'hover:bg-[#CC0000] hover:text-[#F9F9F7] text-[#CC0000]' : 'hover:bg-[#E5E5E0] text-[#111111]'}`}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm">{action.icon}</span>
+                      <span className="text-xs font-black uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        {action.label}
+                      </span>
+                    </div>
+                    <FaChevronRight className="text-xs opacity-40" />
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+
+        {/* ── Modals ────────────────────────────────────────────────────────── */}
+        <AnimatePresence>
+
+          {/* Edit Profile Modal */}
+          {showEditModal && editFormData && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#111111]/75 z-50 flex items-center justify-center p-4"
+              onClick={() => setShowEditModal(false)}>
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-[#F9F9F7] border-4 border-[#111111] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+
+                {/* Modal Header */}
+                <div className="p-5 border-b-4 border-[#111111] bg-[#111111] flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <FaEdit className="text-[#F9F9F7] w-5 h-5" />
+                    <div>
+                      <h2 className="text-xl font-black text-[#F9F9F7] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        EDIT PROFILE
+                      </h2>
+                      <p className="text-[0.6rem] font-black uppercase tracking-widest text-[#A3A3A3] mt-0.5" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        ONLY YOUR NAME IS REQUIRED — EVERYTHING ELSE IS OPTIONAL
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowEditModal(false)}
+                    className="p-2 text-[#F9F9F7] hover:text-[#CC0000] transition-colors">
+                    <FaTimes className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 overflow-y-auto flex-1">
+                  {/* Info Banner */}
+                  <div className="mb-6 p-4 border-2 border-[#111111] bg-[#E5E5E0] flex items-start gap-3">
+                    <div className="w-1.5 bg-[#111111] flex-shrink-0 self-stretch" />
+                    <p className="text-sm text-[#111111]" style={{ fontFamily: "'Lora', serif" }}>
+                      Fill in as much or as little as you'd like. You can update your profile anytime — only your <strong>name</strong> is required.
                     </p>
                   </div>
-                </div>
 
-                <div className="space-y-8">
-                  {/* Basic Information */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaUser className="text-indigo-600" />
-                      Basic Information
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Full Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={editFormData.name}
-                          onChange={(e) => handleEditChange('basic', 'name', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                            validationErrors.name ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="Enter your full name"
-                        />
-                        <ValidationError message={validationErrors.name} />
+                  <div className="space-y-8">
+                    {/* Basic */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#111111]">
+                        <FaUser className="text-[#111111]" />
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          BASIC INFORMATION
+                        </h3>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input
-                          type="email"
-                          value={editFormData.email}
-                          disabled
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={npLabel}>FULL NAME <span className="text-[#CC0000]">*</span></label>
+                          <input type="text" value={editFormData.name}
+                            onChange={(e) => handleEditChange('basic', 'name', e.target.value)}
+                            className={npInput(!!validationErrors.name)}
+                            placeholder="Enter your full name"
+                            style={{ fontFamily: "'Inter', sans-serif" }} />
+                          <ValidationError message={validationErrors.name} />
+                        </div>
+                        <div>
+                          <label className={npLabel}>EMAIL</label>
+                          <input type="email" value={editFormData.email} disabled
+                            className="w-full px-4 py-2.5 border-2 border-[#E5E5E0] bg-[#E5E5E0] text-[#525252] cursor-not-allowed"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                          <p className="text-[0.6rem] uppercase tracking-widest text-[#525252] mt-1.5"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}>EMAIL CANNOT BE CHANGED</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Personal Information */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaUserSecret className="text-indigo-600" />
-                      Personal Information
-                      <span className="text-xs text-gray-500 font-normal ml-2">(All Optional)</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
-                        <input
-                          type="date"
-                          value={editFormData.personalInfo.dateOfBirth}
-                          onChange={(e) => handleEditChange('personalInfo', 'dateOfBirth', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['personalInfo.dateOfBirth'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                        />
-                        <ValidationError message={validationErrors['personalInfo.dateOfBirth']} />
+                    {/* Personal Info */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#111111]">
+                        <FaUserSecret className="text-[#111111]" />
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          PERSONAL INFORMATION <span className="text-[#525252] normal-case font-normal text-[0.6rem]">(Optional)</span>
+                        </h3>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone Number
-                          <span className="text-xs text-gray-400 ml-1 font-normal">(auto-formats with country code)</span>
-                        </label>
-                        <input
-                          type="tel"
-                          value={editFormData.personalInfo.phoneNumber}
-                          onChange={(e) => handleEditChange('personalInfo', 'phoneNumber', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['personalInfo.phoneNumber'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="+1 (555) 000-0000"
-                        />
-                        <ValidationError message={validationErrors['personalInfo.phoneNumber']} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Nationality
-                          <span className="text-xs text-gray-400 ml-1 font-normal">(sets phone country code)</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={editFormData.personalInfo.nationality}
-                          onChange={(e) => handleEditChange('personalInfo', 'nationality', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['personalInfo.nationality'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="e.g., India, USA, UK"
-                        />
-                        <ValidationError message={validationErrors['personalInfo.nationality']} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Marital Status</label>
-                        <select
-                          value={editFormData.personalInfo.maritalStatus}
-                          onChange={(e) => handleEditChange('personalInfo', 'maritalStatus', e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="">Select</option>
-                          <option value="Single">Single</option>
-                          <option value="Married">Married</option>
-                          <option value="Divorced">Divorced</option>
-                          <option value="Widowed">Widowed</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-                        <select
-                          value={editFormData.personalInfo.gender}
-                          onChange={(e) => handleEditChange('personalInfo', 'gender', e.target.value)}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="">Select</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Other">Other</option>
-                          <option value="Prefer not to say">Prefer not to say</option>
-                        </select>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={npLabel}>DATE OF BIRTH</label>
+                          <input type="date" value={editFormData.personalInfo.dateOfBirth}
+                            onChange={(e) => handleEditChange('personalInfo', 'dateOfBirth', e.target.value)}
+                            className={npInput(!!validationErrors['personalInfo.dateOfBirth'])}
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                          <ValidationError message={validationErrors['personalInfo.dateOfBirth']} />
+                        </div>
+                        <div>
+                          <label className={npLabel}>PHONE NUMBER <span className="text-[#525252] normal-case font-normal">(auto-formats)</span></label>
+                          <input type="tel" value={editFormData.personalInfo.phoneNumber}
+                            onChange={(e) => handleEditChange('personalInfo', 'phoneNumber', e.target.value)}
+                            className={npInput(!!validationErrors['personalInfo.phoneNumber'])}
+                            placeholder="+91 98765 43210"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                          <ValidationError message={validationErrors['personalInfo.phoneNumber']} />
+                        </div>
+                        <div>
+                          <label className={npLabel}>NATIONALITY <span className="text-[#525252] normal-case font-normal">(sets phone code)</span></label>
+                          <input type="text" value={editFormData.personalInfo.nationality}
+                            onChange={(e) => handleEditChange('personalInfo', 'nationality', e.target.value)}
+                            className={npInput(!!validationErrors['personalInfo.nationality'])}
+                            placeholder="e.g., India, USA, UK"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                          <ValidationError message={validationErrors['personalInfo.nationality']} />
+                        </div>
+                        <div>
+                          <label className={npLabel}>MARITAL STATUS</label>
+                          <select value={editFormData.personalInfo.maritalStatus}
+                            onChange={(e) => handleEditChange('personalInfo', 'maritalStatus', e.target.value)}
+                            className={npSelect()}>
+                            <option value="">Select</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Divorced">Divorced</option>
+                            <option value="Widowed">Widowed</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className={npLabel}>GENDER</label>
+                          <select value={editFormData.personalInfo.gender}
+                            onChange={(e) => handleEditChange('personalInfo', 'gender', e.target.value)}
+                            className={npSelect()}>
+                            <option value="">Select</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Professional Information */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaBriefcase className="text-indigo-600" />
-                      Professional Information
-                      <span className="text-xs text-gray-500 font-normal ml-2">(All Optional)</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
-                        <input
-                          type="text"
-                          value={editFormData.professionalInfo.occupation}
-                          onChange={(e) => handleEditChange('professionalInfo', 'occupation', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['professionalInfo.occupation'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="e.g., Software Engineer"
-                        />
-                        <ValidationError message={validationErrors['professionalInfo.occupation']} />
+                    {/* Professional */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#111111]">
+                        <FaBriefcase className="text-[#111111]" />
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          PROFESSIONAL INFORMATION
+                        </h3>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
-                        <input
-                          type="text"
-                          value={editFormData.professionalInfo.company}
-                          onChange={(e) => handleEditChange('professionalInfo', 'company', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['professionalInfo.company'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="Company name"
-                        />
-                        <ValidationError message={validationErrors['professionalInfo.company']} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
-                        <input
-                          type="text"
-                          value={editFormData.professionalInfo.department}
-                          onChange={(e) => handleEditChange('professionalInfo', 'department', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['professionalInfo.department'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="e.g., Engineering"
-                        />
-                        <ValidationError message={validationErrors['professionalInfo.department']} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
-                        <input
-                          type="text"
-                          value={editFormData.professionalInfo.employeeId}
-                          onChange={(e) => handleEditChange('professionalInfo', 'employeeId', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['professionalInfo.employeeId'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="EMP123456"
-                        />
-                        <ValidationError message={validationErrors['professionalInfo.employeeId']} />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
-                        <input
-                          type="text"
-                          value={editFormData.professionalInfo.experience}
-                          onChange={(e) => handleEditChange('professionalInfo', 'experience', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['professionalInfo.experience'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="e.g., 5+ years"
-                        />
-                        <ValidationError message={validationErrors['professionalInfo.experience']} />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          { label: 'OCCUPATION', key: 'occupation', placeholder: 'e.g., Software Engineer' },
+                          { label: 'COMPANY', key: 'company', placeholder: 'e.g., Acme Corp' },
+                          { label: 'DEPARTMENT', key: 'department', placeholder: 'e.g., Engineering' },
+                          { label: 'EMPLOYEE ID', key: 'employeeId', placeholder: 'e.g., EMP001' },
+                          { label: 'EXPERIENCE', key: 'experience', placeholder: 'e.g., 5+ years' },
+                        ].map(({ label, key, placeholder }) => (
+                          <div key={key}>
+                            <label className={npLabel}>{label}</label>
+                            <input type="text"
+                              value={(editFormData.professionalInfo as any)[key]}
+                              onChange={(e) => handleEditChange('professionalInfo', key, e.target.value)}
+                              placeholder={placeholder}
+                              className={npInput(!!(validationErrors as any)[`professionalInfo.${key}`])}
+                              style={{ fontFamily: "'Inter', sans-serif" }} />
+                            <ValidationError message={(validationErrors as any)[`professionalInfo.${key}`]} />
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Address Information */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaMapMarkerAlt className="text-indigo-600" />
-                      Address
-                      <span className="text-xs text-gray-500 font-normal ml-2">(All Optional)</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Street Address</label>
-                        <input
-                          type="text"
-                          value={editFormData.address.street}
-                          onChange={(e) => handleEditChange('address', 'street', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['address.street'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="123 Main Street"
-                        />
-                        <ValidationError message={validationErrors['address.street']} />
+                    {/* Address */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#111111]">
+                        <FaMapMarkerAlt className="text-[#111111]" />
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          ADDRESS
+                        </h3>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                        <input
-                          type="text"
-                          value={editFormData.address.city}
-                          onChange={(e) => handleEditChange('address', 'city', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['address.city'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="City"
-                        />
-                        <ValidationError message={validationErrors['address.city']} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">State/Province</label>
-                        <input
-                          type="text"
-                          value={editFormData.address.state}
-                          onChange={(e) => handleEditChange('address', 'state', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['address.state'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="State"
-                        />
-                        <ValidationError message={validationErrors['address.state']} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                        <input
-                          type="text"
-                          value={editFormData.address.country}
-                          onChange={(e) => handleEditChange('address', 'country', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['address.country'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="Country"
-                        />
-                        <ValidationError message={validationErrors['address.country']} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Postal Code</label>
-                        <input
-                          type="text"
-                          value={editFormData.address.postalCode}
-                          onChange={(e) => handleEditChange('address', 'postalCode', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['address.postalCode'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="12345"
-                        />
-                        <ValidationError message={validationErrors['address.postalCode']} />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2">
+                          <label className={npLabel}>STREET ADDRESS</label>
+                          <input type="text" value={editFormData.address.street}
+                            onChange={(e) => handleEditChange('address', 'street', e.target.value)}
+                            className={npInput(!!validationErrors['address.street'])}
+                            placeholder="123 Main Street"
+                            style={{ fontFamily: "'Inter', sans-serif" }} />
+                          <ValidationError message={validationErrors['address.street']} />
+                        </div>
+                        {[
+                          { label: 'CITY', key: 'city', placeholder: 'e.g., Mumbai' },
+                          { label: 'STATE', key: 'state', placeholder: 'e.g., Maharashtra' },
+                          { label: 'COUNTRY', key: 'country', placeholder: 'e.g., India' },
+                          { label: 'POSTAL CODE', key: 'postalCode', placeholder: 'e.g., 400001' },
+                        ].map(({ label, key, placeholder }) => (
+                          <div key={key}>
+                            <label className={npLabel}>{label}</label>
+                            <input type="text"
+                              value={(editFormData.address as any)[key]}
+                              onChange={(e) => handleEditChange('address', key, e.target.value)}
+                              placeholder={placeholder}
+                              className={npInput(!!(validationErrors as any)[`address.${key}`])}
+                              style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                            <ValidationError message={(validationErrors as any)[`address.${key}`]} />
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Social Profiles */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaGlobe className="text-indigo-600" />
-                      Social Profiles
-                      <span className="text-xs text-gray-500 font-normal ml-2">(All Optional)</span>
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaLinkedin className="text-blue-600" /> LinkedIn
-                        </label>
-                        <input
-                          type="url"
-                          value={editFormData.socialProfiles.linkedin}
-                          onChange={(e) => handleEditChange('socialProfiles', 'linkedin', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['socialProfiles.linkedin'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="https://linkedin.com/in/username"
-                        />
-                        <ValidationError message={validationErrors['socialProfiles.linkedin']} />
+                    {/* Social Profiles */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4 pb-2 border-b-2 border-[#111111]">
+                        <FaGlobe className="text-[#111111]" />
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          SOCIAL PROFILES
+                        </h3>
                       </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaGithub className="text-gray-800" /> GitHub
-                        </label>
-                        <input
-                          type="url"
-                          value={editFormData.socialProfiles.github}
-                          onChange={(e) => handleEditChange('socialProfiles', 'github', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['socialProfiles.github'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="https://github.com/username"
-                        />
-                        <ValidationError message={validationErrors['socialProfiles.github']} />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaTwitter className="text-blue-400" /> Twitter
-                        </label>
-                        <input
-                          type="url"
-                          value={editFormData.socialProfiles.twitter}
-                          onChange={(e) => handleEditChange('socialProfiles', 'twitter', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['socialProfiles.twitter'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="https://twitter.com/username"
-                        />
-                        <ValidationError message={validationErrors['socialProfiles.twitter']} />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <FaGlobe className="text-green-600" /> Website
-                        </label>
-                        <input
-                          type="url"
-                          value={editFormData.socialProfiles.website}
-                          onChange={(e) => handleEditChange('socialProfiles', 'website', e.target.value)}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 ${
-                            validationErrors['socialProfiles.website'] ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                          placeholder="https://yourwebsite.com"
-                        />
-                        <ValidationError message={validationErrors['socialProfiles.website']} />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          { label: 'LINKEDIN', key: 'linkedin', icon: <FaLinkedin />, placeholder: 'https://linkedin.com/in/username' },
+                          { label: 'GITHUB', key: 'github', icon: <FaGithub />, placeholder: 'https://github.com/username' },
+                          { label: 'TWITTER / X', key: 'twitter', icon: <FaTwitter />, placeholder: 'https://twitter.com/username' },
+                          { label: 'WEBSITE', key: 'website', icon: <FaGlobe />, placeholder: 'https://yourwebsite.com' },
+                        ].map(({ label, key, icon, placeholder }) => (
+                          <div key={key}>
+                            <label className={`${npLabel} flex items-center gap-1.5`}>{icon} {label}</label>
+                            <input type="url"
+                              value={(editFormData.socialProfiles as any)[key]}
+                              onChange={(e) => handleEditChange('socialProfiles', key, e.target.value)}
+                              placeholder={placeholder}
+                              className={npInput(!!(validationErrors as any)[`socialProfiles.${key}`])}
+                              style={{ fontFamily: "'Lora', serif" }} />
+                            <ValidationError message={(validationErrors as any)[`socialProfiles.${key}`]} />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Modal Footer */}
-              <div className="bg-gray-50 px-6 py-4 flex items-center justify-end gap-3 border-t">
-                <button
-                  onClick={() => setShowEditModal(false)}
-                  className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={saving}
-                  className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? (
-                    <>
-                      <FaSpinner className="animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <FaSave />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
+                {/* Modal Footer */}
+                <div className="p-5 border-t-4 border-[#111111] bg-[#E5E5E0] flex items-center justify-end gap-3 flex-shrink-0">
+                  <button onClick={() => setShowEditModal(false)}
+                    className="px-6 py-3 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all"
+                    style={{ fontFamily: "'Inter', sans-serif" }}>
+                    CANCEL
+                  </button>
+                  <button onClick={handleSaveEdit} disabled={saving}
+                    className="px-8 py-3 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ fontFamily: "'Inter', sans-serif" }}>
+                    {saving ? <><FaSpinner className="animate-spin" /> SAVING…</> : <><FaSave /> SAVE CHANGES</>}
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
 
-        {/* Change Password Modal */}
-        {showPasswordModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-            >
-              <form onSubmit={handleChangePassword}>
-                <div className="p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <FaKey className="text-indigo-600" /> Change Password
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
-                      <input 
-                        type="password"
-                        required
-                        value={passwordForm.currentPassword}
-                        onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-                      <input 
-                        type="password"
-                        required
-                        minLength={8}
-                        value={passwordForm.newPassword}
-                        onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-                      <input 
-                        type="password"
-                        required
-                        value={passwordForm.confirmPassword}
-                        onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
+          {/* Change Password Modal */}
+          {showPasswordModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/75"
+              onClick={() => setShowPasswordModal(false)}>
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-[#F9F9F7] border-4 border-[#111111] w-full max-w-md overflow-hidden">
+                <div className="p-5 border-b-4 border-[#111111] bg-[#111111] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FaKey className="text-[#F9F9F7]" />
+                    <h3 className="text-lg font-black text-[#F9F9F7] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      CHANGE PASSWORD
+                    </h3>
                   </div>
-                  <div className="mt-6 flex justify-end gap-3">
-                    <button type="button" onClick={() => setShowPasswordModal(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">Cancel</button>
-                    <button type="submit" disabled={actionLoading} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-                      {actionLoading ? 'Saving...' : 'Update Password'}
-                    </button>
-                  </div>
+                  <button onClick={() => setShowPasswordModal(false)} className="p-2 text-[#F9F9F7] hover:text-[#CC0000] transition-colors">
+                    <FaTimes />
+                  </button>
                 </div>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {/* Delete Account Modal */}
-        {showDeleteModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-            >
-              <form onSubmit={handleDeleteAccount}>
-                <div className="p-6">
-                  <h3 className="text-lg font-bold text-red-600 mb-4 flex items-center gap-2">
-                    <FaTrash /> Delete Account
-                  </h3>
-                  <div className="bg-red-50 text-red-700 p-4 rounded-lg text-sm mb-4">
-                    <strong>Warning:</strong> This action is permanent. All your data, passwords, and documents will be securely erased and cannot be recovered.
-                  </div>
-                  <div className="space-y-4">
+                <form onSubmit={handleChangePassword}>
+                  <div className="p-6 space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Account Password</label>
-                      <input 
-                        type="password"
-                        required
-                        value={deletePassword}
-                        onChange={e => setDeletePassword(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                      <label className={npLabel}>CURRENT PASSWORD</label>
+                      <input type="password" required value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                        className={npInput()}
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                    </div>
+                    <div>
+                      <label className={npLabel}>NEW PASSWORD</label>
+                      <input type="password" required minLength={8} value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                        className={npInput()}
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                    </div>
+                    <div>
+                      <label className={npLabel}>CONFIRM NEW PASSWORD</label>
+                      <input type="password" required value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        className={npInput()}
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button type="button" onClick={() => setShowPasswordModal(false)}
+                        className="px-5 py-2.5 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#E5E5E0] transition-all"
+                        style={{ fontFamily: "'Inter', sans-serif" }}>
+                        CANCEL
+                      </button>
+                      <button type="submit" disabled={actionLoading}
+                        className="px-5 py-2.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#F9F9F7] hover:text-[#111111] transition-all disabled:opacity-50"
+                        style={{ fontFamily: "'Inter', sans-serif" }}>
+                        {actionLoading ? 'SAVING…' : 'UPDATE PASSWORD'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Delete Account Modal */}
+          {showDeleteModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#111111]/75"
+              onClick={() => setShowDeleteModal(false)}>
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-[#F9F9F7] border-4 border-[#CC0000] w-full max-w-md overflow-hidden">
+                <div className="p-5 border-b-4 border-[#CC0000] bg-[#CC0000] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FaTrash className="text-[#F9F9F7]" />
+                    <h3 className="text-lg font-black text-[#F9F9F7] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      DELETE ACCOUNT
+                    </h3>
+                  </div>
+                  <button onClick={() => setShowDeleteModal(false)} className="p-2 text-[#F9F9F7] hover:opacity-70 transition-opacity">
+                    <FaTimes />
+                  </button>
+                </div>
+                <form onSubmit={handleDeleteAccount}>
+                  <div className="p-6 space-y-4">
+                    {/* Warning block */}
+                    <div className="p-4 border-2 border-[#CC0000] bg-[#FFF5F5]">
+                      <p className="text-xs font-black uppercase tracking-widest text-[#CC0000]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        ⚠ IRREVERSIBLE ACTION
+                      </p>
+                      <p className="text-sm mt-2 text-[#111111]" style={{ fontFamily: "'Lora', serif" }}>
+                        This will permanently erase all your passwords, documents, and data. This action <strong>cannot be undone</strong>.
+                      </p>
+                    </div>
+                    <div>
+                      <label className={npLabel}>ACCOUNT PASSWORD</label>
+                      <input type="password" required value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        className={npInput()}
                         placeholder="Enter password to confirm"
-                      />
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Type "DELETE" to confirm</label>
-                      <input 
-                        type="text"
-                        required
-                        value={deleteConfirmText}
-                        onChange={e => setDeleteConfirmText(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                      <label className={npLabel}>TYPE "DELETE" TO CONFIRM</label>
+                      <input type="text" required value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value)}
+                        className={npInput(deleteConfirmText.length > 0 && deleteConfirmText !== 'DELETE')}
                         placeholder="DELETE"
-                      />
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }} />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button type="button" onClick={() => setShowDeleteModal(false)}
+                        className="px-5 py-2.5 border-2 border-[#111111] text-[#111111] font-black text-xs uppercase tracking-widest hover:bg-[#E5E5E0] transition-all"
+                        style={{ fontFamily: "'Inter', sans-serif" }}>
+                        CANCEL
+                      </button>
+                      <button type="submit" disabled={actionLoading || deleteConfirmText !== 'DELETE'}
+                        className="px-5 py-2.5 bg-[#CC0000] text-[#F9F9F7] border-2 border-[#CC0000] font-black text-xs uppercase tracking-widest hover:bg-[#990000] transition-all disabled:opacity-50"
+                        style={{ fontFamily: "'Inter', sans-serif" }}>
+                        {actionLoading ? 'DELETING…' : 'PERMANENTLY DELETE'}
+                      </button>
                     </div>
                   </div>
-                  <div className="mt-6 flex justify-end gap-3">
-                    <button type="button" onClick={() => setShowDeleteModal(false)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition">Cancel</button>
-                    <button type="submit" disabled={actionLoading || deleteConfirmText !== 'DELETE'} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition">
-                      {actionLoading ? 'Deleting...' : 'Permanently Delete'}
-                    </button>
-                  </div>
-                </div>
-              </form>
+                </form>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
