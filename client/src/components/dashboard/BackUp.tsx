@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaCloud, FaCheck, FaExclamationTriangle, 
+import {
+  FaCloud, FaCheck, FaExclamationTriangle,
   FaLaptop, FaMobile, FaTablet, FaDesktop,
-  FaHistory, FaCog, FaTrash, FaEdit, FaShieldAlt, 
+  FaHistory, FaCog, FaTrash, FaEdit, FaShieldAlt,
   FaCloudDownloadAlt, FaCloudUploadAlt, FaUndo,
   FaCalendarAlt, FaDatabase, FaEllipsisV,
   FaTimes, FaLock, FaPlus, FaServer,
   FaSyncAlt, FaCheckCircle, FaExclamationCircle, FaClock,
-  FaSave, FaChevronRight
+  FaSave, FaChevronRight, FaSpinner,
+  FaSignOutAlt
 } from 'react-icons/fa';
 import { HiCloud, HiOutlineDownload, HiOutlineUpload } from "react-icons/hi";
 import { IoCloudDone, IoCloudOffline } from "react-icons/io5";
@@ -33,6 +34,12 @@ interface SyncDevice {
   type: 'laptop' | 'mobile' | 'tablet' | 'desktop';
   lastSync: string;
   status: 'online' | 'offline';
+
+  os?: string;
+  browser?: string;
+  lastActive?: string;
+  ip?: string;
+  isCurrent?: boolean;
 }
 
 interface SyncHistory {
@@ -40,6 +47,11 @@ interface SyncHistory {
   date: string;
   status: 'success' | 'error';
   details: string;
+  action?: string;
+  device?: string;
+  changes?: number;
+  size?: string;
+  timestamp?: string;
 }
 
 interface SyncProgress {
@@ -63,12 +75,12 @@ const Switch: React.FC<SwitchProps> = ({ checked, onChange, label }) => {
         onChange={(e) => onChange(e.target.checked)}
         className="sr-only peer"
       />
-      <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 
-                     peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] 
-                     after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 
-                     after:border after:rounded-full after:h-6 after:w-6 after:shadow-md after:transition-all 
-                     peer-checked:bg-blue-600 rounded-full"></div>
-      {label && <span className="ml-3 text-sm font-medium text-gray-900">{label}</span>}
+      <div className="w-14 h-7 bg-[#E5E5E0] border-2 border-[#111111] peer-focus:outline-none 
+                     peer-checked:after:translate-x-full after:content-[''] 
+                     after:absolute after:top-[2px] after:left-[2px] after:bg-[#111111] 
+                     after:border-2 after:border-[#111111] after:h-5 after:w-6 after:transition-all 
+                     peer-checked:bg-[#CC0000]"></div>
+      {label && <span className="ml-3 text-sm font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{label}</span>}
     </label>
   );
 };
@@ -168,7 +180,7 @@ const BackUp: React.FC = () => {
   const [selectableQRCodes, setSelectableQRCodes] = useState<any[]>([]);
 
   // ==================== VALIDATION FUNCTIONS ====================
-  
+
   const validateRetentionPeriod = (days: number): string | null => {
     if (!days || isNaN(days)) {
       return 'Retention period is required';
@@ -228,9 +240,9 @@ const BackUp: React.FC = () => {
   };
 
   const validateSelectiveBackup = (): string | null => {
-    const totalSelected = 
-      selectedItems.passwordIds.length + 
-      selectedItems.documentIds.length + 
+    const totalSelected =
+      selectedItems.passwordIds.length +
+      selectedItems.documentIds.length +
       selectedItems.qrcodeIds.length;
 
     if (totalSelected === 0) {
@@ -307,7 +319,7 @@ const BackUp: React.FC = () => {
             id: log._id,
             date: new Date(log.startedAt).toLocaleString(),
             status: (log.syncStatus === 'completed' ? 'success' : 'error') as 'success' | 'error',
-            details: log.syncStatus === 'completed' 
+            details: log.syncStatus === 'completed'
               ? `${log.totalItems || 0} items synced successfully`
               : log.error?.message || 'Sync failed'
           }));
@@ -357,20 +369,20 @@ const BackUp: React.FC = () => {
           let allPasswords: any[] = [];
           let currentPage = 1;
           let hasMore = true;
-          
+
           // Fetch all passwords with pagination (backend limit is 100 per page)
           while (hasMore && currentPage <= 10) { // Max 10 pages (1000 items)
-            const passwordsResponse = await passwordService.getPasswords({ 
-              limit: 100, 
-              page: currentPage 
+            const passwordsResponse = await passwordService.getPasswords({
+              limit: 100,
+              page: currentPage
             });
-            
+
             if (passwordsResponse.passwords && passwordsResponse.passwords.length > 0) {
               allPasswords = [...allPasswords, ...passwordsResponse.passwords];
-              
+
               // Check if there are more pages
-              if (passwordsResponse.pagination && 
-                  currentPage < passwordsResponse.pagination.pages) {
+              if (passwordsResponse.pagination &&
+                currentPage < passwordsResponse.pagination.pages) {
                 currentPage++;
                 await delay(50); // Small delay between requests
               } else {
@@ -380,7 +392,7 @@ const BackUp: React.FC = () => {
               hasMore = false;
             }
           }
-          
+
           setSelectablePasswords(allPasswords);
         } catch (passwordsError) {
           console.error('Error fetching passwords:', passwordsError);
@@ -492,13 +504,13 @@ const BackUp: React.FC = () => {
       setIsLoading(true);
       setSyncProgress({ total: 100, current: 0, uploading: true });
       setSyncStatus(prev => ({ ...prev, status: 'pending' }));
-      
+
       // Create backup via API
       const response = await backupService.createBackup('manual');
-      
+
       if (response.success) {
         const backupId = response.backup.id;
-        
+
         // Poll for backup status
         let progress = 0;
         const interval = setInterval(async () => {
@@ -507,14 +519,14 @@ const BackUp: React.FC = () => {
             ...prev,
             current: progress
           }));
-          
+
           if (progress >= 100) {
             clearInterval(interval);
-            
+
             // Fetch the completed backup
             try {
               const statusResponse = await backupService.getBackupStatus(backupId);
-              
+
               if (statusResponse.success && statusResponse.backup) {
                 const backup = statusResponse.backup;
                 const newBackup = {
@@ -524,9 +536,9 @@ const BackUp: React.FC = () => {
                   type: backup.backupType as 'auto' | 'manual',
                   restorable: backup.restorable && backup.backupStatus === 'completed'
                 };
-                
+
                 setBackupVersions(prev => [newBackup, ...prev]);
-                
+
                 setSyncStatus({
                   lastSync: new Date().toLocaleString(),
                   status: backup.backupStatus === 'completed' ? 'success' : 'pending',
@@ -536,10 +548,10 @@ const BackUp: React.FC = () => {
             } catch (error) {
               console.error('Error fetching backup status:', error);
             }
-            
+
             setIsLoading(false);
             setSyncProgress({ total: 0, current: 0, uploading: false });
-            
+
             // Auto close modal after 2 seconds on success
             setTimeout(() => {
               setShowBackupModal(false);
@@ -572,10 +584,10 @@ const BackUp: React.FC = () => {
         currentFile: 'Initializing recovery...',
         estimatedTime: 'Calculating...'
       });
-      
+
       // Initiate restore via API
       const response = await backupService.restoreBackup(versionId);
-      
+
       if (response.success) {
         let progress = 0;
         const interval = setInterval(() => {
@@ -586,7 +598,7 @@ const BackUp: React.FC = () => {
             currentFile: `Recovering file ${progress}/100`,
             estimatedTime: `${Math.ceil((100 - progress) / 10)} seconds remaining`
           }));
-          
+
           if (progress >= 100) {
             clearInterval(interval);
             setRecoveryStatus(prev => ({
@@ -595,7 +607,7 @@ const BackUp: React.FC = () => {
               currentFile: 'Recovery complete',
               estimatedTime: 'Done'
             }));
-            
+
             setTimeout(() => {
               setRecoveryStatus(prev => ({ ...prev, inProgress: false }));
               // Refresh data after restore
@@ -616,16 +628,16 @@ const BackUp: React.FC = () => {
       if (!window.confirm('Are you sure you want to delete this backup?')) {
         return;
       }
-      
+
       setIsLoading(true);
       setError(null);
-      
+
       const response = await backupService.deleteBackup(versionId);
-      
+
       if (response.success) {
         setBackupVersions(prev => prev.filter(backup => backup.id !== versionId));
       }
-      
+
       setIsLoading(false);
     } catch (err: any) {
       console.error('Delete backup error:', err);
@@ -637,7 +649,7 @@ const BackUp: React.FC = () => {
   const handleUpdateSettings = async () => {
     try {
       console.log('🔍 Validating backup settings...');
-      
+
       // Validate settings before saving
       if (!validateBackupSettings()) {
         alert('⚠️ Please fix the validation errors before saving settings');
@@ -646,18 +658,18 @@ const BackUp: React.FC = () => {
 
       setIsLoading(true);
       setError(null);
-      
+
       const updatedSettings = {
         ...backupSettings,
         frequency: syncMode === 'auto' ? backupSettings.frequency : ('weekly' as 'daily' | 'weekly' | 'monthly'),
         encryption: encryptionEnabled,
         autoBackupEnabled: syncMode === 'auto'
       };
-      
+
       console.log('📤 Sending settings update to backend:', updatedSettings);
-      
+
       const response = await backupService.updateBackupSettings(updatedSettings);
-      
+
       if (response.success) {
         console.log('✅ Settings updated successfully');
         setBackupSettings(response.settings);
@@ -665,13 +677,13 @@ const BackUp: React.FC = () => {
         setValidationErrors({}); // Clear any validation errors
         alert('✅ Backup settings updated successfully!');
       }
-      
+
       setIsLoading(false);
     } catch (err: any) {
       console.error('❌ Update settings error:', err);
       const errorMessage = err.response?.data?.message || 'Failed to update settings';
       setError(errorMessage);
-      
+
       // Handle backend validation errors
       if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
         const backendErrors: Record<string, string> = {};
@@ -680,7 +692,7 @@ const BackUp: React.FC = () => {
         });
         setValidationErrors(backendErrors);
       }
-      
+
       setIsLoading(false);
     }
   };
@@ -689,7 +701,7 @@ const BackUp: React.FC = () => {
   const handleSelectiveBackup = async () => {
     try {
       console.log('🔍 Validating selective backup...');
-      
+
       // Validate selective backup
       const validationError = validateSelectiveBackup();
       if (validationError) {
@@ -719,7 +731,7 @@ const BackUp: React.FC = () => {
 
       if (response.success) {
         console.log('✅ Selective backup created successfully');
-        
+
         // Poll for completion
         let progress = 0;
         const interval = setInterval(() => {
@@ -729,9 +741,9 @@ const BackUp: React.FC = () => {
           if (progress >= 100) {
             clearInterval(interval);
             setIsLoading(false);
-            
+
             console.log('🔄 Refreshing backup data...');
-            
+
             // Refresh backup list
             backupService.getBackupVersions().then(res => {
               if (res.success && res.backups) {
@@ -772,7 +784,7 @@ const BackUp: React.FC = () => {
       console.error('❌ Selective backup error:', err);
       const errorMessage = err.response?.data?.message || 'Failed to create selective backup';
       setError(errorMessage);
-      
+
       // Handle backend validation errors
       if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
         const errorMessages = err.response.data.errors.map((e: any) => e.message).join(', ');
@@ -780,7 +792,7 @@ const BackUp: React.FC = () => {
       } else {
         alert(`❌ ${errorMessage}`);
       }
-      
+
       setIsLoading(false);
       setShowBackupModal(false);
       setSyncProgress({ total: 0, current: 0, uploading: false });
@@ -791,16 +803,16 @@ const BackUp: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await backupService.uploadToGoogleDrive(backupId);
-      
+
       if (response.success) {
         // Update backup list to show Google Drive link
-        setBackupVersions(prev => prev.map(backup => 
-          backup.id === backupId 
+        setBackupVersions(prev => prev.map(backup =>
+          backup.id === backupId
             ? { ...backup, googleDrive: response.googleDrive }
             : backup
         ));
       }
-      
+
       setIsLoading(false);
     } catch (err: any) {
       console.error('Google Drive upload error:', err);
@@ -813,7 +825,7 @@ const BackUp: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await backupService.verifyBackup(backupId);
-      
+
       if (response.success) {
         // Refresh health score after verification
         const healthResponse = await backupService.getHealthScore();
@@ -821,7 +833,7 @@ const BackUp: React.FC = () => {
           setHealthScore(healthResponse.health);
         }
       }
-      
+
       setIsLoading(false);
     } catch (err: any) {
       console.error('Verify backup error:', err);
@@ -832,14 +844,14 @@ const BackUp: React.FC = () => {
 
   const toggleItemSelection = (type: 'password' | 'document' | 'qrcode', id: string) => {
     setSelectedItems(prev => {
-      const key = type === 'password' ? 'passwordIds' : 
-                  type === 'document' ? 'documentIds' : 'qrcodeIds';
-      
+      const key = type === 'password' ? 'passwordIds' :
+        type === 'document' ? 'documentIds' : 'qrcodeIds';
+
       const currentIds = prev[key];
       const newIds = currentIds.includes(id)
         ? currentIds.filter(itemId => itemId !== id)
         : [...currentIds, id];
-      
+
       return { ...prev, [key]: newIds };
     });
   };
@@ -861,217 +873,168 @@ const BackUp: React.FC = () => {
   };
 
   const BackupHeader = () => (
-    <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 rounded-2xl shadow-xl">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
-      <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-blue-300 opacity-10 rounded-full translate-y-1/3"></div>
-      
-      <div className="relative z-10 p-7">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="inline-flex items-center gap-3 mb-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaDatabase className="text-blue-200" />
-              <span className="text-xs font-medium text-blue-50">Data Protection</span>
-            </div>
-            
-            <h2 className="text-3xl font-bold text-white flex flex-wrap items-center gap-3">
-              <HiCloud className="h-8 w-8 text-blue-200" /> 
-              <span>Backup & Sync</span>
-            </h2>
-            
-            <p className="text-blue-100 mt-1.5 max-w-lg">
-              Keep your sensitive information safely backed up and synchronized across devices
-            </p>
+    <div className="border-b-4 border-[#111111] bg-[#F9F9F7] p-8 md:p-12 relative overflow-hidden newsprint-texture">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
+        <div>
+          <div className="inline-block border border-[#111111] px-3 py-1 mb-6 text-[0.65rem] font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            DATA PROTECTION &bull; SYNC
           </div>
-          
-          <div className="flex items-center gap-3 self-end">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setShowSettings(!showSettings)}
-              className={`px-4 py-2.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium rounded-lg transition-all flex items-center gap-2 border border-white/20 ${
-                showSettings ? 'bg-white/20' : ''
+          <h2 className="text-5xl md:text-7xl font-black leading-[0.85] tracking-tighter text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
+            BACKUP &<br />
+            <span className="text-[#CC0000]">SYNC</span>
+          </h2>
+          <p className="mt-6 text-lg text-[#525252] max-w-2xl leading-relaxed border-l-4 border-[#CC0000] pl-4" style={{ fontFamily: "'Lora', serif" }}>
+            Keep your sensitive information securely backed up and synchronized across all your registered devices.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto mt-8 md:mt-0">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`px-6 py-4 border-2 border-[#111111] font-black uppercase text-xs tracking-widest transition-all ${showSettings ? 'bg-[#111111] text-[#F9F9F7]' : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0] hard-shadow-hover'
               }`}
-            >
-              <FaCog className="text-blue-200" /> {showSettings ? 'Hide Settings' : 'Settings'}
-            </motion.button>
-            
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleSync}
-              disabled={isLoading}
-              className="px-4 py-2.5 bg-white text-blue-700 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-            >
-              <FaSyncAlt className={isLoading ? 'animate-spin' : ''} /> 
-              {isLoading ? 'Backing Up...' : 'Backup Now'}
-            </motion.button>
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
+            {showSettings ? 'HIDE SETTINGS' : 'SETTINGS'}
+          </button>
+
+          <button
+            onClick={handleSync}
+            disabled={isLoading}
+            className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
+            <FaSyncAlt className={isLoading ? 'animate-spin' : ''} />
+            {isLoading ? 'BACKING UP...' : 'BACKUP NOW'}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-12 pt-6 border-t-4 border-[#111111] grid grid-cols-2 md:grid-cols-5 gap-0 bg-[#111111]">
+        <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+          <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[SECURED ITEMS]</div>
+          <div className="font-black text-[#111111] flex items-center gap-2 text-2xl" style={{ fontFamily: "'Playfair Display', serif" }}><FaDatabase className="text-[#111111] text-lg" /> {syncStatus.items}</div>
+        </div>
+        <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+          <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[LAST BACKUP]</div>
+          <div className="font-bold text-[#111111] text-xs" style={{ fontFamily: "'Inter', sans-serif" }}>{formatDate(syncStatus.lastSync)}</div>
+        </div>
+        <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+          <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[STATUS]</div>
+          <div className="font-bold text-[#111111] text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+            {syncMode === 'auto' ? 'AUTO ENABLED' : 'MANUAL ONLY'}
           </div>
         </div>
-        
-        <div className="mt-6 flex flex-wrap gap-3">
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-            <FaCloudUploadAlt className="text-blue-200" size={12} />
-            <span className="text-xs text-blue-50">{syncStatus.items} items secured</span>
+        <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+          <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[HEALTH]</div>
+          <div className="font-bold text-[#111111] text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+            {healthScore ? `${healthScore.rating} (${healthScore.score}/100)` : 'N/A'}
           </div>
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-            <FaCalendarAlt className="text-blue-200" size={12} />
-            <span className="text-xs text-blue-50">Last backup: {formatDate(syncStatus.lastSync)}</span>
-          </div>
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-            {syncMode === 'auto' ? (
-              <>
-                <FaClock className="text-blue-200" size={12} />
-                <span className="text-xs text-blue-50">Auto backup enabled</span>
-              </>
-            ) : (
-              <>
-                <FaExclamationTriangle className="text-yellow-300" size={12} />
-                <span className="text-xs text-blue-50">Auto backup disabled</span>
-              </>
-            )}
-          </div>
-          {healthScore && (
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <div className={`w-2 h-2 rounded-full ${getHealthScoreBg(healthScore.score)}`}></div>
-              <FaShieldAlt className="text-blue-200" size={12} />
-              <span className="text-xs text-blue-50">
-                Health: {healthScore.rating} ({healthScore.score}/100)
-              </span>
-            </div>
-          )}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+        </div>
+        <div className="col-span-2 md:col-span-1 bg-[#111111]">
+          <button
             onClick={() => setShowSelectiveBackup(true)}
-            className="flex items-center gap-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 px-3 py-1.5 rounded-full text-xs text-blue-50 font-medium border border-white/20 transition-all"
+            className="w-full h-full flex items-center justify-center gap-2 bg-[#111111] text-[#F9F9F7] font-black text-xs uppercase tracking-widest p-4 hover:bg-[#CC0000] transition-colors"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            <FaPlus size={10} /> Select Items
-          </motion.button>
+            <FaPlus /> SELECT ITEMS
+          </button>
         </div>
       </div>
     </div>
   );
 
   const BackupSummary = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
-      <motion.div
-        whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-        transition={{ type: "spring", stiffness: 300 }}
-        className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
-      >
-        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-100 p-5 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">Backup Status</h3>
-            <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
-              {syncStatus.status === 'success' ? 
-                <IoCloudDone className="text-blue-600 h-5 w-5" /> : 
-                syncStatus.status === 'pending' ?
-                <FaClock className="text-amber-500 h-5 w-5" /> :
-                <IoCloudOffline className="text-red-500 h-5 w-5" />
-              }
-            </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 border-b-4 border-[#111111]">
+      <div className="border-r border-[#111111] bg-[#F9F9F7] p-8 hover:bg-[#E5E5E0] transition-colors">
+        <div className="flex items-center justify-between mb-8 border-b-2 border-[#111111] pb-4">
+          <h3 className="text-2xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>STATUS</h3>
+          <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+            {syncStatus.status === 'success' ?
+              <IoCloudDone className="h-6 w-6" /> :
+              syncStatus.status === 'pending' ?
+                <FaClock className="h-6 w-6" /> :
+                <IoCloudOffline className="text-[#CC0000] h-6 w-6" />
+            }
           </div>
         </div>
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-500">Last Successful Backup</p>
-            {getStatusBadge(syncStatus.status)}
-          </div>
-          <p className="text-xl font-semibold text-gray-800">{formatDate(syncStatus.lastSync)}</p>
-          <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
-            <span className="text-gray-600">{syncStatus.items} items backed up</span>
-            <span className="text-blue-600 font-medium hover:underline cursor-pointer">View Details</span>
-          </div>
+        <div className="mb-6">
+          <p className="text-[0.65rem] text-[#CC0000] uppercase tracking-widest font-bold mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>LATEST ARCHIVE</p>
+          <p className="text-xl font-black text-[#111111] border-l-2 border-[#111111] pl-3 py-1" style={{ fontFamily: "'Inter', sans-serif" }}>{formatDate(syncStatus.lastSync)}</p>
         </div>
-      </motion.div>
+        <div className="pt-4 border-t border-[#111111] flex justify-between items-center text-xs font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          <span className="text-[#525252]">{syncStatus.items} ITEMS</span>
+          <span className="text-[#CC0000] hover:underline cursor-pointer">DETAILS &rarr;</span>
+        </div>
+      </div>
 
-      <motion.div
-        whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-        transition={{ type: "spring", stiffness: 300 }}
-        className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
-      >
-        <div className="bg-gradient-to-r from-indigo-50 via-violet-50 to-indigo-100 p-5 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">Backup Size</h3>
-            <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
-              <FaDatabase className="text-indigo-600 h-5 w-5" />
-            </div>
+      <div className="border-r border-[#111111] bg-[#F9F9F7] p-8 hover:bg-[#E5E5E0] transition-colors">
+        <div className="flex items-center justify-between mb-8 border-b-2 border-[#111111] pb-4">
+          <h3 className="text-2xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>STORAGE</h3>
+          <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+            <FaDatabase className="h-6 w-6" />
           </div>
         </div>
-        <div className="p-5">
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-indigo-600">{syncStatus.items * 0.5} MB</p>
-            <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
-              {syncStatus.items} files
-            </span>
+        <div className="flex items-baseline gap-2 mb-4">
+          <p className="text-4xl font-black text-[#111111] tracking-tighter">{syncStatus.items * 0.5} MB</p>
+          <span className="text-[0.65rem] border border-[#111111] text-[#111111] px-2 py-0.5 uppercase tracking-widest font-bold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            {syncStatus.items} FILES
+          </span>
+        </div>
+        <div className="mt-4">
+          <div className="h-2 w-full border border-[#111111] bg-white">
+            <div
+              className="h-full bg-[#CC0000]"
+              style={{ width: `${Math.min((syncStatus.items * 0.5) / 100, 100)}%` }}
+            ></div>
           </div>
-          <div className="mt-2.5">
-            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-indigo-500 rounded-full" 
-                style={{ width: `${Math.min((syncStatus.items * 0.5) / 100, 100)}%` }}
-              ></div>
-            </div>
-            <div className="mt-1 flex justify-between text-xs text-gray-500">
-              <span>0 MB</span>
-              <span>Max 100 MB</span>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
-            <span className="text-gray-600">{backupVersions.length} versions</span>
-            <span className={`${syncMode === 'auto' ? 'text-green-600' : 'text-amber-600'} font-medium`}>
-              {syncMode === 'auto' ? 'Auto' : 'Manual'} backup
-            </span>
+          <div className="mt-2 flex justify-between text-[0.6rem] text-[#525252] font-bold tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <span>0MB</span>
+            <span>100MB</span>
           </div>
         </div>
-      </motion.div>
+        <div className="mt-6 pt-4 border-t border-[#111111] flex justify-between items-center text-xs font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          <span className="text-[#525252]">{backupVersions.length} VERSIONS</span>
+          <span className={`${syncMode === 'auto' ? 'text-[#111111]' : 'text-[#CC0000]'}`}>
+            {syncMode === 'auto' ? 'AUTO' : 'MANUAL'}
+          </span>
+        </div>
+      </div>
 
-      <motion.div
-        whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-        transition={{ type: "spring", stiffness: 300 }}
-        className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
-      >
-        <div className="bg-gradient-to-r from-purple-50 via-fuchsia-50 to-violet-100 p-5 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">Next Backup</h3>
-            <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
-              <FaCalendarAlt className="text-purple-600 h-5 w-5" />
-            </div>
+      <div className="bg-[#F9F9F7] p-8 hover:bg-[#E5E5E0] transition-colors">
+        <div className="flex items-center justify-between mb-8 border-b-2 border-[#111111] pb-4">
+          <h3 className="text-2xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>SCHEDULE</h3>
+          <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+            <FaCalendarAlt className="h-6 w-6" />
           </div>
         </div>
-        <div className="p-5">
+        <div className="mb-6">
           {syncMode === 'auto' ? (
             <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
-                </div>
-                <p className="text-xl font-semibold text-gray-800">Today, 18:00</p>
-              </div>
-              <p className="text-sm text-gray-600">Automatic daily backup scheduled</p>
+              <p className="text-xl font-black text-[#111111] border-l-2 border-[#111111] pl-3 py-1 mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>Today, 18:00</p>
+              <p className="text-sm text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>Automatic daily backup scheduled</p>
             </div>
           ) : (
             <div>
-              <p className="text-xl font-semibold text-gray-800 mb-3">Not scheduled</p>
-              <p className="text-sm text-gray-600">Auto backup is disabled</p>
+              <p className="text-xl font-black text-[#CC0000] border-l-2 border-[#CC0000] pl-3 py-1 mb-2" style={{ fontFamily: "'Inter', sans-serif" }}>UNSCHEDULED</p>
+              <p className="text-sm text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>Auto backup is disabled</p>
             </div>
           )}
-          
-          <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Auto Backup
-            </div>
-            <Switch 
-              checked={syncMode === 'auto'}
-              onChange={(checked) => setSyncMode(checked ? 'auto' : 'manual')}
-            />
-          </div>
         </div>
-      </motion.div>
+
+        <div className="mt-8 pt-4 border-t border-[#111111] flex justify-between items-center">
+          <div className="text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            ENABLE AUTO
+          </div>
+          <Switch
+            checked={syncMode === 'auto'}
+            onChange={(checked) => setSyncMode(checked ? 'auto' : 'manual')}
+          />
+        </div>
+      </div>
     </div>
   );
-  
+
   const SyncProgress = () => (
     <AnimatePresence>
       {isLoading && (
@@ -1079,62 +1042,60 @@ const BackUp: React.FC = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="bg-white mb-6 rounded-xl shadow-md border border-indigo-100 overflow-hidden"
+          className="bg-[#111111] text-[#F9F9F7] mb-6 border-b-4 border-[#CC0000] p-8"
         >
-          <div className="p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl flex items-center justify-center">
-                  {syncProgress.uploading ? 
-                    <HiOutlineUpload className="text-blue-600 h-6 w-6" /> : 
-                    <HiOutlineDownload className="text-blue-600 h-6 w-6" />
-                  }
-                </div>
-                <div>
-                  <h3 className="font-medium text-lg text-gray-900">
-                    {syncProgress.uploading ? 'Uploading Backup' : 'Processing Backup'}
-                  </h3>
-                  <p className="text-gray-600">
-                    Please keep the application open
-                  </p>
-                </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 border-b-2 border-[#404040] pb-6">
+            <div className="flex items-center gap-4">
+              <div className="p-4 border-2 border-[#F9F9F7]">
+                {syncProgress.uploading ?
+                  <HiOutlineUpload className="h-8 w-8" /> :
+                  <HiOutlineDownload className="h-8 w-8" />
+                }
               </div>
-              
-              <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-2 text-center">
-                <p className="text-sm text-gray-700">Estimated time remaining</p>
-                <p className="font-bold text-indigo-700">{Math.round((100 - syncProgress.current) / 10)} seconds</p>
+              <div>
+                <h3 className="font-black text-2xl uppercase tracking-widest" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {syncProgress.uploading ? 'UPLOADING ARCHIVE' : 'PROCESSING ARCHIVE'}
+                </h3>
+                <p className="text-[#A3A3A3] text-sm mt-1" style={{ fontFamily: "'Lora', serif" }}>
+                  Please keep the application open
+                </p>
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-gray-800">{syncProgress.current}% complete</span>
-                <span className="text-gray-600">{syncProgress.current < 50 ? 'Preparing data...' : 'Encrypting and uploading...'}</span>
-              </div>
-              
-              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div 
-                  className="h-full bg-gradient-to-r from-indigo-600 to-blue-500"
-                  style={{ width: `${syncProgress.current}%` }}
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${syncProgress.current}%` }}
-                  transition={{ type: "spring", damping: 20 }}
-                />
-              </div>
-              
-              <div className="flex gap-1 mt-3">
-                <div className={`h-1.5 w-1/4 rounded-full ${syncProgress.current >= 25 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-                <div className={`h-1.5 w-1/4 rounded-full ${syncProgress.current >= 50 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-                <div className={`h-1.5 w-1/4 rounded-full ${syncProgress.current >= 75 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-                <div className={`h-1.5 w-1/4 rounded-full ${syncProgress.current >= 100 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-              </div>
+
+            <div className="border border-[#404040] p-4 text-center min-w-[150px]">
+              <p className="text-[0.65rem] text-[#A3A3A3] uppercase tracking-widest mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>EST. TIME</p>
+              <p className="font-bold text-xl">{Math.round((100 - syncProgress.current) / 10)}s</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex justify-between text-xs font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              <span>{syncProgress.current}% COMPLETE</span>
+              <span className="text-[#A3A3A3]">{syncProgress.current < 50 ? 'PREPARING DATA...' : 'ENCRYPTING AND UPLOADING...'}</span>
+            </div>
+
+            <div className="w-full h-4 border-2 border-[#F9F9F7] bg-[#111111]">
+              <motion.div
+                className="h-full bg-[#CC0000]"
+                style={{ width: `${syncProgress.current}%` }}
+                initial={{ width: "0%" }}
+                animate={{ width: `${syncProgress.current}%` }}
+                transition={{ type: "spring", damping: 20 }}
+              />
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <div className={`h-2 flex-1 border ${syncProgress.current >= 25 ? 'bg-[#CC0000] border-[#CC0000]' : 'bg-transparent border-[#404040]'}`}></div>
+              <div className={`h-2 flex-1 border ${syncProgress.current >= 50 ? 'bg-[#CC0000] border-[#CC0000]' : 'bg-transparent border-[#404040]'}`}></div>
+              <div className={`h-2 flex-1 border ${syncProgress.current >= 75 ? 'bg-[#CC0000] border-[#CC0000]' : 'bg-transparent border-[#404040]'}`}></div>
+              <div className={`h-2 flex-1 border ${syncProgress.current >= 100 ? 'bg-[#CC0000] border-[#CC0000]' : 'bg-transparent border-[#404040]'}`}></div>
             </div>
           </div>
         </motion.div>
       )}
     </AnimatePresence>
   );
-  
+
   const ErrorDisplay = () => (
     <AnimatePresence>
       {error && (
@@ -1142,33 +1103,35 @@ const BackUp: React.FC = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="p-5 mb-6 rounded-xl bg-gradient-to-r from-red-50 to-red-100 border border-red-200 shadow-sm"
+          className="p-8 mb-6 border-4 border-[#CC0000] bg-[#F9F9F7] newsprint-texture"
         >
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-red-100 rounded-full">
-              <FaExclamationCircle className="text-red-600 h-6 w-6" />
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            <div className="p-4 border-2 border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]">
+              <FaExclamationCircle className="h-8 w-8" />
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-lg text-red-800">Backup Error</h3>
-              <p className="text-red-700 mt-1">{error}</p>
-              <div className="mt-3 flex gap-3">
-                <button 
+              <h3 className="font-black text-2xl text-[#CC0000] uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>SYSTEM ERROR DETECTED</h3>
+              <p className="text-[#111111] mt-2 font-bold" style={{ fontFamily: "'Inter', sans-serif" }}>{error}</p>
+              <div className="mt-6 flex flex-wrap gap-4">
+                <button
                   onClick={() => setError(null)}
-                  className="px-4 py-2 bg-white text-red-700 rounded-lg border border-red-200 hover:bg-red-50 transition-colors text-sm font-medium"
+                  className="px-6 py-3 border-2 border-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors text-[#111111]"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
-                  Dismiss
+                  DISMISS
                 </button>
-                <button 
+                <button
                   onClick={handleSync}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center gap-2"
+                  className="px-6 py-3 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center gap-2"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
-                  <FaSyncAlt /> Retry Backup
+                  <FaSyncAlt /> RETRY OPERATION
                 </button>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setError(null)}
-              className="p-1.5 hover:bg-red-200/50 rounded-full text-red-700"
+              className="p-2 border border-[#111111] hover:bg-[#E5E5E0] text-[#111111]"
             >
               <FaTimes />
             </button>
@@ -1177,147 +1140,115 @@ const BackUp: React.FC = () => {
       )}
     </AnimatePresence>
   );
-  
+
   const RecoveryPanel = () => (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
-      <div className="bg-gradient-to-r from-gray-50 via-blue-50 to-gray-50 p-6 border-b border-gray-100">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-xl shadow-sm">
-              <FaUndo className="text-blue-600 h-5 w-5" />
+    <div className="border-b-4 border-[#111111] bg-[#F9F9F7] mb-6">
+      <div className="bg-[#111111] text-[#F9F9F7] p-8 md:p-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="flex items-center gap-6">
+            <div className="p-4 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111]">
+              <FaUndo className="h-8 w-8" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Previous Backups</h3>
-              <p className="text-sm text-gray-500">Restore your data to a previous state</p>
+              <h3 className="text-4xl font-black tracking-tighter uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>ARCHIVE RECOVERY</h3>
+              <p className="text-[#A3A3A3] mt-2 max-w-md" style={{ fontFamily: "'Lora', serif" }}>Restore your data to a previously recorded state.</p>
             </div>
           </div>
-          <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
-            View All Versions
-            <FaChevronRight size={12} />
+          <button className="text-[0.65rem] font-bold text-[#F9F9F7] uppercase tracking-widest border border-[#F9F9F7] px-4 py-2 hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            VIEW ALL &rarr;
           </button>
         </div>
       </div>
-      <div className="p-6">
+      <div className="p-8 md:p-12">
         <div className="space-y-4">
           {backupVersions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="relative mx-auto w-20 h-20 mb-6">
-                <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-50"></div>
-                <div className="relative bg-blue-50 rounded-full w-full h-full flex items-center justify-center">
-                  <FaDatabase className="text-blue-400 text-2xl" />
-                </div>
+            <div className="text-center py-16 border-2 border-dashed border-[#111111]">
+              <div className="mx-auto w-16 h-16 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] flex items-center justify-center mb-6">
+                <FaDatabase className="text-2xl" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No backups available yet</h3>
-              <p className="text-gray-500 max-w-md mx-auto mb-6">
-                Create your first backup to ensure your data is protected against loss or corruption
+              <h3 className="text-2xl font-black text-[#111111] mb-2 uppercase tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>NO ARCHIVES FOUND</h3>
+              <p className="text-[#525252] max-w-md mx-auto mb-8" style={{ fontFamily: "'Lora', serif" }}>
+                Create your first backup to ensure your data is protected against loss or corruption.
               </p>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              <button
                 onClick={handleSync}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2 mx-auto"
+                className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] flex items-center gap-2 mx-auto"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                <FaSyncAlt /> Create First Backup
-              </motion.button>
+                <FaSyncAlt /> INITIALIZE BACKUP
+              </button>
             </div>
           ) : (
             backupVersions.map((version) => (
-              <motion.div 
+              <div
                 key={version.id}
-                whileHover={{ y: -3, boxShadow: "0 10px 20px rgba(0,0,0,0.05)" }}
-                className="p-5 rounded-xl border border-gray-100 transition-all"
+                className="p-6 border-2 border-[#111111] hover:bg-[#E5E5E0] hard-shadow-hover transition-all bg-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-xl ${
-                      version.type === 'auto' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
+                <div className="flex items-start gap-6">
+                  <div className={`p-4 border-2 border-[#111111] ${version.type === 'auto' ? 'bg-[#111111] text-[#F9F9F7]' : 'bg-[#CC0000] text-[#F9F9F7]'
                     }`}>
-                      {version.type === 'auto' ? 
-                        <FaClock /> : 
-                        <FaDatabase />
-                      }
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-gray-900">{formatDate(version.timestamp)}</h4>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          version.type === 'auto' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-purple-50 text-purple-700 border border-purple-100'
-                        }`}>
-                          {version.type === 'auto' ? 'Automatic' : 'Manual'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                        <span className="flex items-center gap-1.5">
-                          <FaDatabase className="text-gray-400" size={12} />
-                          {version.size}
-                        </span>
-                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <span>ID: {version.id}</span>
-                      </div>
-                    </div>
+                    {version.type === 'auto' ? <FaClock className="h-6 w-6" /> : <FaDatabase className="h-6 w-6" />}
                   </div>
-                  
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleVerifyBackup(version.id)}
-                      disabled={isLoading}
-                      className={`p-2 rounded-lg ${
-                        isLoading ? 'text-gray-400 cursor-not-allowed' : 'text-green-600 hover:bg-green-50'
-                      }`}
-                      title="Verify backup integrity"
-                    >
-                      <FaCheckCircle />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleUploadToGoogleDrive(version.id)}
-                      disabled={isLoading}
-                      className={`p-2 rounded-lg ${
-                        isLoading ? 'text-gray-400 cursor-not-allowed' : 'text-indigo-600 hover:bg-indigo-50'
-                      }`}
-                      title="Upload to Google Drive"
-                    >
-                      <FaCloudUploadAlt />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleRestore(version.id)}
-                      disabled={isLoading || !version.restorable}
-                      className={`p-2 rounded-lg ${
-                        isLoading || !version.restorable 
-                          ? 'text-gray-400 cursor-not-allowed' 
-                          : 'text-blue-600 hover:bg-blue-50'
-                      }`}
-                      title="Restore this backup"
-                    >
-                      <FaUndo />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleDeleteBackup(version.id)}
-                      disabled={isLoading}
-                      className={`p-2 rounded-lg ${
-                        isLoading ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'
-                      }`}
-                      title="Delete this backup"
-                    >
-                      <FaTrash />
-                    </motion.button>
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="font-black text-xl text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>{formatDate(version.timestamp)}</h4>
+                      <span className={`text-[0.65rem] font-bold uppercase tracking-widest px-2 py-1 border border-[#111111] ${version.type === 'auto' ? 'bg-[#111111] text-[#F9F9F7]' : 'bg-transparent text-[#111111]'
+                        }`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        {version.type === 'auto' ? 'AUTO' : 'MANUAL'}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-bold uppercase tracking-widest text-[#525252]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                      <span className="flex items-center gap-1">
+                        <FaDatabase /> {version.size}
+                      </span>
+                      <span className="w-1 h-1 bg-[#111111]"></span>
+                      <span>ID: {version.id}</span>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
+
+                <div className="flex flex-wrap gap-2 w-full md:w-auto mt-4 md:mt-0">
+                  <button
+                    onClick={() => handleVerifyBackup(version.id)}
+                    disabled={isLoading}
+                    className="flex-1 md:flex-none p-3 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Verify backup integrity"
+                  >
+                    <FaCheckCircle className="mx-auto" />
+                  </button>
+                  <button
+                    onClick={() => handleUploadToGoogleDrive(version.id)}
+                    disabled={isLoading}
+                    className="flex-1 md:flex-none p-3 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Upload to Google Drive"
+                  >
+                    <FaCloudUploadAlt className="mx-auto" />
+                  </button>
+                  <button
+                    onClick={() => handleRestore(version.id)}
+                    disabled={isLoading || !version.restorable}
+                    className="flex-1 md:flex-none p-3 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Restore this backup"
+                  >
+                    <FaUndo className="mx-auto" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBackup(version.id)}
+                    disabled={isLoading}
+                    className="flex-1 md:flex-none p-3 border-2 border-[#CC0000] bg-[#F9F9F7] text-[#CC0000] hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Delete this backup"
+                  >
+                    <FaTrash className="mx-auto" />
+                  </button>
+                </div>
+              </div>
             ))
           )}
-          
+
           {backupVersions.length > 0 && (
-            <div className="text-center pt-3">
-              <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                Load more backups
+            <div className="text-center pt-8">
+              <button className="text-xs font-black text-[#111111] uppercase tracking-widest border-b-2 border-[#111111] hover:text-[#CC0000] hover:border-[#CC0000] pb-1 transition-colors" style={{ fontFamily: "'Inter', sans-serif" }}>
+                LOAD OLDER ARCHIVES &darr;
               </button>
             </div>
           )}
@@ -1333,61 +1264,63 @@ const BackUp: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6"
+          className="bg-[#F9F9F7] border-4 border-[#111111] mb-6 hard-shadow"
         >
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-5 border-b border-gray-100">
+          <div className="bg-[#111111] text-[#F9F9F7] p-6 border-b-4 border-[#111111]">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-green-100 rounded-xl shadow-sm">
-                  <FaCloudDownloadAlt className="text-green-600 h-5 w-5" />
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-[#F9F9F7] text-[#111111] border-2 border-[#F9F9F7]">
+                  <FaCloudDownloadAlt className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Recovery in Progress</h3>
-                  <p className="text-sm text-gray-500">Restoring your data to a previous state</p>
+                  <h3 className="text-2xl font-black uppercase tracking-widest" style={{ fontFamily: "'Playfair Display', serif" }}>RECOVERY IN PROGRESS</h3>
+                  <p className="text-sm mt-1" style={{ fontFamily: "'Lora', serif" }}>Restoring your data to a previous state.</p>
                 </div>
               </div>
-              <div className="bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200 text-sm font-medium text-green-600">
-                {recoveryStatus.progress}% complete
+              <div className="bg-[#F9F9F7] text-[#111111] px-4 py-2 text-xs font-black uppercase tracking-widest border-2 border-[#F9F9F7]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                {recoveryStatus.progress}% COMPLETE
               </div>
             </div>
           </div>
-          
-          <div className="p-6">
-            <div className="space-y-6">
+
+          <div className="p-8">
+            <div className="space-y-8">
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium text-gray-800">Recovery Progress</span>
-                  <span className="text-gray-600">{recoveryStatus.estimatedTime}</span>
+                <div className="flex justify-between text-[0.65rem] font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span className="text-[#525252]">PROGRESS</span>
+                  <span className="text-[#111111]">{recoveryStatus.estimatedTime}</span>
                 </div>
-                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div 
-                    className="h-full bg-gradient-to-r from-green-500 to-emerald-400"
+                <div className="w-full h-4 border-2 border-[#111111] bg-white">
+                  <motion.div
+                    className="h-full bg-[#CC0000]"
                     style={{ width: `${recoveryStatus.progress}%` }}
                     initial={{ width: "0%" }}
                     animate={{ width: `${recoveryStatus.progress}%` }}
                   />
                 </div>
               </div>
-              
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
-                <div className="text-sm font-medium text-gray-700 mb-2">Current Operation</div>
-                <div className="flex items-center gap-3">
-                  <div className="animate-pulse p-2 bg-green-100 rounded-lg">
-                    <FaDatabase className="text-green-600" />
+
+              <div className="bg-white border-2 border-[#111111] p-6">
+                <div className="text-[0.65rem] font-bold uppercase tracking-widest text-[#525252] mb-3 border-b-2 border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  CURRENT OPERATION
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="animate-pulse p-4 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+                    <FaDatabase />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-gray-800">{recoveryStatus.currentFile}</div>
-                    <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden mt-2">
-                      <div className="h-full bg-green-500 rounded-full animate-pulse" style={{ width: "60%" }}></div>
+                    <div className="font-black text-[#111111] uppercase tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>{recoveryStatus.currentFile}</div>
+                    <div className="h-2 w-full border border-[#111111] bg-white mt-3">
+                      <div className="h-full bg-[#111111] animate-pulse" style={{ width: "60%" }}></div>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-center">
-                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 inline-flex items-center gap-2 text-sm text-yellow-700">
-                  <FaExclamationTriangle className="text-yellow-600" />
-                  Do not close the application during recovery
+                <div className="bg-[#CC0000] border-2 border-[#111111] text-[#F9F9F7] px-6 py-3 inline-flex items-center gap-3">
+                  <FaExclamationTriangle className="text-xl" />
+                  <span className="text-xs font-black uppercase tracking-widest" style={{ fontFamily: "'Inter', sans-serif" }}>DO NOT CLOSE THE APPLICATION DURING RECOVERY</span>
                 </div>
               </div>
             </div>
@@ -1396,172 +1329,186 @@ const BackUp: React.FC = () => {
       )}
     </AnimatePresence>
   );
-  
+
   const DeviceManagement = () => (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
-      <div className="bg-gradient-to-r from-gray-50 via-indigo-50 to-gray-50 p-6 border-b border-gray-100">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-indigo-100 rounded-xl shadow-sm">
-              <FaLaptop className="text-indigo-600 h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Connected Devices</h3>
-              <p className="text-sm text-gray-500">Manage device synchronization</p>
-            </div>
+    <div className="bg-[#F9F9F7] border-4 border-[#111111] mb-6 hard-shadow">
+      <div className="bg-[#111111] p-6 text-[#F9F9F7] flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-[#111111]">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-[#F9F9F7] text-[#111111] border-2 border-[#F9F9F7]">
+            <FaLaptop className="h-6 w-6" />
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="px-4 py-2 border border-indigo-200 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors flex items-center gap-2 text-sm font-medium"
-          >
-            <FaPlus size={12} /> Add New Device
-          </motion.button>
+          <div>
+            <h3 className="text-2xl font-black uppercase tracking-widest" style={{ fontFamily: "'Playfair Display', serif" }}>CONNECTED DEVICES</h3>
+            <p className="text-sm mt-1" style={{ fontFamily: "'Lora', serif" }}>Manage device synchronization and remote access.</p>
+          </div>
         </div>
+        <button className="px-6 py-3 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors text-[0.65rem] font-bold uppercase tracking-widest flex items-center gap-2">
+          <FaPlus size={12} /> ADD NEW DEVICE
+        </button>
       </div>
-      <div className="p-6">
-        <div className="space-y-4">
+
+      <div className="p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {devices.map(device => (
-            <motion.div 
+            <div
               key={device.id}
-              whileHover={{ y: -3, boxShadow: "0 10px 20px rgba(0,0,0,0.05)" }}
-              className="p-4 rounded-xl border border-gray-100 hover:border-indigo-200 transition-all"
+              className="bg-white border-4 border-[#111111] p-0 flex flex-col hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_#111111] transition-all"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${
-                    device.status === 'online' ? 'bg-green-50' : 'bg-gray-50'
-                  }`}>
+              <div className="p-6 flex items-start justify-between border-b-2 border-[#111111] bg-[#F9F9F7]">
+                <div className="flex items-start gap-4">
+                  <div className={`p-4 border-2 border-[#111111] ${device.status === 'online' ? 'bg-[#111111] text-[#F9F9F7]' : 'bg-white text-[#111111]'}`}>
                     {getDeviceIcon(device.type)}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-gray-900">{device.name}</h4>
+                    <h4 className="font-black text-xl text-[#111111] uppercase tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      {device.name}
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
                       {device.status === 'online' && (
-                        <div className="flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                          </span>
-                          Online
-                        </div>
+                        <span className="flex items-center gap-1 text-[0.65rem] font-bold text-[#111111] bg-[#E5E5E0] px-2 py-1 uppercase tracking-widest border border-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          <span className="w-2 h-2 bg-[#CC0000] border border-[#111111] animate-pulse"></span>
+                          ONLINE
+                        </span>
+                      )}
+                      {device.isCurrent && (
+                        <span className="text-[0.65rem] font-bold text-[#F9F9F7] bg-[#111111] px-2 py-1 uppercase tracking-widest border border-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          CURRENT DEVICE
+                        </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                      <span className="flex items-center gap-1.5">
-                        <FaClock className="text-gray-400" size={12} />
-                        Last sync: {formatDate(device.lastSync)}
-                      </span>
-                      <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                      <span className="capitalize">{device.type}</span>
-                    </div>
                   </div>
                 </div>
-                
-                <div className="flex gap-2">
+              </div>
+
+              <div className="p-6 bg-white flex-1 flex flex-col justify-between">
+                <div className="space-y-4 mb-6">
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest border-b border-dashed border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    <span className="text-[#525252]">OS / BROWSER</span>
+                    <span className="text-[#111111] text-right">{device.os} &bull; {device.browser || 'APP'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest border-b border-dashed border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    <span className="text-[#525252]">LAST ACTIVE</span>
+                    <span className="text-[#111111] text-right">{device.lastActive === 'Now' ? 'JUST NOW' : device.lastActive}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest border-b border-dashed border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    <span className="text-[#525252]">IP ADDRESS</span>
+                    <span className="text-[#111111] text-right">{device.ip}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    <span className="text-[#525252]">LAST SYNC</span>
+                    <span className="text-[#111111] text-right flex items-center gap-1 justify-end">
+                      <IoCloudDone /> {formatDate(device.lastSync).split(',')[0]}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 mt-auto">
                   {device.status === 'online' && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
+                    <button
                       onClick={handleSync}
-                      className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
-                      title="Sync now"
+                      className="flex-1 p-3 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] hover:bg-[#333333] transition-colors text-[0.65rem] font-bold uppercase tracking-widest flex items-center justify-center gap-2"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
                     >
-                      <FaSyncAlt />
-                    </motion.button>
+                      <FaSyncAlt /> SYNC NOW
+                    </button>
                   )}
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleDeviceAction(device.id, 'edit')}
-                    className="p-2 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-colors"
-                  >
-                    <FaEdit />
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleDeviceAction(device.id, 'remove')}
-                    className="p-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
-                  >
-                    <FaTrash />
-                  </motion.button>
+                  {!device.isCurrent && (
+                    <button
+                      className="flex-1 p-3 border-2 border-[#111111] bg-white text-[#CC0000] hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-colors text-[0.65rem] font-bold uppercase tracking-widest flex items-center justify-center gap-2"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      <FaSignOutAlt /> REMOVE
+                    </button>
+                  )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
-          
-          <button className="w-full p-3 border border-dashed border-gray-300 rounded-xl text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center justify-center gap-2">
-            <FaPlus /> Add another device
-          </button>
         </div>
       </div>
     </div>
   );
-  
+
   const SyncHistoryPanel = () => (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
-      <div className="bg-gradient-to-r from-gray-50 via-purple-50 to-gray-50 p-6 border-b border-gray-100">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-100 rounded-xl shadow-sm">
-              <FaHistory className="text-purple-600 h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Activity Log</h3>
-              <p className="text-sm text-gray-500">Track backup and sync operations</p>
-            </div>
+    <div className="border-b-4 border-[#111111] bg-[#F9F9F7] mb-6">
+      <div className="flex flex-col md:flex-row items-center justify-between p-8 border-b-2 border-[#111111]">
+        <div className="flex items-center gap-6">
+          <div className="p-4 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+            <FaHistory className="h-8 w-8" />
           </div>
-          <div className="flex items-center gap-2">
-            <select className="text-sm border-gray-200 rounded-lg focus:ring-purple-300 focus:border-purple-300">
-              <option>All activities</option>
-              <option>Backups only</option>
-              <option>Restore operations</option>
-            </select>
+          <div>
+            <h3 className="text-3xl font-black text-[#111111] uppercase tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>ACTIVITY LOG</h3>
+            <p className="text-[#525252] text-sm mt-1" style={{ fontFamily: "'Lora', serif" }}>Recent synchronization events across all your devices.</p>
           </div>
         </div>
+        <button className="mt-6 md:mt-0 text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest border border-[#111111] px-4 py-2 hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          EXPORT LOG &darr;
+        </button>
       </div>
-      <div className="p-6">
-        <div className="space-y-6">
-          {syncHistory.map((entry, index) => (
-            <div key={entry.id} className="relative pl-6">
-              <div className={`absolute left-0 top-0 w-3.5 h-3.5 rounded-full ${
-                entry.status === 'success' ? 'bg-green-500' : 'bg-red-500'
-              }`}></div>
-              
-              {index !== syncHistory.length - 1 && (
-                <div className="absolute left-1.5 top-3 bottom-0 w-0.5 bg-gradient-to-b from-gray-300 to-transparent"></div>
-              )}
-              
-              <div className="pb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="font-medium text-gray-900 flex items-center gap-2">
-                    {formatDate(entry.date)}
-                    {entry.status === 'success' ? (
-                      <span className="flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
-                        <FaCheckCircle size={10} /> Success
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
-                        <FaExclamationCircle size={10} /> Failed
-                      </span>
-                    )}
-                  </div>
-                  <button className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded-full">
-                    <FaEllipsisV size={12} />
-                  </button>
+
+      <div className="p-0">
+        <div className="divide-y divide-[#111111]">
+          {syncHistory.map((item) => (
+            <div key={item.id} className="p-6 md:p-8 hover:bg-[#E5E5E0] transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex items-center gap-6 w-full md:w-auto">
+                <div className={`w-14 h-14 border-2 border-[#111111] flex items-center justify-center shrink-0 ${item.status === 'success' ? 'bg-[#F9F9F7]' :
+                  item.status === 'error' ? 'bg-[#CC0000] text-[#F9F9F7]' :
+                    'bg-[#111111] text-[#F9F9F7]'
+                  }`}>
+                  {item.status === 'success' ? <FaCheckCircle className={item.status === 'success' ? 'text-[#111111] text-xl' : 'text-[#F9F9F7] text-xl'} /> :
+                    item.status === 'error' ? <FaExclamationTriangle className="text-xl text-[#F9F9F7]" /> :
+                      <FaSpinner className="animate-spin text-xl text-[#F9F9F7]" />}
                 </div>
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <p className="text-gray-700">{entry.details}</p>
+
+                <div className="flex-1">
+                  <h4 className="font-black text-xl text-[#111111] uppercase tracking-wide" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    {item.action === 'upload' ? 'BACKUP CREATED' : item.action === 'download' ? 'RESTORED FROM BACKUP' : 'SYNC COMPLETED'}
+                  </h4>
+                  <p className="text-sm font-bold text-[#525252] uppercase tracking-widest mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {item.device}
+                  </p>
+                  {item.status === 'error' && (
+                    <p className="text-xs text-[#CC0000] font-bold mt-2" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      Error processing request.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-8 w-full md:w-auto border-t md:border-t-0 border-[#111111] pt-4 md:pt-0">
+                <div className="text-right">
+                  <div className="text-sm font-bold text-[#111111] uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {(item.changes ?? 0) > 0
+                      ? `+${item.changes} ITEMS`
+                      : 'NO CHANGES'}
+                  </div>
+                  <div className="text-xs text-[#525252] font-bold mt-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    {item.size}
+                  </div>
+                </div>
+
+                <div className="text-right border-l-2 border-[#111111] pl-6">
+                  <div className="text-sm font-black text-[#111111]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                    {formatDate(item.date).split(',')[0]}
+                  </div>
+                  <div className="text-xs font-bold text-[#525252] uppercase tracking-widest mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    {formatDate(item.date).split(',')[1]}
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      <div className="p-6 border-t-2 border-[#111111] text-center bg-[#E5E5E0]">
+        <button className="text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest hover:underline" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          VIEW FULL HISTORY
+        </button>
+      </div>
     </div>
   );
-  
+
   const SettingsPanel = () => (
     <AnimatePresence>
       {showSettings && (
@@ -1570,46 +1517,45 @@ const BackUp: React.FC = () => {
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6"
+          className="bg-[#F9F9F7] border-4 border-[#111111] overflow-hidden mb-6 hard-shadow"
         >
-          <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-100 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-indigo-100 rounded-xl shadow-sm">
-                <FaCog className="text-indigo-600 h-5 w-5" />
+          <div className="bg-[#111111] text-[#F9F9F7] px-8 py-6 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="p-3 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111]">
+                <FaCog className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-800">Backup Settings</h3>
-                <p className="text-sm text-gray-500">Configure your backup preferences</p>
+                <h3 className="text-2xl font-black uppercase tracking-widest" style={{ fontFamily: "'Playfair Display', serif" }}>SYSTEM SETTINGS</h3>
+                <p className="text-sm mt-1" style={{ fontFamily: "'Lora', serif" }}>Configure your backup preferences and retention policies.</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setShowSettings(false)}
-              className="p-2 rounded-full hover:bg-white/50 text-gray-700"
+              className="p-3 border-2 border-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
             >
               <FaTimes />
             </button>
           </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-5">
-                <h4 className="font-medium text-gray-900 flex items-center gap-1.5 mb-4">
-                  <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full"></div>
-                  Backup Options
+
+          <div className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              <div className="space-y-8">
+                <h4 className="font-black text-xl text-[#111111] flex items-center gap-3 uppercase tracking-widest border-b-2 border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  <FaDatabase /> BACKUP OPTIONS
                 </h4>
-                
-                <div className="p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-100">
-                  <div className="flex items-center justify-between mb-3">
+
+                <div className="p-6 border-2 border-[#111111] bg-white hover:bg-[#E5E5E0] transition-colors">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <label className="font-medium text-gray-800">Auto-Backup</label>
-                      <p className="text-sm text-gray-600">Automatically backup your data</p>
+                      <label className="font-black text-lg text-[#111111] uppercase tracking-wide">AUTO-BACKUP</label>
+                      <p className="text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>Automatically backup your data according to schedule.</p>
                     </div>
-                    <Switch 
+                    <Switch
                       checked={syncMode === 'auto'}
                       onChange={(checked) => setSyncMode(checked ? 'auto' : 'manual')}
                     />
                   </div>
-                  
+
                   <AnimatePresence>
                     {syncMode === 'auto' && (
                       <motion.div
@@ -1618,86 +1564,80 @@ const BackUp: React.FC = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="pt-3 border-t border-gray-100">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Backup Frequency
+                        <div className="pt-6 mt-4 border-t-2 border-[#111111]">
+                          <label className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                            BACKUP FREQUENCY
                           </label>
-                          <select 
+                          <select
                             value={backupSettings.frequency}
                             onChange={(e) => setBackupSettings(prev => ({
                               ...prev,
                               frequency: e.target.value as any
                             }))}
-                            className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                            className="w-full p-4 border-2 border-[#111111] bg-[#F9F9F7] font-bold uppercase tracking-widest text-[#111111] focus:ring-0 focus:outline-none appearance-none"
+                            style={{ fontFamily: "'Inter', sans-serif" }}
                           >
-                            <option value="daily">Daily</option>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
+                            <option value="daily">DAILY (RECOMMENDED)</option>
+                            <option value="weekly">WEEKLY</option>
+                            <option value="monthly">MONTHLY</option>
                           </select>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Storage Location
+                  <label className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    STORAGE LOCATION
                   </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <motion.button
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.98 }}
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
                       onClick={() => setBackupSettings(prev => ({ ...prev, location: 'cloud' }))}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-xl border ${
-                        backupSettings.location === 'cloud'
-                          ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-200 ring-opacity-50'
-                          : 'bg-white border-gray-200 hover:border-blue-200'
-                      }`}
+                      className={`flex flex-col items-center gap-4 p-6 border-2 transition-all ${backupSettings.location === 'cloud'
+                        ? 'border-[#111111] bg-[#111111] text-[#F9F9F7]'
+                        : 'border-[#111111] bg-white text-[#111111] hover:bg-[#E5E5E0]'
+                        }`}
                     >
-                      <FaCloud size={24} className={backupSettings.location === 'cloud' ? 'text-blue-600' : 'text-gray-400'} />
-                      <span className={`text-sm font-medium ${backupSettings.location === 'cloud' ? 'text-blue-700' : 'text-gray-700'}`}>
-                        Cloud Storage
+                      <FaCloud className="text-3xl" />
+                      <span className="text-xs font-black uppercase tracking-widest" style={{ fontFamily: "'Inter', sans-serif" }}>
+                        CLOUD STORAGE
                       </span>
-                    </motion.button>
-                    
-                    <motion.button
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.98 }}
+                    </button>
+
+                    <button
                       onClick={() => setBackupSettings(prev => ({ ...prev, location: 'local' }))}
-                      className={`flex flex-col items-center gap-3 p-4 rounded-xl border ${
-                        backupSettings.location === 'local'
-                          ? 'bg-blue-50 border-blue-200 ring-2 ring-blue-200 ring-opacity-50'
-                          : 'bg-white border-gray-200 hover:border-blue-200'
-                      }`}
+                      className={`flex flex-col items-center gap-4 p-6 border-2 transition-all ${backupSettings.location === 'local'
+                        ? 'border-[#111111] bg-[#111111] text-[#F9F9F7]'
+                        : 'border-[#111111] bg-white text-[#111111] hover:bg-[#E5E5E0]'
+                        }`}
                     >
-                      <FaServer size={24} className={backupSettings.location === 'local' ? 'text-blue-600' : 'text-gray-400'} />
-                      <span className={`text-sm font-medium ${backupSettings.location === 'local' ? 'text-blue-700' : 'text-gray-700'}`}>
-                        Local Storage
+                      <FaServer className="text-3xl" />
+                      <span className="text-xs font-black uppercase tracking-widest" style={{ fontFamily: "'Inter', sans-serif" }}>
+                        LOCAL STORAGE
                       </span>
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
               </div>
-              
-              <div className="space-y-5">
-                <h4 className="font-medium text-gray-900 flex items-center gap-1.5 mb-4">
-                  <div className="w-1 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full"></div>
-                  Security & Data
+
+              <div className="space-y-8">
+                <h4 className="font-black text-xl text-[#111111] flex items-center gap-3 uppercase tracking-widest border-b-2 border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                  <FaShieldAlt /> SECURITY & DATA
                 </h4>
-                
-                <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-white border border-gray-100">
-                  <div className="flex items-center justify-between mb-3">
+
+                <div className="p-6 border-2 border-[#111111] bg-white hover:bg-[#E5E5E0] transition-colors">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <label className="font-medium text-gray-800">End-to-End Encryption</label>
-                      <p className="text-sm text-gray-600">Securely encrypt all your data</p>
+                      <label className="font-black text-lg text-[#111111] uppercase tracking-wide">END-TO-END ENCRYPTION</label>
+                      <p className="text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>Securely encrypt all your data before transmission.</p>
                     </div>
-                    <Switch 
+                    <Switch
                       checked={encryptionEnabled}
                       onChange={setEncryptionEnabled}
                     />
                   </div>
-                  
+
                   <AnimatePresence>
                     {encryptionEnabled && (
                       <motion.div
@@ -1706,12 +1646,12 @@ const BackUp: React.FC = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="overflow-hidden"
                       >
-                        <div className="pt-3 border-t border-gray-100">
-                          <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 flex items-start gap-3">
-                            <FaExclamationTriangle className="text-yellow-600 mt-0.5" />
-                            <div className="text-sm text-yellow-800">
-                              <p className="font-medium">Important Security Note</p>
-                              <p className="mt-1">Encrypted backups cannot be recovered if you forget your master password.</p>
+                        <div className="pt-6 mt-4 border-t-2 border-[#111111]">
+                          <div className="bg-[#CC0000] text-[#F9F9F7] p-4 flex items-start gap-4">
+                            <FaExclamationTriangle className="mt-1 text-xl shrink-0" />
+                            <div>
+                              <p className="font-black uppercase tracking-widest text-xs mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>CRITICAL WARNING</p>
+                              <p className="text-sm" style={{ fontFamily: "'Lora', serif" }}>Encrypted backups cannot be recovered if you forget your master password.</p>
                             </div>
                           </div>
                         </div>
@@ -1719,13 +1659,13 @@ const BackUp: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Backup Retention Period <span className="text-red-500">*</span>
+                  <label className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    BACKUP RETENTION PERIOD <span className="text-[#CC0000]">*</span>
                   </label>
                   <div className="relative">
-                    <select 
+                    <select
                       value={backupSettings.retention}
                       onChange={(e) => {
                         const value = parseInt(e.target.value);
@@ -1735,36 +1675,36 @@ const BackUp: React.FC = () => {
                         }));
                         clearValidationError('retention');
                       }}
-                      className={`w-full rounded-lg shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 pl-10 ${
-                        validationErrors.retention ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      className={`w-full p-4 pl-12 border-2 bg-white font-bold uppercase tracking-widest text-[#111111] focus:ring-0 focus:outline-none appearance-none ${validationErrors.retention ? 'border-[#CC0000]' : 'border-[#111111]'
+                        }`}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
                     >
-                      <option value={7}>Keep for 7 days</option>
-                      <option value={14}>Keep for 14 days</option>
-                      <option value={30}>Keep for 30 days</option>
-                      <option value={90}>Keep for 90 days</option>
-                      <option value={365}>Keep for 1 year</option>
+                      <option value={7}>KEEP FOR 7 DAYS</option>
+                      <option value={14}>KEEP FOR 14 DAYS</option>
+                      <option value={30}>KEEP FOR 30 DAYS</option>
+                      <option value={90}>KEEP FOR 90 DAYS</option>
+                      <option value={365}>KEEP FOR 1 YEAR</option>
                     </select>
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <FaClock className="text-gray-400" />
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                      <FaClock className="text-[#111111] text-lg" />
                     </div>
                   </div>
                   {validationErrors.retention && (
                     <ValidationError message={validationErrors.retention} />
                   )}
                   {!validationErrors.retention && (
-                    <p className="mt-1.5 text-xs text-gray-500">
-                      Older backups will be automatically deleted to save space
+                    <p className="mt-2 text-[0.65rem] text-[#525252] font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                      OLDER BACKUPS WILL BE AUTOMATICALLY DELETED TO SAVE SPACE.
                     </p>
                   )}
                 </div>
-                
-                <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-purple-50 to-white border border-gray-100">
+
+                <div className="flex items-center justify-between p-6 border-2 border-[#111111] bg-white hover:bg-[#E5E5E0] transition-colors">
                   <div>
-                    <label className="font-medium text-gray-800">Data Compression</label>
-                    <p className="text-sm text-gray-600">Reduce backup size</p>
+                    <label className="font-black text-lg text-[#111111] uppercase tracking-wide">DATA COMPRESSION</label>
+                    <p className="text-[#525252] mt-1" style={{ fontFamily: "'Lora', serif" }}>Reduce backup size to save storage space.</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={backupSettings.compression}
                     onChange={(checked) => setBackupSettings(prev => ({
                       ...prev,
@@ -1774,25 +1714,23 @@ const BackUp: React.FC = () => {
                 </div>
               </div>
             </div>
-            
-            <div className="mt-8 pt-5 border-t border-gray-200 flex justify-end gap-3">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+
+            <div className="mt-12 pt-6 border-t-4 border-[#111111] flex justify-end gap-4">
+              <button
                 onClick={() => setShowSettings(false)}
-                className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                className="px-8 py-4 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                CANCEL
+              </button>
+              <button
                 onClick={handleUpdateSettings}
                 disabled={isLoading}
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 shadow-sm font-medium flex items-center gap-2"
+                className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors disabled:opacity-50 flex items-center gap-2"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                <FaSave /> Save Settings
-              </motion.button>
+                <FaSave /> SAVE CONFIGURATION
+              </button>
             </div>
           </div>
         </motion.div>
@@ -1801,38 +1739,33 @@ const BackUp: React.FC = () => {
   );
 
   const AuthPrompt = () => (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 max-w-md mx-auto my-20">
-      <div className="text-center">
-        <div className="relative mx-auto w-20 h-20 mb-6">
-          <div className="absolute inset-0 bg-red-100 rounded-full animate-ping opacity-50"></div>
-          <div className="relative bg-gradient-to-br from-red-50 to-red-100 rounded-full w-full h-full flex items-center justify-center">
-            <FaLock className="text-red-600 text-xl" />
-          </div>
+    <div className="bg-[#F9F9F7] border-4 border-[#111111] p-12 max-w-2xl mx-auto my-20 hard-shadow">
+      <div className="text-center flex flex-col items-center">
+        <div className="w-24 h-24 border-4 border-[#CC0000] bg-[#CC0000] text-[#F9F9F7] flex items-center justify-center mb-8 shrink-0">
+          <FaLock className="text-4xl" />
         </div>
-        <h3 className="text-2xl font-bold mb-3 text-gray-800">Authentication Required</h3>
-        <p className="text-gray-600 mb-8 max-w-sm mx-auto">
-          {error || "You need to be logged in to access and manage backups. Please sign in to continue."}
+        <h3 className="text-4xl font-black mb-4 text-[#111111] uppercase tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>AUTHENTICATION REQUIRED</h3>
+        <p className="text-[#525252] mb-10 max-w-md mx-auto text-lg leading-relaxed" style={{ fontFamily: "'Lora', serif" }}>
+          {error || "Access to backup infrastructure is restricted. Please authenticate to verify identity."}
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <motion.a 
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            href="/signin" 
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm font-medium"
+        <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md">
+          <a
+            href="/signin"
+            className="flex-1 px-8 py-4 bg-[#111111] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#333333] transition-colors text-center"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            Sign In
-          </motion.a>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
+            SIGN IN
+          </a>
+          <button
             onClick={() => {
               setError(null);
               setIsAuthenticated(true);
             }}
-            className="px-6 py-2.5 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
+            className="flex-1 px-8 py-4 border-2 border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors text-center"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
-            Try Again
-          </motion.button>
+            RETRY
+          </button>
         </div>
       </div>
     </div>
@@ -1844,10 +1777,10 @@ const BackUp: React.FC = () => {
 
   if (dataLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600 mb-4"></div>
-          <p className="text-gray-600">Loading backup data...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F9F7]">
+        <div className="w-16 h-16 border-4 border-[#111111] border-t-[#CC0000] animate-spin mb-6"></div>
+        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+          INITIALIZING BACKUP SYSTEM...
         </div>
       </div>
     );
@@ -1864,7 +1797,7 @@ const BackUp: React.FC = () => {
       <RecoveryPanel />
       <DeviceManagement />
       <SyncHistoryPanel />
-      
+
       {/* Backup Progress Modal */}
       <AnimatePresence>
         {showBackupModal && (
@@ -1872,170 +1805,162 @@ const BackUp: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-[#111111]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={() => !isLoading && setShowBackupModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-md w-full max-h-[90vh] overflow-y-auto hard-shadow"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-5 flex justify-between items-center bg-[#111111] text-[#F9F9F7]">
-                <h3 className="text-xl font-black flex items-center gap-2" style={{ fontFamily: "'Playfair Display', serif" }}>
+              <div className="p-6 flex justify-between items-center bg-[#111111] text-[#F9F9F7]">
+                <h3 className="text-2xl font-black uppercase tracking-widest flex items-center gap-3" style={{ fontFamily: "'Playfair Display', serif" }}>
                   <FaCloudUploadAlt />
-                  {syncProgress.current >= 100 ? 'Backup Complete' : 'Backing Up Data'}
+                  {syncProgress.current >= 100 ? 'ARCHIVE COMPLETE' : 'ARCHIVING DATA'}
                 </h3>
-                <button 
+                <button
                   onClick={() => !isLoading && setShowBackupModal(false)}
-                  className="p-2 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors"
+                  className="p-2 border-2 border-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
                   disabled={isLoading}
                 >
                   <FaTimes />
                 </button>
               </div>
-              
-              <div className="p-6 bg-[#F9F9F7] border-2 border-[#111111]">
+
+              <div className="p-8">
                 {isLoading ? (
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     <div className="text-center">
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4"
+                        className="inline-flex items-center justify-center w-24 h-24 border-4 border-[#111111] bg-white mb-6"
                       >
-                        <FaCloudUploadAlt className="text-3xl text-blue-600" />
+                        <FaCloudUploadAlt className="text-4xl text-[#111111]" />
                       </motion.div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-700 font-medium">Progress</span>
-                        <span className="text-blue-600 font-semibold">{Math.round(syncProgress.current)}%</span>
+                      <div className="flex justify-between text-xs font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        <span className="text-[#525252]">PROGRESS</span>
+                        <span className="text-[#111111]">{Math.round(syncProgress.current)}%</span>
                       </div>
-                      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-4 border-2 border-[#111111] bg-white">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${syncProgress.current}%` }}
-                          className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
+                          className="h-full bg-[#CC0000]"
                         />
                       </div>
                     </div>
 
-                    {/* Live Stats */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-blue-50 rounded-lg p-4 text-center">
-                        <FaDatabase className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                        <div className="text-2xl font-bold text-gray-800">{Math.floor(syncProgress.current * 1.56)}</div>
-                        <div className="text-xs text-gray-600 mt-1">Items Backed Up</div>
+                      <div className="border-2 border-[#111111] bg-white p-4 text-center">
+                        <FaDatabase className="w-8 h-8 text-[#111111] mx-auto mb-3" />
+                        <div className="text-3xl font-black text-[#111111]">{Math.floor(syncProgress.current * 1.56)}</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-[#525252] mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>ITEMS SECURED</div>
                       </div>
-                      <div className="bg-indigo-50 rounded-lg p-4 text-center">
-                        <FaCloudUploadAlt className="w-6 h-6 text-indigo-600 mx-auto mb-2" />
-                        <div className="text-2xl font-bold text-gray-800">{Math.floor(syncProgress.current * 2.5)} MB</div>
-                        <div className="text-xs text-gray-600 mt-1">Data Uploaded</div>
+                      <div className="border-2 border-[#111111] bg-white p-4 text-center">
+                        <FaCloudUploadAlt className="w-8 h-8 text-[#111111] mx-auto mb-3" />
+                        <div className="text-3xl font-black text-[#111111]">{Math.floor(syncProgress.current * 2.5)} MB</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-[#525252] mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>DATA UPLOADED</div>
                       </div>
                     </div>
 
-                    {/* Backup Activity */}
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
+                    <div className="border-2 border-[#111111] bg-white p-4">
+                      <div className="flex items-center gap-3 mb-4 border-b-2 border-[#111111] pb-2">
                         <motion.div
                           animate={{ scale: [1, 1.2, 1] }}
                           transition={{ duration: 1, repeat: Infinity }}
-                          className="w-2 h-2 rounded-full bg-green-500"
+                          className="w-3 h-3 bg-[#CC0000] border border-[#111111]"
                         ></motion.div>
-                        <span className="text-sm font-medium text-gray-700">Current Activity</span>
+                        <span className="text-sm font-black uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>CURRENT ACTIVITY</span>
                       </div>
-                      <div className="space-y-2 text-sm text-gray-600">
+                      <div className="space-y-2 text-sm text-[#525252] font-bold" style={{ fontFamily: "'Inter', sans-serif" }}>
                         <motion.div
                           animate={{ opacity: [0.5, 1, 0.5] }}
                           transition={{ duration: 2, repeat: Infinity }}
                           className="flex items-center gap-2"
                         >
-                          <FaChevronRight className="text-blue-600" size={10} />
+                          <FaChevronRight className="text-[#CC0000]" size={10} />
                           <span>
-                            {syncProgress.current < 30 ? 'Collecting your data...' :
-                             syncProgress.current < 60 ? 'Encrypting files...' :
-                             syncProgress.current < 90 ? 'Uploading to cloud...' :
-                             'Finalizing backup...'}
+                            {syncProgress.current < 30 ? 'COLLECTING DATA...' :
+                              syncProgress.current < 60 ? 'ENCRYPTING FILES...' :
+                                syncProgress.current < 90 ? 'UPLOADING TO CLOUD...' :
+                                  'FINALIZING BACKUP...'}
                           </span>
                         </motion.div>
                       </div>
                     </div>
 
-                    {/* Security Notice */}
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-3">
-                      <FaLock className="text-green-600 mt-0.5" />
-                      <div className="text-sm text-green-800">
-                        <p className="font-medium">Secure Backup in Progress</p>
-                        <p className="mt-1">Your data is being encrypted with AES-256 encryption.</p>
+                    <div className="bg-[#111111] text-[#F9F9F7] p-4 flex items-start gap-4">
+                      <FaLock className="mt-1 text-xl shrink-0" />
+                      <div className="text-sm" style={{ fontFamily: "'Lora', serif" }}>
+                        <p className="font-black uppercase tracking-widest text-[0.65rem] mb-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>SECURE BACKUP</p>
+                        <p>Your data is being encrypted with AES-256 encryption.</p>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    {/* Success State */}
-                    <div className="text-center">
+                  <div className="space-y-8">
+                    <div className="text-center py-6">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                        className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4"
+                        className="inline-flex items-center justify-center w-24 h-24 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] mb-6"
                       >
-                        <FaCheckCircle className="text-3xl text-green-600" />
+                        <FaCheckCircle className="text-4xl" />
                       </motion.div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-2">Backup Successful!</h4>
-                      <p className="text-gray-600">Your data has been securely backed up to the cloud.</p>
+                      <h4 className="text-3xl font-black text-[#111111] mb-2 uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>ARCHIVE SUCCESSFUL</h4>
+                      <p className="text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>Your data has been securely backed up.</p>
                     </div>
 
-                    {/* Final Results */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-blue-50 rounded-lg p-4 text-center border-2 border-blue-200">
-                        <FaDatabase className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                        <div className="text-2xl font-bold text-gray-800">{syncStatus.items}</div>
-                        <div className="text-xs text-gray-600 mt-1">Items Secured</div>
+                      <div className="border-2 border-[#111111] bg-white p-4 text-center">
+                        <FaDatabase className="w-8 h-8 text-[#111111] mx-auto mb-3" />
+                        <div className="text-3xl font-black text-[#111111]">{syncStatus.items}</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-[#525252] mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>ITEMS SECURED</div>
                       </div>
-                      <div className="bg-indigo-50 rounded-lg p-4 text-center border-2 border-indigo-200">
-                        <FaCloudUploadAlt className="w-6 h-6 text-indigo-600 mx-auto mb-2" />
-                        <div className="text-2xl font-bold text-gray-800">{Math.floor(syncStatus.items * 0.5)} MB</div>
-                        <div className="text-xs text-gray-600 mt-1">Total Size</div>
+                      <div className="border-2 border-[#111111] bg-white p-4 text-center">
+                        <FaCloudUploadAlt className="w-8 h-8 text-[#111111] mx-auto mb-3" />
+                        <div className="text-3xl font-black text-[#111111]">{Math.floor(syncStatus.items * 0.5)} MB</div>
+                        <div className="text-[0.65rem] font-bold uppercase tracking-widest text-[#525252] mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>TOTAL SIZE</div>
                       </div>
                     </div>
 
-                    {/* Backup Info */}
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <FaShieldAlt className="w-5 h-5 text-green-600" />
+                    <div className="border-2 border-[#111111] bg-white p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 bg-[#111111] text-[#F9F9F7]">
+                          <FaShieldAlt className="w-6 h-6" />
                         </div>
                         <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Backup Details</h5>
-                          <div className="space-y-1 text-sm text-gray-600">
-                            <div className="flex items-center gap-2">
-                              <FaCheckCircle className="text-green-600" size={14} />
-                              <span>End-to-end encrypted</span>
+                          <h5 className="font-black text-[#111111] mb-3 uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>ARCHIVE DETAILS</h5>
+                          <div className="space-y-2 text-sm text-[#525252] font-bold" style={{ fontFamily: "'Inter', sans-serif" }}>
+                            <div className="flex items-center gap-3">
+                              <FaCheckCircle className="text-[#111111]" />
+                              <span>END-TO-END ENCRYPTED</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <FaCheckCircle className="text-green-600" size={14} />
-                              <span>Stored securely in the cloud</span>
+                            <div className="flex items-center gap-3">
+                              <FaCheckCircle className="text-[#111111]" />
+                              <span>SECURELY STORED</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <FaCheckCircle className="text-green-600" size={14} />
-                              <span>Backup ID: v{backupVersions.length}</span>
+                            <div className="flex items-center gap-3">
+                              <FaCheckCircle className="text-[#111111]" />
+                              <span>ID: V{backupVersions.length}</span>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="pt-4 flex justify-end space-x-3 border-t border-gray-100">
-                      <motion.button 
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                    <div className="pt-6 border-t-2 border-[#111111] flex justify-end">
+                      <button
                         onClick={() => setShowBackupModal(false)}
-                        className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
+                        className="px-8 py-4 bg-[#111111] text-[#F9F9F7] font-black uppercase tracking-widest text-xs hover:bg-[#333333] transition-colors"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
                       >
-                        Done
-                      </motion.button>
+                        CLOSE
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2052,220 +1977,195 @@ const BackUp: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+            className="fixed inset-0 bg-[#111111]/80 flex items-center justify-center z-50 p-4 overflow-y-auto"
             onClick={() => setShowSelectiveBackup(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full my-8 overflow-hidden"
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-4xl w-full my-8 hard-shadow"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+              <div className="bg-[#111111] p-6 text-[#F9F9F7]">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold flex items-center gap-3">
-                      <FaDatabase /> Select Items to Backup
+                    <h3 className="text-2xl font-black uppercase tracking-widest flex items-center gap-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+                      <FaDatabase /> SELECTIVE ARCHIVE
                     </h3>
-                    <p className="text-blue-100 mt-1">Choose specific items you want to include in this backup</p>
+                    <p className="text-sm mt-1" style={{ fontFamily: "'Lora', serif" }}>Choose specific items to include in this backup.</p>
                   </div>
                   <button
                     onClick={() => setShowSelectiveBackup(false)}
-                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                    className="p-2 border-2 border-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
                   >
                     <FaTimes size={20} />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 max-h-[calc(90vh-250px)] overflow-y-auto">
-                {/* Device Selector */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="p-8 max-h-[calc(90vh-250px)] overflow-y-auto">
+                <div className="mb-8">
+                  <label className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-3" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                     <FaLaptop className="inline mr-2" />
-                    Select Device (Optional)
+                    TARGET DEVICE (OPTIONAL)
                   </label>
                   <select
                     value={selectedBackupDevice}
                     onChange={(e) => setSelectedBackupDevice(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-[#111111] bg-white font-bold uppercase tracking-widest text-[#111111] focus:ring-0 focus:outline-none appearance-none"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
                   >
-                    <option value="">All Devices</option>
+                    <option value="">ALL REGISTERED DEVICES</option>
                     {availableDevices.map((device: any) => (
                       <option key={device.id} value={device.id}>
-                        {device.name} ({device.type}) - {device.status}
+                        {device.name} ({device.type}) - {device.status.toUpperCase()}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Selection Summary */}
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Selected Items:</span>
-                    <span className="text-lg font-bold text-blue-600">
-                      {selectedItems.passwordIds.length + selectedItems.documentIds.length + selectedItems.qrcodeIds.length}
-                    </span>
+                <div className="mb-8 p-6 bg-[#111111] text-[#F9F9F7] flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="text-sm font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>SELECTION SUMMARY:</div>
+                  <div className="text-3xl font-black" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    {selectedItems.passwordIds.length + selectedItems.documentIds.length + selectedItems.qrcodeIds.length} ITEMS
                   </div>
-                  <div className="mt-2 flex gap-3 text-xs text-gray-600">
-                    <span>{selectedItems.passwordIds.length} Passwords</span>
-                    <span>•</span>
-                    <span>{selectedItems.documentIds.length} Documents</span>
-                    <span>•</span>
-                    <span>{selectedItems.qrcodeIds.length} QR Codes</span>
+                  <div className="flex flex-wrap justify-center gap-4 text-xs font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                    <span className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1"><FaLock /> {selectedItems.passwordIds.length} PASSWORDS</span>
+                    <span className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1"><FaDatabase /> {selectedItems.documentIds.length} DOCS</span>
+                    <span className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1"><FaShieldAlt /> {selectedItems.qrcodeIds.length} QRS</span>
                   </div>
                 </div>
 
-                {/* Item Selection */}
-                <div className="space-y-6">
-                  {/* Passwords Section */}
+                <div className="space-y-8">
                   {selectablePasswords.length > 0 && (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                          <FaLock className="text-blue-600" />
-                          Passwords & Cards ({selectablePasswords.length})
+                    <div className="border-2 border-[#111111] bg-white">
+                      <div className="bg-[#E5E5E0] p-4 border-b-2 border-[#111111]">
+                        <h4 className="font-black text-[#111111] uppercase tracking-widest flex items-center gap-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          <FaLock /> PASSWORDS & CARDS ({selectablePasswords.length})
                         </h4>
                       </div>
-                      <div className="p-4 max-h-60 overflow-y-auto">
-                        <div className="space-y-2">
-                          {selectablePasswords.map((password) => (
-                            <div 
-                              key={password._id} 
-                              className="flex items-center gap-3 p-2 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors"
-                              onClick={() => toggleItemSelection('password', password._id)}
-                            >
-                              <input 
-                                type="checkbox" 
-                                checked={selectedItems.passwordIds.includes(password._id)}
-                                onChange={() => toggleItemSelection('password', password._id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                              />
-                              <FaLock className="text-gray-400" />
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm font-medium text-gray-700 block truncate">
-                                  {password.title}
-                                </span>
-                                {password.website && (
-                                  <span className="text-xs text-gray-500 block truncate">
-                                    {password.website}
-                                  </span>
-                                )}
-                              </div>
-                              {password.category && (
-                                <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-                                  {password.category}
+                      <div className="p-4 max-h-60 overflow-y-auto divide-y divide-[#111111]">
+                        {selectablePasswords.map((password) => (
+                          <div
+                            key={password._id}
+                            className="flex items-center gap-4 py-3 hover:bg-[#F9F9F7] cursor-pointer transition-colors"
+                            onClick={() => toggleItemSelection('password', password._id)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.passwordIds.includes(password._id)}
+                              onChange={() => toggleItemSelection('password', password._id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-5 h-5 border-2 border-[#111111] bg-white checked:bg-[#111111] appearance-none"
+                            />
+                            <FaLock className="text-[#111111]" />
+                            <div className="flex-1 min-w-0">
+                              <span className="font-bold text-[#111111] block truncate" style={{ fontFamily: "'Inter', sans-serif" }}>
+                                {password.title}
+                              </span>
+                              {password.website && (
+                                <span className="text-xs text-[#525252] block truncate" style={{ fontFamily: "'Lora', serif" }}>
+                                  {password.website}
                                 </span>
                               )}
                             </div>
-                          ))}
-                        </div>
+                            {password.category && (
+                              <span className="text-[0.65rem] px-2 py-1 border border-[#111111] font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                                {password.category}
+                              </span>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Documents Section */}
                   {selectableDocuments.length > 0 && (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                          <FaDatabase className="text-green-600" />
-                          Documents ({selectableDocuments.length})
+                    <div className="border-2 border-[#111111] bg-white">
+                      <div className="bg-[#E5E5E0] p-4 border-b-2 border-[#111111]">
+                        <h4 className="font-black text-[#111111] uppercase tracking-widest flex items-center gap-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          <FaDatabase /> SECURE DOCUMENTS ({selectableDocuments.length})
                         </h4>
                       </div>
-                      <div className="p-3 max-h-48 overflow-y-auto">
-                        <div className="space-y-1">
-                          {selectableDocuments.map((doc) => (
-                            <div 
-                              key={doc._id} 
-                              className="flex items-center gap-3 p-2 hover:bg-green-50 rounded-lg cursor-pointer transition-colors"
-                              onClick={() => toggleItemSelection('document', doc._id)}
-                            >
-                              <input 
-                                type="checkbox" 
-                                checked={selectedItems.documentIds.includes(doc._id)}
-                                onChange={() => toggleItemSelection('document', doc._id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded flex-shrink-0"
-                              />
-                              <FaDatabase className="text-gray-400 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm font-medium text-gray-700 block truncate">
-                                  {doc.fileName}
-                                </span>
-                                <span className="text-xs text-gray-500 block">
-                                  {doc.fileType} • {formatBytes(doc.fileSize)}
-                                </span>
-                              </div>
-                              {doc.category && (
-                                <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full flex-shrink-0">
-                                  {doc.category}
-                                </span>
-                              )}
+                      <div className="p-4 max-h-60 overflow-y-auto divide-y divide-[#111111]">
+                        {selectableDocuments.map((doc) => (
+                          <div
+                            key={doc._id}
+                            className="flex items-center gap-4 py-3 hover:bg-[#F9F9F7] cursor-pointer transition-colors"
+                            onClick={() => toggleItemSelection('document', doc._id)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.documentIds.includes(doc._id)}
+                              onChange={() => toggleItemSelection('document', doc._id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-5 h-5 border-2 border-[#111111] bg-white checked:bg-[#111111] appearance-none flex-shrink-0"
+                            />
+                            <FaDatabase className="text-[#111111] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <span className="font-bold text-[#111111] block truncate" style={{ fontFamily: "'Inter', sans-serif" }}>
+                                {doc.fileName}
+                              </span>
+                              <span className="text-xs text-[#525252] block" style={{ fontFamily: "'Lora', serif" }}>
+                                {doc.fileType} &bull; {formatBytes(doc.fileSize)}
+                              </span>
                             </div>
-                          ))}
-                        </div>
+                            {doc.category && (
+                              <span className="text-[0.65rem] px-2 py-1 border border-[#111111] font-bold uppercase tracking-widest flex-shrink-0" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                                {doc.category}
+                              </span>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {/* QR Codes Section */}
                   {selectableQRCodes.length > 0 && (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                          <FaShieldAlt className="text-purple-600" />
-                          QR Codes ({selectableQRCodes.length})
+                    <div className="border-2 border-[#111111] bg-white">
+                      <div className="bg-[#E5E5E0] p-4 border-b-2 border-[#111111]">
+                        <h4 className="font-black text-[#111111] uppercase tracking-widest flex items-center gap-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          <FaShieldAlt /> QR CODES ({selectableQRCodes.length})
                         </h4>
                       </div>
-                      <div className="p-3 max-h-48 overflow-y-auto">
-                        <div className="space-y-1">
-                          {selectableQRCodes.map((qr) => (
-                            <div 
-                              key={qr._id} 
-                              className="flex items-center gap-3 p-2 hover:bg-purple-50 rounded-lg cursor-pointer transition-colors"
-                              onClick={() => toggleItemSelection('qrcode', qr._id)}
-                            >
-                              <input 
-                                type="checkbox" 
-                                checked={selectedItems.qrcodeIds.includes(qr._id)}
-                                onChange={() => toggleItemSelection('qrcode', qr._id)}
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded flex-shrink-0"
-                              />
-                              <FaShieldAlt className="text-gray-400 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm font-medium text-gray-700 block truncate">
-                                  {qr.title}
-                                </span>
-                                <span className="text-xs text-gray-500 block">
-                                  {qr.qrType} • Scans: {qr.scanCount}
-                                </span>
-                              </div>
-                              {qr.isActive ? (
-                                <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                                  Active
-                                </span>
-                              ) : (
-                                <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">
-                                  Inactive
-                                </span>
-                              )}
+                      <div className="p-4 max-h-60 overflow-y-auto divide-y divide-[#111111]">
+                        {selectableQRCodes.map((qr) => (
+                          <div
+                            key={qr._id}
+                            className="flex items-center gap-4 py-3 hover:bg-[#F9F9F7] cursor-pointer transition-colors"
+                            onClick={() => toggleItemSelection('qrcode', qr._id)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.qrcodeIds.includes(qr._id)}
+                              onChange={() => toggleItemSelection('qrcode', qr._id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-5 h-5 border-2 border-[#111111] bg-white checked:bg-[#111111] appearance-none flex-shrink-0"
+                            />
+                            <FaShieldAlt className="text-[#111111] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <span className="font-bold text-[#111111] block truncate" style={{ fontFamily: "'Inter', sans-serif" }}>
+                                {qr.title}
+                              </span>
+                              <span className="text-xs text-[#525252] block" style={{ fontFamily: "'Lora', serif" }}>
+                                {qr.qrType} &bull; SCANS: {qr.scanCount}
+                              </span>
                             </div>
-                          ))}
-                        </div>
+                            <span className={`text-[0.65rem] px-2 py-1 border font-bold uppercase tracking-widest ${qr.isActive ? 'border-[#111111] bg-[#111111] text-[#F9F9F7]' : 'border-[#111111] text-[#111111]'}`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                              {qr.isActive ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Empty State */}
                   {selectablePasswords.length === 0 && selectableDocuments.length === 0 && selectableQRCodes.length === 0 && (
-                    <div className="p-8 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                      <FaDatabase className="mx-auto text-4xl text-gray-400 mb-3" />
-                      <p className="text-gray-600 mb-2">No items available</p>
-                      <p className="text-sm text-gray-500">
+                    <div className="p-12 border-4 border-dashed border-[#111111] text-center">
+                      <FaDatabase className="mx-auto text-5xl text-[#111111] mb-6" />
+                      <h4 className="text-2xl font-black uppercase tracking-tighter mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>VAULT IS EMPTY</h4>
+                      <p className="text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
                         Add passwords, documents, or QR codes to enable selective backup.
                       </p>
                     </div>
@@ -2273,33 +2173,34 @@ const BackUp: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-4 bg-gray-50 border-t border-gray-200 flex flex-wrap justify-between items-center gap-3">
+              <div className="p-6 border-t-4 border-[#111111] bg-[#F9F9F7] flex flex-wrap justify-between items-center gap-4">
                 <button
                   onClick={() => {
                     setSelectedItems({ passwordIds: [], documentIds: [], qrcodeIds: [] });
                     setSelectedBackupDevice('');
                   }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                  className="px-6 py-3 border border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
-                  Clear Selection
+                  CLEAR SELECTION
                 </button>
-                <div className="flex gap-3">
+                <div className="flex gap-4">
                   <button
                     onClick={() => setShowSelectiveBackup(false)}
-                    className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                    className="px-8 py-4 border-2 border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
                   >
-                    Cancel
+                    CANCEL
                   </button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                  <button
                     onClick={handleSelectiveBackup}
                     disabled={isLoading || (selectedItems.passwordIds.length === 0 && selectedItems.documentIds.length === 0 && selectedItems.qrcodeIds.length === 0)}
-                    className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+                    className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] disabled:opacity-50 flex items-center gap-2 transition-colors"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     <FaCloudUploadAlt />
-                    {isLoading ? 'Creating Backup...' : 'Create Selective Backup'}
-                  </motion.button>
+                    {isLoading ? 'CREATING ARCHIVE...' : 'CREATE BACKUP'}
+                  </button>
                 </div>
               </div>
             </motion.div>
