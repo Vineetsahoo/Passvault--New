@@ -1,69 +1,195 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Shield, Lock, HardDrive, Key, AlertTriangle, CheckCircle2, FileCheck, 
-  Settings, History, Download, CloudOff, KeyRound, Eye, EyeOff, LogIn, ArrowLeft 
+import {
+  Shield, Lock, HardDrive, Key, AlertTriangle, CheckCircle2, FileCheck,
+  Settings, History, Download, CloudOff, KeyRound, Eye, EyeOff, LogIn,
+  ArrowLeft, Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../../components/Navbar'; // Import Navbar
-import Footer from '../../components/Footer'; // Import Footer
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 import ScrollButton from '../../components/ScrollButton';
 import storageService from '../../services/storageService';
 import backupService from '../../services/backupService';
 
+// ─── Newsprint Design System ──────────────────────────────────────────────────
+// Font imports + utility classes that enforce the print-press aesthetic.
+// Mirrors QrScan.tsx / TerminalQrScanner.tsx exactly.
+// ─────────────────────────────────────────────────────────────────────────────
+const NewsprintStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
+
+    .np-serif  { font-family: 'Playfair Display', 'Times New Roman', serif; }
+    .np-body   { font-family: 'Lora', Georgia, serif; }
+    .np-sans   { font-family: 'Inter', 'Helvetica Neue', sans-serif; }
+    .np-mono   { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+    /* Zero radius — no exceptions */
+    * { border-radius: 0px !important; }
+
+    /* Hard offset shadow on hover — "newspaper cutout" lift */
+    .np-hard-hover { transition: box-shadow 200ms ease-out, transform 200ms ease-out; }
+    .np-hard-hover:hover { box-shadow: 4px 4px 0px 0px #111111; transform: translate(-2px, -2px); }
+
+    /* Subtle newsprint dot grid on background */
+    .np-dot-bg {
+      background-color: #F9F9F7;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+    }
+
+    /* Fine graph-paper line grid for inverted / heavy sections */
+    .np-texture {
+      position: relative;
+    }
+    .np-texture::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(0deg, transparent 98%, rgba(255,255,255,0.03) 100%),
+        linear-gradient(90deg, transparent 98%, rgba(255,255,255,0.03) 100%);
+      background-size: 3px 3px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* Focus ring for keyboard nav */
+    .np-focus:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px #F9F9F7, 0 0 0 4px #111111;
+    }
+
+    /* Custom scrollbar for audit log */
+    .np-scroll::-webkit-scrollbar { width: 4px; }
+    .np-scroll::-webkit-scrollbar-track { background: #F5F5F5; }
+    .np-scroll::-webkit-scrollbar-thumb { background: #111111; }
+  `}</style>
+);
+
+// ─── FeatureTemplate ──────────────────────────────────────────────────────────
+// Page-level wrapper: newspaper masthead, edition bar, header, ornamental footer.
+// Identical structure to QrScan.tsx's FeatureTemplate.
+// ─────────────────────────────────────────────────────────────────────────────
 interface FeatureTemplateProps {
   title: string;
   description: string;
   icon: React.ReactNode;
+  edition?: string;
   children: React.ReactNode;
 }
 
-const FeatureTemplate: React.FC<FeatureTemplateProps> = ({ title, description, icon, children }) => {
+const FeatureTemplate: React.FC<FeatureTemplateProps> = ({
+  title, description, icon, edition, children
+}) => {
   const navigate = useNavigate();
-  
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
   return (
-    <div className="bg-[#F9F9F7] min-h-screen pt-28 pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="np-dot-bg min-h-screen pt-28 pb-20 np-sans">
+      <NewsprintStyles />
       <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
-        {/* Go Back Button */}
-        <div className="mb-8">
-          <button 
+
+        {/* ── Back button ── */}
+        <div className="mb-6">
+          <button
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F9F9F7] border border-[#111111] text-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F9F9F7] border border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px] np-mono np-focus"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             BACK TO HOME
           </button>
         </div>
 
+        {/* ── Main bordered container ── */}
         <div className="border-4 border-[#111111] bg-[#F9F9F7] overflow-hidden">
+
+          {/* Masthead / Edition bar */}
+          <div className="bg-[#111111] px-6 py-2 flex items-center justify-between np-texture">
+            <span className="text-[#A3A3A3] np-mono text-xs uppercase tracking-widest">
+              {edition ?? 'SECURITY EDITION'}
+            </span>
+            <span className="text-[#737373] np-mono text-xs">{today}</span>
+          </div>
+
+          {/* ── Page header ── */}
           <div className="p-8 md:p-12 border-b-4 border-[#111111]">
             <div className="flex flex-col md:flex-row md:items-center gap-8">
-              <div className="border-2 border-[#111111] p-6 flex items-center justify-center w-24 h-24 flex-shrink-0">
-                {React.cloneElement(icon as React.ReactElement, { 
-                  className: "h-12 w-12 text-[#111111]" 
+
+              {/* Icon box */}
+              <div className="border-2 border-[#111111] p-6 flex items-center justify-center w-24 h-24 flex-shrink-0 np-hard-hover cursor-default">
+                {React.cloneElement(icon as React.ReactElement, {
+                  className: 'h-12 w-12 text-[#111111]',
+                  strokeWidth: 1.5
                 })}
               </div>
-              
+
               <div className="space-y-4">
-                <div className="inline-block border border-[#111111] px-4 py-1 text-xs font-black uppercase tracking-widest text-[#111111]">
+                {/* Section badge */}
+                <div className="inline-block border border-[#CC0000] bg-[#CC0000] px-4 py-1 text-xs font-black uppercase tracking-widest text-[#F9F9F7] np-mono">
                   FEATURE
                 </div>
-                <h1 className="text-5xl md:text-6xl font-black leading-[0.9]" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</h1>
-                <p className="text-lg leading-relaxed max-w-2xl" style={{ fontFamily: "'Lora', serif" }}>{description}</p>
+                {/* Headline — Newsprint drama */}
+                <h1 className="text-4xl md:text-5xl font-black leading-[0.92] tracking-tight text-[#111111] np-serif">
+                  {title}
+                </h1>
+                {/* Deck / subhead */}
+                <p className="text-base leading-relaxed max-w-2xl text-[#525252] np-body border-l-2 border-[#E5E5E0] pl-4">
+                  {description}
+                </p>
               </div>
             </div>
           </div>
-          
+
+          {/* ── Content area ── */}
           <div className="p-8 md:p-12">
             {children}
           </div>
         </div>
-        
-        <div className="mt-8 h-1 bg-[#111111]"></div>
+
+        {/* ── Ornamental footer divider ── */}
+        <div className="mt-8 py-4 text-center np-serif text-xl text-[#A3A3A3] tracking-[1em]">
+          &#x2727; &#x2727; &#x2727;
+        </div>
+        <div className="h-1 bg-[#111111]" />
       </div>
     </div>
   );
 };
 
+// ─── SectionHeader ─────────────────────────────────────────────────────────────
+// Reusable panel header: grey band, icon + uppercase label, optional action slot.
+// ─────────────────────────────────────────────────────────────────────────────
+const SectionHeader: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  action?: React.ReactNode;
+}> = ({ icon, title, action }) => (
+  <div className="bg-[#F5F5F5] px-4 py-3 border-b border-[#111111] flex items-center justify-between">
+    <h3 className="font-black flex items-center gap-2 text-[#111111] text-xs uppercase tracking-widest np-mono">
+      {icon}
+      {title}
+    </h3>
+    {action}
+  </div>
+);
+
+// ─── SectionRule ──────────────────────────────────────────────────────────────
+// Horizontal rule that optionally bears a centred section label.
+// ─────────────────────────────────────────────────────────────────────────────
+const SectionRule: React.FC<{ label?: string }> = ({ label }) =>
+  label ? (
+    <div className="flex items-center gap-3 my-6">
+      <div className="flex-1 h-px bg-[#111111]" />
+      <span className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3]">{label}</span>
+      <div className="flex-1 h-px bg-[#111111]" />
+    </div>
+  ) : (
+    <div className="h-px bg-[#111111] my-6" />
+  );
+
+// ─── Interfaces ───────────────────────────────────────────────────────────────
 interface StorageMetrics {
   totalStorage: string;
   usedStorage: string;
@@ -94,28 +220,37 @@ interface BackupStatus {
   location: string;
 }
 
+// ─── AuthPrompt ───────────────────────────────────────────────────────────────
+// Shown when the user is not signed in. Matches the locked-state pattern in
+// QrScan.tsx — bordered icon box, serif headline, primary CTA.
+// ─────────────────────────────────────────────────────────────────────────────
 const AuthPrompt = () => {
   const navigate = useNavigate();
-  
   return (
-    <div className="bg-white border border-slate-200/60 p-8 rounded-xl shadow-lg text-center backdrop-blur-sm">
-      <div className="bg-indigo-50 rounded-full p-4 w-20 h-20 flex items-center justify-center mx-auto mb-6">
-        <Lock className="h-10 w-10 text-indigo-600" />
+    <div className="bg-[#F9F9F7] border border-[#111111] p-10 text-center">
+      <div className="border-2 border-[#111111] p-4 w-20 h-20 flex items-center justify-center mx-auto mb-6">
+        <Lock className="h-10 w-10 text-[#111111]" strokeWidth={1.5} />
       </div>
-      <h3 className="text-xl font-semibold text-slate-800 mb-3">Sign in Required</h3>
-      <p className="text-slate-600 mb-6">Please sign in to view your secure storage details</p>
-      <button 
+      <div className="space-y-3 mb-6">
+        <h3 className="text-2xl font-black text-[#111111] np-serif">Sign In Required</h3>
+        <p className="text-[#525252] np-body text-base leading-relaxed max-w-xs mx-auto">
+          Please sign in to view your secure storage details
+        </p>
+      </div>
+      <button
         onClick={() => navigate('/signin')}
-        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
+        className="inline-flex items-center gap-2 px-6 py-3 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px] np-focus"
       >
-        <LogIn className="h-5 w-5" />
-        Sign In
+        <LogIn className="h-4 w-4" strokeWidth={1.5} />
+        SIGN IN NOW
       </button>
     </div>
   );
 };
 
+// ─── Main component ────────────────────────────────────────────────────────────
 const SecureStorage = () => {
+  // ── All state and logic below is preserved exactly from the original ──────
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [metrics, setMetrics] = useState<StorageMetrics>({
     totalStorage: '0 GB',
@@ -150,15 +285,15 @@ const SecureStorage = () => {
       const token = localStorage.getItem('accessToken');
       const authStatus = !!token;
       setIsAuthenticated(authStatus);
-      
+
       if (authStatus) {
         try {
           setDataLoading(true);
-          
+
           // Fetch storage metrics
           const storageMetricsResponse = await storageService.getStorageMetrics();
           const storageMetrics = storageMetricsResponse.metrics || storageMetricsResponse;
-          
+
           // Format storage metrics
           const formatBytes = (bytes: number) => {
             if (bytes === 0) return '0 B';
@@ -167,28 +302,28 @@ const SecureStorage = () => {
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
           };
-          
+
           setMetrics({
             totalStorage: '10 GB', // Fixed limit
             usedStorage: formatBytes(storageMetrics.totalSize || storageMetrics.usedStorageBytes || 0),
             encryptedFiles: storageMetrics.totalItems || storageMetrics.encryptedFiles || 0,
             lastBackup: new Date()
           });
-          
+
           // Fetch security status
           const secStatusResponse = await storageService.getSecurityStatus();
           const secStatus = secStatusResponse.status || secStatusResponse;
-          
+
           setSecurityStatus({
             status: (secStatus.overallStatus || secStatus.status || 'secure') as 'secure' | 'warning' | 'critical',
             lastScan: new Date(secStatus.lastSecurityScan || secStatus.lastScan || Date.now()),
             encryptionType: secStatus.encryptionType || 'AES-256',
             twoFactorEnabled: secStatus.twoFactorEnabled || false
           });
-          
+
           // Fetch backup stats
           const backupStats = await backupService.getBackupStats();
-          
+
           if (backupStats.recentBackups && backupStats.recentBackups.length > 0) {
             const lastBackupData = backupStats.recentBackups[0];
             setBackupStatus({
@@ -197,13 +332,13 @@ const SecureStorage = () => {
               backupSize: formatBytes(lastBackupData.backupSize || 0),
               location: lastBackupData.location || 'Cloud Storage'
             });
-            
+
             setMetrics(prev => ({
               ...prev,
               lastBackup: new Date(lastBackupData.createdAt)
             }));
           }
-          
+
           // Fetch recovery key
           try {
             const keyResponse = await storageService.getRecoveryKey();
@@ -212,7 +347,7 @@ const SecureStorage = () => {
             console.log('Recovery key not available:', keyErr);
             setRecoveryKey('XXXX-YYYY-ZZZZ-AAAA');
           }
-          
+
           setLoading(false);
           setDataLoading(false);
         } catch (err: any) {
@@ -234,7 +369,7 @@ const SecureStorage = () => {
       // Fetch audit log when opening for the first time
       try {
         const auditResponse = await storageService.getSecurityAuditLog(20);
-        
+
         // Map audit log to component format
         const mappedAuditLog: SecurityAudit[] = auditResponse.auditLog.map((entry: any) => ({
           id: entry.syncLogId,
@@ -244,7 +379,7 @@ const SecureStorage = () => {
           location: entry.deviceInfo?.location || 'Unknown',
           status: entry.status || 'success'
         }));
-        
+
         setAuditLog(mappedAuditLog);
       } catch (err) {
         console.error('Failed to load audit log:', err);
@@ -262,316 +397,497 @@ const SecureStorage = () => {
     }
   };
 
+  // ── Newsprint status map ───────────────────────────────────────────────────
+  // Maps security status → Newsprint token styles:
+  //  secure   → full inverted ink panel (authority, calm)
+  //  warning  → red left-border on light ground (alert without panic)
+  //  critical → editorial red background (maximum urgency)
+  const STATUS_CONFIG = {
+    secure: {
+      containerClass: 'bg-[#111111] np-texture',
+      icon: <CheckCircle2 className="h-6 w-6 text-[#F9F9F7]" strokeWidth={1.5} />,
+      iconBorder: 'border border-[#F9F9F7]/20',
+      headline: 'SYSTEMS SECURE',
+      headlineClass: 'text-[#F9F9F7]',
+      metaClass: 'text-[#737373]',
+      badgeClass: 'bg-[#F9F9F7]/10 text-[#A3A3A3] border border-[#F9F9F7]/20',
+      dot: 'bg-[#F9F9F7]'
+    },
+    warning: {
+      containerClass: 'bg-[#F9F9F7] border-l-4 border-[#CC0000]',
+      icon: <AlertTriangle className="h-6 w-6 text-[#CC0000]" strokeWidth={1.5} />,
+      iconBorder: 'border border-[#CC0000]',
+      headline: 'WARNING',
+      headlineClass: 'text-[#CC0000]',
+      metaClass: 'text-[#737373]',
+      badgeClass: 'bg-[#F5F5F5] text-[#737373] border border-[#111111]',
+      dot: 'bg-[#CC0000]'
+    },
+    critical: {
+      containerClass: 'bg-[#CC0000] np-texture',
+      icon: <AlertTriangle className="h-6 w-6 text-[#F9F9F7]" strokeWidth={1.5} />,
+      iconBorder: 'border border-[#F9F9F7]/30',
+      headline: 'CRITICAL',
+      headlineClass: 'text-[#F9F9F7]',
+      metaClass: 'text-[#F9F9F7]/60',
+      badgeClass: 'bg-[#111111] text-[#F9F9F7] border border-[#111111]',
+      dot: 'bg-[#F9F9F7]'
+    }
+  } as const;
+
+  const cfg = STATUS_CONFIG[securityStatus.status] ?? STATUS_CONFIG.secure;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
       <Navbar />
       <FeatureTemplate
         title="Secure Storage"
         description="Your passes are encrypted and stored securely in the cloud."
-        icon={<Shield className="h-8 w-8 text-slate-700" />}
+        icon={<Shield />}
+        edition="SECURITY EDITION"
       >
+        {/* ════════════════════════════════════════════════════
+            STATE A — Not authenticated
+            ════════════════════════════════════════════════════ */}
         {!isAuthenticated ? (
           <AuthPrompt />
+
+        /* ════════════════════════════════════════════════════
+            STATE B — Loading
+            ════════════════════════════════════════════════════ */
         ) : loading ? (
-          <div className="bg-white p-8 rounded-xl border border-slate-200/60 shadow-lg text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-200 border-t-indigo-600 mb-3"></div>
-            <p className="text-slate-600">Loading security status...</p>
+          <div className="border border-[#111111] bg-[#F5F5F5] p-12 text-center">
+            <div className="border-2 border-[#111111] p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-[#F9F9F7]">
+              <Loader2 className="h-8 w-8 text-[#111111] animate-spin" strokeWidth={1.5} />
+            </div>
+            <p className="text-xs np-mono uppercase tracking-widest text-[#111111]">
+              Loading security status...
+            </p>
           </div>
+
+        /* ════════════════════════════════════════════════════
+            STATE C — Authenticated + data loaded
+            ════════════════════════════════════════════════════ */
         ) : (
-          <div className="space-y-8">
-            {/* Security Status Overview - Enhanced */}
-            <div className={`p-6 rounded-xl border shadow-md ${getStatusColor(securityStatus.status)} transition-all duration-300`}>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-white/60 backdrop-blur-sm p-3 rounded-full shadow-sm">
-                    {securityStatus.status === 'secure' && <CheckCircle2 className="h-6 w-6 text-emerald-500" />}
-                    {securityStatus.status === 'warning' && <AlertTriangle className="h-6 w-6 text-amber-500" />}
-                    {securityStatus.status === 'critical' && <AlertTriangle className="h-6 w-6 text-rose-500" />}
+          <div>
+
+            {/* ══ 1. Security Status Banner ══════════════════════════════ */}
+            <div className={`relative overflow-hidden ${cfg.containerClass}`}>
+              <div className="p-6 md:p-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+
+                  {/* Left: icon + headline */}
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 flex items-center justify-center ${cfg.iconBorder}`}>
+                      {cfg.icon}
+                    </div>
+                    <div>
+                      <p className={`text-xs np-mono uppercase tracking-widest mb-1 ${cfg.metaClass}`}>
+                        Security Status
+                      </p>
+                      <h2 className={`text-3xl md:text-4xl font-black np-serif leading-tight tracking-tight ${cfg.headlineClass}`}>
+                        {cfg.headline}
+                      </h2>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-lg">Security Status</h3>
-                    <p className="text-sm font-semibold uppercase tracking-wider">
-                      {securityStatus.status}
+
+                  {/* Right: last-scan badge */}
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 np-mono text-xs uppercase tracking-widest ${cfg.badgeClass}`}>
+                    <span className={`inline-block w-1.5 h-1.5 ${cfg.dot} animate-pulse flex-shrink-0`} />
+                    LAST SCAN: {securityStatus.lastScan.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Section divider ── */}
+            <SectionRule label="Storage" />
+
+            {/* ══ 2. Storage Metrics — collapsed 2-col grid ══════════════ */}
+            <div className="border border-[#111111] overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#111111]">
+
+                {/* — Left col: Storage Usage — */}
+                <div>
+                  <SectionHeader
+                    icon={<HardDrive className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                    title="Storage Usage"
+                  />
+                  <div className="p-6 space-y-5">
+
+                    {/* Big usage number */}
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-xs np-mono uppercase tracking-widest text-[#737373] mb-1">Used Storage</p>
+                        <p className="text-3xl font-black text-[#111111] np-mono tabular-nums leading-none">
+                          {metrics.usedStorage}
+                        </p>
+                        <p className="text-xs np-mono text-[#A3A3A3] mt-1 uppercase tracking-widest">
+                          of {metrics.totalStorage}
+                        </p>
+                      </div>
+                      <div className="border border-[#111111] px-3 py-1.5 bg-[#F5F5F5] flex-shrink-0">
+                        <span className="text-xs np-mono uppercase tracking-widest text-[#111111] font-black">
+                          75% FREE
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Flat newsprint progress bar — no gradient, no rounded ends */}
+                    <div>
+                      <div className="flex justify-between text-xs np-mono uppercase tracking-widest text-[#737373] mb-1.5">
+                        <span>Usage</span>
+                        <span>{metrics.usedStorage} / {metrics.totalStorage}</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-[#E5E5E0] border border-[#111111]">
+                        <div
+                          className="h-full bg-[#111111] transition-all duration-500"
+                          style={{ width: '25%' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Encrypted files stat block */}
+                    <div className="border border-[#111111] bg-[#F5F5F5] flex items-center gap-4 p-4">
+                      <div className="border border-[#111111] p-2 flex items-center justify-center bg-[#F9F9F7] flex-shrink-0">
+                        <Lock className="h-5 w-5 text-[#111111]" strokeWidth={1.5} />
+                      </div>
+                      <div>
+                        <p className="text-xs np-mono uppercase tracking-widest text-[#737373] mb-0.5">
+                          Encrypted Files
+                        </p>
+                        <p className="text-2xl font-black text-[#111111] np-mono tabular-nums leading-none">
+                          {metrics.encryptedFiles}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* — Right col: Security Settings — */}
+                <div>
+                  <SectionHeader
+                    icon={<Lock className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                    title="Security Settings"
+                  />
+                  <div className="p-6 space-y-4">
+
+                    {/* Encryption type */}
+                    <div className="border border-[#111111] bg-[#F5F5F5] flex items-center gap-3 p-4">
+                      <div className="border border-[#111111] p-2 bg-[#F9F9F7] flex items-center justify-center flex-shrink-0">
+                        <Key className="h-5 w-5 text-[#111111]" strokeWidth={1.5} />
+                      </div>
+                      <div>
+                        <p className="text-xs np-mono uppercase tracking-widest text-[#737373] mb-0.5">
+                          Encryption Type
+                        </p>
+                        <p className="text-xl font-black text-[#111111] np-mono tracking-wider leading-tight">
+                          {securityStatus.encryptionType}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Two-Factor Authentication — newsprint toggle */}
+                    <div className="border border-[#111111] overflow-hidden">
+                      <div className="bg-[#F5F5F5] px-4 py-2 border-b border-[#111111]">
+                        <p className="text-xs np-mono uppercase tracking-widest text-[#737373] font-black">
+                          Two-Factor Authentication
+                        </p>
+                      </div>
+                      <label className="flex items-center justify-between gap-4 p-4 hover:bg-[#F5F5F5] transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Shield className="h-5 w-5 text-[#111111] flex-shrink-0" strokeWidth={1.5} />
+                          <div className="min-w-0">
+                            <p className="font-black text-xs uppercase tracking-widest text-[#111111] np-mono">
+                              {securityStatus.twoFactorEnabled ? 'ENABLED' : 'DISABLED'}
+                            </p>
+                            <p className="text-xs text-[#737373] np-mono mt-0.5 truncate">
+                              Adds an extra layer of security
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Sharp-cornered newsprint toggle switch */}
+                        <div className="relative flex-shrink-0">
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={securityStatus.twoFactorEnabled}
+                            onChange={() => setSecurityStatus(prev => ({
+                              ...prev,
+                              twoFactorEnabled: !prev.twoFactorEnabled
+                            }))}
+                          />
+                          <div
+                            className={`w-12 h-6 border-2 border-[#111111] flex items-center transition-colors duration-200 cursor-pointer ${
+                              securityStatus.twoFactorEnabled ? 'bg-[#111111]' : 'bg-[#F9F9F7]'
+                            }`}
+                            onClick={() => setSecurityStatus(prev => ({
+                              ...prev,
+                              twoFactorEnabled: !prev.twoFactorEnabled
+                            }))}
+                            role="presentation"
+                          >
+                            <div className={`w-4 h-4 border transition-all duration-200 mx-0.5 ${
+                              securityStatus.twoFactorEnabled
+                                ? 'translate-x-6 bg-[#F9F9F7] border-[#F9F9F7]'
+                                : 'translate-x-0 bg-[#111111] border-[#111111]'
+                            }`} />
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Section divider ── */}
+            <SectionRule label="Backup & Recovery" />
+
+            {/* ══ 3. Backup & Recovery ════════════════════════════════════ */}
+            <div className="border border-[#111111] overflow-hidden">
+              <SectionHeader
+                icon={<Download className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                title="Backup & Recovery"
+              />
+              <div className="p-6 space-y-5">
+
+                {/* Backup status — masthead strip + 4-col stat grid */}
+                <div className="border border-[#111111] overflow-hidden">
+                  <div className="bg-[#111111] px-4 py-2.5 np-texture flex items-center gap-2">
+                    <Download className="h-3.5 w-3.5 text-[#A3A3A3]" strokeWidth={1.5} />
+                    <p className="text-xs np-mono uppercase tracking-widest text-[#A3A3A3]">
+                      Backup Status — Data Is Securely Backed Up
                     </p>
                   </div>
-                </div>
-                <div className="bg-white/60 backdrop-blur-sm py-1.5 px-3 rounded-lg shadow-sm border border-white/50 text-sm">
-                  Last Scan: {securityStatus.lastScan.toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            {/* Storage Metrics - Enhanced */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                  <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                    <HardDrive className="h-5 w-5 text-indigo-600" />
-                    Storage Usage
-                  </h3>
-                </div>
-                <div className="p-6 space-y-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-sm text-slate-500 mb-1">Used Storage</div>
-                      <div className="text-2xl font-semibold text-slate-800">{metrics.usedStorage} <span className="text-sm text-slate-500">of {metrics.totalStorage}</span></div>
-                    </div>
-                    <div className="bg-indigo-50 text-indigo-700 p-1.5 rounded-lg text-sm font-medium">
-                      75% free
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-slate-600">
-                      <span>Storage Usage</span>
-                      <span>{metrics.usedStorage} / {metrics.totalStorage}</span>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                      <div 
-                        className="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full transition-all duration-300" 
-                        style={{ width: '25%' }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-indigo-50/50 p-4 rounded-lg border border-indigo-100/50">
-                    <div className="bg-indigo-100 p-2 rounded-lg">
-                      <Lock className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-slate-800">Encrypted Files</div>
-                      <div className="text-2xl font-semibold text-indigo-700">{metrics.encryptedFiles}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                  <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                    <Lock className="h-5 w-5 text-indigo-600" />
-                    Security Settings
-                  </h3>
-                </div>
-                <div className="p-6 space-y-6">
-                  <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-lg border border-slate-200/60">
-                    <div className="bg-white p-2 rounded-lg shadow-sm">
-                      <Key className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-slate-500">Encryption Type</div>
-                      <div className="text-lg font-semibold text-slate-800">{securityStatus.encryptionType}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-white p-1.5 rounded-lg shadow-sm">
-                          <Shield className="h-5 w-5 text-indigo-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-800">Two-Factor Authentication</div>
-                          <div className="text-xs text-slate-500">Adds an extra layer of security</div>
-                        </div>
+                  {/* Collapsed 4-col stat grid — same pattern as type selector */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-[#111111]">
+                    {[
+                      { label: 'Last Backup',    value: backupStatus.lastBackup.toLocaleString() },
+                      { label: 'Next Scheduled', value: backupStatus.nextScheduled.toLocaleString() },
+                      { label: 'Backup Size',    value: backupStatus.backupSize },
+                      { label: 'Location',       value: backupStatus.location },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="p-4 bg-[#F9F9F7]">
+                        <p className="text-xs np-mono uppercase tracking-widest text-[#737373] mb-1">{label}</p>
+                        <p className="text-sm font-black text-[#111111] np-mono leading-snug">{value}</p>
                       </div>
-                      <div className={`relative w-12 h-6 transition-colors duration-300 rounded-full ${securityStatus.twoFactorEnabled ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                        <input
-                          type="checkbox" 
-                          className="sr-only"
-                          checked={securityStatus.twoFactorEnabled}
-                          onChange={() => setSecurityStatus(prev => ({
-                            ...prev,
-                            twoFactorEnabled: !prev.twoFactorEnabled
-                          }))}
-                        />
-                        <div className={`absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full transition-transform duration-300 ${securityStatus.twoFactorEnabled ? 'transform translate-x-6' : ''}`}></div>
-                      </div>
-                    </label>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Backup Controls - Enhanced */}
-            <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                  <Download className="h-5 w-5 text-indigo-600" />
-                  Backup & Recovery
-                </h3>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-lg border border-slate-200/60 p-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-white p-2 rounded-lg shadow-sm">
-                      <Download className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <div>
-                      <div className="text-lg font-medium text-slate-800">Backup Status</div>
-                      <div className="text-sm text-slate-500">Your data is securely backed up</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200/60">
-                      <div className="text-xs text-slate-500 mb-1">Last Backup</div>
-                      <div className="text-sm font-medium text-slate-800">{backupStatus.lastBackup.toLocaleString()}</div>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200/60">
-                      <div className="text-xs text-slate-500 mb-1">Next Scheduled</div>
-                      <div className="text-sm font-medium text-slate-800">{backupStatus.nextScheduled.toLocaleString()}</div>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200/60">
-                      <div className="text-xs text-slate-500 mb-1">Backup Size</div>
-                      <div className="text-sm font-medium text-slate-800">{backupStatus.backupSize}</div>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 shadow-sm border border-slate-200/60">
-                      <div className="text-xs text-slate-500 mb-1">Location</div>
-                      <div className="text-sm font-medium text-slate-800">{backupStatus.location}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2">
-                    <Download className="h-5 w-5" />
+                {/* Action buttons — split bottom bar (mirrors TerminalQrScanner action bar) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 border border-[#111111] overflow-hidden">
+                  <button className="flex items-center justify-center gap-2 px-4 py-3.5 bg-[#111111] text-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] border-r border-[#111111] transition-all duration-200 font-black text-xs uppercase tracking-widest np-mono min-h-[48px] np-focus">
+                    <Download className="h-4 w-4" strokeWidth={1.5} />
                     Backup Now
                   </button>
-                  <button className="flex-1 px-4 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm flex items-center justify-center gap-2">
-                    <CloudOff className="h-5 w-5" />
+                  <button className="flex items-center justify-center gap-2 px-4 py-3.5 bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 font-black text-xs uppercase tracking-widest np-mono min-h-[48px] np-focus">
+                    <CloudOff className="h-4 w-4" strokeWidth={1.5} />
                     Export Offline Backup
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Recovery Key - Enhanced */}
-            <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                  <KeyRound className="h-5 w-5 text-indigo-600" />
-                  Recovery Key
-                </h3>
-              </div>
-              <div className="p-6">
-                <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 flex items-start gap-3 mb-4">
-                  <div className="p-1.5 bg-amber-100 rounded-full text-amber-600 mt-0.5">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
+            {/* ── Section divider ── */}
+            <SectionRule label="Recovery Key" />
+
+            {/* ══ 4. Recovery Key ════════════════════════════════════════ */}
+            <div className="border border-[#111111] overflow-hidden">
+              <SectionHeader
+                icon={<KeyRound className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                title="Recovery Key"
+              />
+              <div className="p-6 space-y-4">
+
+                {/* Warning notice — editorial red left-border, matches validation errors in QrScan */}
+                <div className="border-l-4 border-[#CC0000] bg-[#F9F9F7] p-4 flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-[#CC0000] flex-shrink-0 mt-0.5" strokeWidth={1.5} />
                   <div>
-                    <p className="text-sm font-medium text-amber-700 mb-1">Important Security Notice</p>
-                    <p className="text-sm text-amber-600">
+                    <p className="text-xs font-black np-mono uppercase tracking-widest text-[#CC0000] mb-1">
+                      Important Security Notice
+                    </p>
+                    <p className="text-sm text-[#525252] np-body leading-relaxed">
                       Store this key safely. You'll need it to recover your data if you lose access to your account.
                     </p>
                   </div>
                 </div>
-                
-                <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                  <div className="flex-1 w-full">
-                    <code className="block w-full bg-white px-4 py-3 rounded-lg font-mono text-slate-800 border border-slate-200 text-center tracking-wider text-lg">
-                      {showRecoveryKey ? recoveryKey : '••••-••••-••••-••••'}
-                    </code>
+
+                {/* Recovery key display area */}
+                <div className="border border-[#111111] bg-[#F5F5F5]">
+                  <div className="p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    {/* Key value */}
+                    <div className="flex-1">
+                      <code className="block w-full bg-[#F9F9F7] border border-[#111111] px-4 py-3 np-mono text-[#111111] text-center tracking-[0.25em] text-lg font-black select-all">
+                        {showRecoveryKey ? recoveryKey : '••••-••••-••••-••••'}
+                      </code>
+                    </div>
+                    {/* Toggle visibility button */}
+                    <button
+                      onClick={() => setShowRecoveryKey(!showRecoveryKey)}
+                      aria-label={showRecoveryKey ? 'Hide Recovery Key' : 'Show Recovery Key'}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F9F9F7] border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 font-black text-xs uppercase tracking-widest np-mono min-h-[44px] flex-shrink-0 np-focus"
+                    >
+                      {showRecoveryKey
+                        ? <><EyeOff className="h-4 w-4" strokeWidth={1.5} />HIDE KEY</>
+                        : <><Eye className="h-4 w-4" strokeWidth={1.5} />SHOW KEY</>
+                      }
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setShowRecoveryKey(!showRecoveryKey)}
-                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg flex items-center gap-2 hover:bg-slate-50 transition-colors shadow-sm"
-                    aria-label={showRecoveryKey ? "Hide Recovery Key" : "Show Recovery Key"}
-                  >
-                    {showRecoveryKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    <span>{showRecoveryKey ? "Hide Key" : "Show Key"}</span>
-                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Security Recommendations - Enhanced */}
-            <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                  <AlertTriangle className="h-5 w-5 text-indigo-600" />
-                  Security Recommendations
-                </h3>
-              </div>
-              <div className="p-6">
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3 p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                    <FileCheck className="h-5 w-5 text-emerald-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-slate-800">Regular backups are enabled and up to date</p>
-                      <p className="text-sm text-slate-500 mt-1">Last backup was completed successfully</p>
+            {/* ── Section divider ── */}
+            <SectionRule label="Recommendations" />
+
+            {/* ══ 5. Security Recommendations ════════════════════════════ */}
+            <div className="border border-[#111111] overflow-hidden">
+              <SectionHeader
+                icon={<AlertTriangle className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                title="Security Recommendations"
+              />
+
+              {/* Divided editorial list — consistent with TerminalQrScanner's how-to list */}
+              <ul className="divide-y divide-[#E5E5E0]">
+
+                {/* Recommendation 1: Backups OK */}
+                <li className="flex items-start gap-4 p-5 hover:bg-[#F5F5F5] transition-colors">
+                  <div className="border border-[#111111] p-2 flex-shrink-0 bg-[#F9F9F7] mt-0.5">
+                    <FileCheck className="h-5 w-5 text-[#111111]" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <p className="font-black text-xs uppercase tracking-widest np-mono text-[#111111]">
+                        Regular backups are enabled and up to date
+                      </p>
+                      <span className="bg-[#111111] text-[#F9F9F7] px-2 py-0.5 text-xs np-mono uppercase tracking-widest font-black flex-shrink-0">
+                        OK
+                      </span>
                     </div>
-                  </li>
-                  <li className="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                    <Settings className="h-5 w-5 text-indigo-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-slate-800">Consider enabling biometric authentication</p>
-                      <p className="text-sm text-slate-500 mt-1">Add an extra layer of security to your account</p>
-                      <button className="mt-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-md text-sm hover:bg-indigo-200 transition-colors">
-                        Enable Now
-                      </button>
+                    <p className="text-sm text-[#525252] np-body leading-relaxed">
+                      Last backup was completed successfully
+                    </p>
+                  </div>
+                </li>
+
+                {/* Recommendation 2: Biometrics tip */}
+                <li className="flex items-start gap-4 p-5 hover:bg-[#F5F5F5] transition-colors">
+                  <div className="border border-[#111111] p-2 flex-shrink-0 bg-[#F9F9F7] mt-0.5">
+                    <Settings className="h-5 w-5 text-[#111111]" strokeWidth={1.5} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <p className="font-black text-xs uppercase tracking-widest np-mono text-[#111111]">
+                        Consider enabling biometric authentication
+                      </p>
+                      <span className="border border-[#CC0000] text-[#CC0000] px-2 py-0.5 text-xs np-mono uppercase tracking-widest font-black flex-shrink-0">
+                        TIP
+                      </span>
                     </div>
-                  </li>
-                </ul>
-              </div>
+                    <p className="text-sm text-[#525252] np-body leading-relaxed">
+                      Add an extra layer of security to your account
+                    </p>
+                    <button className="mt-3 inline-flex items-center gap-1.5 px-4 py-1.5 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 text-xs font-black uppercase tracking-widest np-mono min-h-[36px] np-focus">
+                      ENABLE NOW
+                    </button>
+                  </div>
+                </li>
+              </ul>
             </div>
 
-            {/* Security Audit Log - Enhanced */}
-            <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60 flex items-center justify-between">
-                <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                  <History className="h-5 w-5 text-indigo-600" />
-                  Security Audit Log
-                </h3>
-                <button
-                  onClick={handleToggleAuditLog}
-                  className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                    showAuditLog 
-                      ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' 
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
-                >
-                  {showAuditLog ? 'Hide' : 'Show'} Log
-                </button>
-              </div>
-              {showAuditLog && (
-                <div className="p-6">
-                  <div className="max-h-72 overflow-y-auto space-y-3">
-                    {auditLog.length === 0 ? (
-                      <div className="text-center py-8 text-slate-500">
-                        <History className="h-12 w-12 mx-auto mb-3 text-slate-300" />
-                        <p>No audit log entries found</p>
+            {/* ── Section divider ── */}
+            <SectionRule label="Audit Log" />
+
+            {/* ══ 6. Security Audit Log ══════════════════════════════════ */}
+            <div className="border border-[#111111] overflow-hidden">
+              <SectionHeader
+                icon={<History className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                title="Security Audit Log"
+                action={
+                  <button
+                    onClick={handleToggleAuditLog}
+                    className={`px-4 py-1.5 text-xs font-black uppercase tracking-widest np-mono border transition-all duration-200 min-h-[36px] np-focus ${
+                      showAuditLog
+                        ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]'
+                        : 'bg-transparent text-[#111111] border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
+                    }`}
+                  >
+                    {showAuditLog ? 'HIDE LOG' : 'SHOW LOG'}
+                  </button>
+                }
+              />
+
+              {/* Accordion panel — grid-rows technique matches design system spec */}
+              <div className={`grid transition-all duration-300 ease-in-out ${
+                showAuditLog ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              }`}>
+                <div className="overflow-hidden">
+                  {auditLog.length === 0 ? (
+                    /* Empty state */
+                    <div className="text-center py-12 border-t border-[#E5E5E0]">
+                      <div className="border-2 border-[#E5E5E0] p-4 w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <History className="h-8 w-8 text-[#A3A3A3]" strokeWidth={1.5} />
                       </div>
-                    ) : (
-                      auditLog.map((log) => (
-                        <div key={log.id} className={`bg-white rounded-lg p-4 shadow-sm border ${
-                          log.status === 'success' ? 'border-emerald-200' : 'border-rose-200'
-                        }`}>
-                          <div className="flex items-start gap-3">
-                            <div className={`p-1.5 rounded-full ${
-                              log.status === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
-                            }`}>
-                              {log.status === 'success' ? <CheckCircle2 className="h-5 w-5" /> : <AlertTriangle className="h-5 w-5" />}
+                      <p className="text-xs np-mono uppercase tracking-widest text-[#A3A3A3]">
+                        No audit log entries found
+                      </p>
+                    </div>
+                  ) : (
+                    /* Entry list */
+                    <div className="max-h-72 overflow-y-auto np-scroll divide-y divide-[#E5E5E0] border-t border-[#111111]">
+                      {auditLog.map((log) => (
+                        <div
+                          key={log.id}
+                          className={`flex items-start gap-4 p-4 hover:bg-[#F5F5F5] transition-colors ${
+                            log.status === 'failed'
+                              ? 'border-l-4 border-[#CC0000]'
+                              : 'border-l-4 border-[#111111]'
+                          }`}
+                        >
+                          {/* Status icon */}
+                          <div className={`border p-1.5 flex-shrink-0 mt-0.5 ${
+                            log.status === 'success'
+                              ? 'border-[#111111] bg-[#F9F9F7]'
+                              : 'border-[#CC0000] bg-[#F9F9F7]'
+                          }`}>
+                            {log.status === 'success'
+                              ? <CheckCircle2 className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />
+                              : <AlertTriangle className="h-4 w-4 text-[#CC0000]" strokeWidth={1.5} />
+                            }
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-black text-xs uppercase tracking-widest np-mono text-[#111111] leading-snug">
+                                {log.action}
+                              </p>
+                              <span className={`text-xs px-2 py-0.5 np-mono uppercase tracking-widest font-black flex-shrink-0 ${
+                                log.status === 'success'
+                                  ? 'bg-[#111111] text-[#F9F9F7]'
+                                  : 'bg-[#CC0000] text-[#F9F9F7]'
+                              }`}>
+                                {log.status}
+                              </span>
                             </div>
-                            <div className="flex-1">
-                              <div className="flex justify-between items-center">
-                                <p className="font-medium text-slate-800">{log.action}</p>
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  log.status === 'success' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                                }`}>
-                                  {log.status}
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center mt-2 text-sm text-slate-500">
-                                <span>{log.timestamp.toLocaleString()}</span>
-                                <span>{log.ipAddress} ({log.location})</span>
-                              </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-2">
+                              <span className="text-xs text-[#737373] np-mono">{log.timestamp.toLocaleString()}</span>
+                              <span className="text-xs text-[#737373] np-mono">{log.ipAddress} · {log.location}</span>
                             </div>
                           </div>
                         </div>
-                      ))
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
+            {/* ── End of authenticated content ── */}
+
           </div>
         )}
       </FeatureTemplate>
