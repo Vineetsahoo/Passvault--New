@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaBell, FaCheckCircle, FaExclamationTriangle, FaShieldAlt,
-  FaFingerprint, FaKey, FaLock, FaSync, FaTrash, FaEye,
-  FaFilter, FaSort, FaClock, FaBellSlash, FaRegBell, 
-  FaChevronRight, FaTimes, FaDotCircle, FaRegCircle, FaCreditCard
+import {
+  FaBell, FaExclamationTriangle, FaShieldAlt,
+  FaKey, FaSync, FaTrash, FaEye,
+  FaFilter, FaSort, FaClock, FaBellSlash, FaRegBell,
+  FaChevronRight, FaCreditCard
 } from 'react-icons/fa';
 import { HiBell, HiBellAlert } from 'react-icons/hi2';
 import { IoCheckmarkDoneCircle } from "react-icons/io5";
 import axios from 'axios';
 import alertService, { Alert } from '../../services/alertService';
 import { notificationAPI } from '../../services/api';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface Notification {
   _id: string;
@@ -37,10 +39,12 @@ interface Notification {
     expiryDateString?: string;
     daysUntilExpiry?: number;
   };
-  isAlertType?: boolean; // Flag to identify converted alerts
+  isAlertType?: boolean;
 }
 
 const API_URL = 'http://localhost:5000/api';
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 const Notifications = () => {
   const [filter, setFilter] = useState<string>('all');
@@ -49,41 +53,30 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch notifications from backend
   useEffect(() => {
     fetchNotifications();
   }, [filter, sortBy]);
 
+  // ─── Data helpers ──────────────────────────────────────────────────────────
+
   const convertAlertToNotification = (alert: Alert): Notification => {
-    // Map alert severity to notification priority
     const priorityMap: Record<string, 'high' | 'medium' | 'low'> = {
       critical: 'high',
       high: 'high',
       medium: 'medium',
-      low: 'low'
+      low: 'low',
     };
 
-    // Map alert type to notification type
-    let notificationType: 'success' | 'warning' | 'alert' | 'security' | 'sync' | 'info' = 'alert';
-    if (alert.severity === 'critical' || alert.severity === 'high') {
-      notificationType = 'alert';
-    } else if (alert.severity === 'medium') {
-      notificationType = 'warning';
-    } else {
-      notificationType = 'info';
-    }
+    let notificationType: Notification['type'] = 'alert';
+    if (alert.severity === 'critical' || alert.severity === 'high') notificationType = 'alert';
+    else if (alert.severity === 'medium') notificationType = 'warning';
+    else notificationType = 'info';
 
-    // Determine category - for card/pass expiry, use 'alerts' category
     let category: Notification['category'] = 'alerts';
-    if (alert.alertType.includes('password')) {
-      category = 'password';
-    } else if (alert.alertType.includes('security') || alert.alertType.includes('breach') || alert.alertType.includes('login')) {
-      category = 'security';
-    } else if (alert.alertType.includes('sync')) {
-      category = 'sync';
-    } else if (alert.alertType.includes('document') || alert.alertType.includes('card') || alert.alertType.includes('pass')) {
-      category = 'alerts';
-    }
+    if (alert.alertType.includes('password')) category = 'password';
+    else if (alert.alertType.includes('security') || alert.alertType.includes('breach') || alert.alertType.includes('login')) category = 'security';
+    else if (alert.alertType.includes('sync')) category = 'sync';
+    else if (alert.alertType.includes('document') || alert.alertType.includes('card') || alert.alertType.includes('pass')) category = 'alerts';
 
     return {
       _id: alert._id,
@@ -95,13 +88,11 @@ const Notifications = () => {
       isRead: alert.isRead,
       createdAt: new Date(alert.createdAt).toISOString(),
       readAt: alert.readAt ? new Date(alert.readAt).toISOString() : undefined,
-      action: alert.actionRequired && alert.actionUrl ? {
-        type: 'internal' as const,
-        label: alert.actionLabel || 'View Details',
-        link: alert.actionUrl
-      } : undefined,
+      action: alert.actionRequired && alert.actionUrl
+        ? { type: 'internal' as const, label: alert.actionLabel || 'View Details', link: alert.actionUrl }
+        : undefined,
       metadata: alert.metadata,
-      isAlertType: true // Mark as converted from Alert
+      isAlertType: true,
     };
   };
 
@@ -109,60 +100,42 @@ const Notifications = () => {
     try {
       setLoading(true);
       const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-      
       if (!isAuthenticated) {
         setError('Authentication required');
         setNotifications([]);
         return;
       }
 
-      // Fetch both notifications and alerts in parallel
       const [notificationsResponse, alertsResponse] = await Promise.all([
         notificationAPI.getNotifications({
           filter: filter === 'all' ? undefined : filter,
           sortBy: sortBy === 'priority' ? 'priority' : 'date',
-          limit: 100
+          limit: 100,
         }).catch(err => {
           console.error('Error fetching notifications:', err);
           return { data: { success: false, data: { notifications: [] } } };
         }),
-        
-        alertService.getAlerts({
-          isResolved: false,
-          limit: 100
-        }).catch(err => {
+        alertService.getAlerts({ isResolved: false, limit: 100 }).catch(err => {
           console.error('Error fetching alerts:', err);
           return { alerts: [], pagination: { current: 1, pages: 0, total: 0 } };
-        })
+        }),
       ]);
-
-      console.log('📥 Fetched notifications:', notificationsResponse.data);
-      console.log('📥 Fetched alerts:', alertsResponse);
 
       let allNotifications: Notification[] = [];
 
-      // Add regular notifications
       if (notificationsResponse.data.success) {
         allNotifications = [...notificationsResponse.data.data.notifications];
-        console.log('✅ Added', allNotifications.length, 'regular notifications');
       }
 
-      // Convert and add alerts - alertsResponse has { alerts: [], pagination: {} } structure
-      if (alertsResponse && alertsResponse.alerts && Array.isArray(alertsResponse.alerts) && alertsResponse.alerts.length > 0) {
-        console.log('🔄 Converting', alertsResponse.alerts.length, 'alerts to notifications');
+      if (alertsResponse?.alerts && Array.isArray(alertsResponse.alerts) && alertsResponse.alerts.length > 0) {
         const convertedAlerts = alertsResponse.alerts.map(alert => convertAlertToNotification(alert));
-        console.log('✅ Converted alerts:', convertedAlerts);
         allNotifications = [...allNotifications, ...convertedAlerts];
-      } else {
-        console.log('ℹ️ No alerts to convert');
       }
 
-      // Filter by category if not 'all'
       if (filter !== 'all') {
         allNotifications = allNotifications.filter(n => n.category === filter);
       }
 
-      // Sort notifications
       if (sortBy === 'priority') {
         const priorityOrder = { high: 0, medium: 1, low: 2 };
         allNotifications.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
@@ -181,39 +154,19 @@ const Notifications = () => {
     }
   };
 
-  const categories = [
-    { id: 'all', label: 'All', icon: FaBell },
-    { id: 'alerts', label: 'Alerts', icon: HiBellAlert },
-    { id: 'security', label: 'Security', icon: FaShieldAlt },
-    { id: 'password', label: 'Passwords', icon: FaKey },
-    { id: 'sync', label: 'Sync', icon: FaSync },
-    { id: 'billing', label: 'Billing', icon: FaKey },
-    { id: 'document', label: 'Documents', icon: FaSync }
-  ];
-
-  const filteredNotifications = notifications;
+  // ─── Actions ───────────────────────────────────────────────────────────────
 
   const markAsRead = async (id: string) => {
     try {
       const notification = notifications.find(n => n._id === id);
-      
       if (notification?.isAlertType) {
-        // This is an alert - use alert service
         await alertService.markAsRead(id);
-        
-        // Update local state
-        setNotifications(prev => 
-          prev.map(n => n._id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n)
-        );
       } else {
-        // Regular notification - use notification API
         await notificationAPI.markAsRead(id);
-        
-        // Update local state
-        setNotifications(prev => 
-          prev.map(n => n._id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n)
-        );
       }
+      setNotifications(prev =>
+        prev.map(n => n._id === id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n)
+      );
     } catch (err) {
       console.error('Error marking notification as read:', err);
     }
@@ -222,16 +175,11 @@ const Notifications = () => {
   const deleteNotification = async (id: string) => {
     try {
       const notification = notifications.find(n => n._id === id);
-      
       if (notification?.isAlertType) {
-        // This is an alert - use alert service
         await alertService.deleteAlert(id);
       } else {
-        // Regular notification - use notification API
         await notificationAPI.deleteNotification(id);
       }
-      
-      // Update local state
       setNotifications(prev => prev.filter(n => n._id !== id));
     } catch (err) {
       console.error('Error deleting notification:', err);
@@ -239,110 +187,30 @@ const Notifications = () => {
   };
 
   const handleAction = (notification: Notification) => {
-    console.log(`Executing action: ${notification.action?.type} for notification ${notification._id}`);
-    
-    // Navigate to the action link if it exists
     if (notification.action?.link) {
-      if (notification.action.type === 'internal') {
-        window.location.href = notification.action.link;
-      } else {
-        window.open(notification.action.link, '_blank');
-      }
+      if (notification.action.type === 'internal') window.location.href = notification.action.link;
+      else window.open(notification.action.link, '_blank');
     }
-    
     markAsRead(notification._id);
   };
 
-  // Format relative time
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
-    return date.toLocaleDateString();
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-700';
-      case 'medium': return 'bg-yellow-100 text-yellow-700';
-      default: return 'bg-blue-100 text-blue-700';
-    }
-  };
-
-  const getPriorityDot = (priority: string) => {
-    switch (priority) {
-      case 'high': return <span className="w-2.5 h-2.5 bg-red-500 rounded-full"></span>;
-      case 'medium': return <span className="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>;
-      default: return <span className="w-2.5 h-2.5 bg-blue-500 rounded-full"></span>;
-    }
-  };
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'success':
-        return <div className="p-2.5 bg-green-100 rounded-full">
-          <IoCheckmarkDoneCircle className="text-green-600 w-5 h-5" />
-        </div>;
-      case 'warning':
-        return <div className="p-2.5 bg-yellow-100 rounded-full">
-          <FaExclamationTriangle className="text-yellow-600 w-5 h-5" />
-        </div>;
-      case 'alert':
-        return <div className="p-2.5 bg-red-100 rounded-full">
-          <HiBellAlert className="text-red-600 w-5 h-5" />
-        </div>;
-      case 'security':
-        return <div className="p-2.5 bg-purple-100 rounded-full">
-          <FaShieldAlt className="text-purple-600 w-5 h-5" />
-        </div>;
-      case 'sync':
-        return <div className="p-2.5 bg-blue-100 rounded-full">
-          <FaSync className="text-blue-600 w-5 h-5" />
-        </div>;
-      default:
-        return <div className="p-2.5 bg-indigo-100 rounded-full">
-          <HiBell className="text-indigo-600 w-5 h-5" />
-        </div>;
-    }
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
   const markAllAsRead = async () => {
     try {
-      // Separate alerts from regular notifications
       const regularNotifications = notifications.filter(n => !n.isAlertType && !n.isRead);
       const alertNotifications = notifications.filter(n => n.isAlertType && !n.isRead);
-      
-      // Mark all regular notifications as read (if any exist)
+
       if (regularNotifications.length > 0) {
-        await notificationAPI.markAllAsRead().catch(err => {
-          console.error('Error marking regular notifications as read:', err);
-          throw err; // Re-throw to prevent local state update on failure
-        });
+        await notificationAPI.markAllAsRead().catch(err => { throw err; });
       }
-      
-      // Mark all alerts as read (if any exist)
       if (alertNotifications.length > 0) {
         await axios.put(
           `${API_URL}/alerts/mark-all-read`,
           {},
           { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
-        ).catch(err => {
-          console.error('Error marking alerts as read:', err);
-          throw err; // Re-throw to prevent local state update on failure
-        });
+        ).catch(err => { throw err; });
       }
-      
-      // Update local state only after successful backend updates
-      setNotifications(prev => prev.map(n => ({...n, isRead: true, readAt: new Date().toISOString()})));
-      
-      console.log('✅ All notifications marked as read successfully');
+
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true, readAt: new Date().toISOString() })));
     } catch (err: any) {
       console.error('Error marking all as read:', err);
       alert(err.response?.data?.message || 'Failed to mark all as read. Please try again.');
@@ -353,29 +221,23 @@ const Notifications = () => {
     if (confirm('Are you sure you want to clear all notifications?')) {
       try {
         const token = localStorage.getItem('accessToken');
-        
-        // Separate alerts from regular notifications
         const regularNotifications = notifications.filter(n => !n.isAlertType);
         const alertNotifications = notifications.filter(n => n.isAlertType);
-        
-        // Delete regular notifications
+
         if (regularNotifications.length > 0) {
           await axios.delete(`${API_URL}/user/notifications`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           }).catch(err => console.error('Error clearing regular notifications:', err));
         }
-        
-        // Delete alerts one by one (if there's no bulk delete endpoint)
         if (alertNotifications.length > 0) {
           await Promise.all(
-            alertNotifications.map(alert => 
-              alertService.deleteAlert(alert._id).catch(err => 
+            alertNotifications.map(alert =>
+              alertService.deleteAlert(alert._id).catch(err =>
                 console.error(`Error deleting alert ${alert._id}:`, err)
               )
             )
           );
         }
-        
         setNotifications([]);
       } catch (err) {
         console.error('Error clearing notifications:', err);
@@ -383,322 +245,491 @@ const Notifications = () => {
     }
   };
 
+  // ─── Display helpers ───────────────────────────────────────────────────────
+
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffInSeconds < 60) return 'JUST NOW';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}M AGO`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}H AGO`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}D AGO`;
+    return date.toLocaleDateString().toUpperCase();
+  };
+
+  // Square icon boxes — zero radius, newsprint aesthetic
+  const getIcon = (type: string) => {
+    const base = 'w-10 h-10 border-2 flex items-center justify-center flex-shrink-0';
+    switch (type) {
+      case 'success':
+        return (
+          <div className={`${base} border-[#111111] bg-[#111111]`}>
+            <IoCheckmarkDoneCircle className="text-[#F9F9F7] w-5 h-5" />
+          </div>
+        );
+      case 'warning':
+        return (
+          <div className={`${base} border-[#111111] bg-[#E5E5E0]`}>
+            <FaExclamationTriangle className="text-[#111111] w-4 h-4" />
+          </div>
+        );
+      case 'alert':
+        return (
+          <div className={`${base} border-[#CC0000] bg-[#CC0000]`}>
+            <HiBellAlert className="text-[#F9F9F7] w-5 h-5" />
+          </div>
+        );
+      case 'security':
+        return (
+          <div className={`${base} border-[#111111] bg-[#111111]`}>
+            <FaShieldAlt className="text-[#F9F9F7] w-4 h-4" />
+          </div>
+        );
+      case 'sync':
+        return (
+          <div className={`${base} border-[#111111] bg-[#F9F9F7]`}>
+            <FaSync className="text-[#111111] w-4 h-4" />
+          </div>
+        );
+      default:
+        return (
+          <div className={`${base} border-[#111111] bg-[#F9F9F7]`}>
+            <HiBell className="text-[#111111] w-5 h-5" />
+          </div>
+        );
+    }
+  };
+
+  const getPriorityStyles = (priority: string) => {
+    if (priority === 'high') return 'border-[#CC0000] text-[#CC0000] bg-[#FFF5F5]';
+    if (priority === 'medium') return 'border-[#111111] text-[#111111] bg-[#E5E5E0]';
+    return 'border-[#A3A3A3] text-[#737373] bg-[#F9F9F7]';
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const filteredNotifications = notifications;
+
+  const categories = [
+    { id: 'all', label: 'ALL', icon: FaBell },
+    { id: 'alerts', label: 'ALERTS', icon: HiBellAlert },
+    { id: 'security', label: 'SECURITY', icon: FaShieldAlt },
+    { id: 'password', label: 'PASSWORDS', icon: FaKey },
+    { id: 'sync', label: 'SYNC', icon: FaSync },
+    { id: 'billing', label: 'BILLING', icon: FaCreditCard },
+    { id: 'document', label: 'DOCUMENTS', icon: FaKey },
+  ];
+
+  // ─── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <div className="space-y-8 -mt-4"> {/* Increased spacing between sections */}
-      {/* Enhanced header with decorative elements */}
-      <div className="relative border-4 border-[#111111] bg-[#111111]">
-        <div className="relative z-10 p-7">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div
+      className="bg-[#F9F9F7]"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`,
+      }}
+    >
+
+      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      <div className="border-4 border-[#111111] bg-[#111111]">
+        <div className="p-6 md:p-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start gap-6">
+
+            {/* Left: title block */}
             <div>
-              <div className="inline-flex items-center gap-3 mb-2 border border-[#F9F9F7] px-3 py-1.5">
+              {/* Edition badge */}
+              <div className="inline-flex items-center gap-2 mb-4 border border-[#CC0000] px-3 py-1">
                 {unreadCount > 0 ? (
-                  <span className="relative flex h-3 w-3">
-                    <span className="absolute inline-flex h-full w-full bg-[#CC0000]"></span>
-                    <span className="relative inline-flex h-3 w-3 bg-[#CC0000]"></span>
-                  </span>
+                  <motion.span
+                    animate={{ opacity: [1, 0.3, 1] }}
+                    transition={{ duration: 1.4, repeat: Infinity }}
+                    className="w-2 h-2 bg-[#CC0000] inline-block"
+                  />
                 ) : (
-                  <span className="h-3 w-3 bg-[#F9F9F7]"></span>
+                  <span className="w-2 h-2 bg-[#F9F9F7] inline-block" />
                 )}
-                <span className="text-xs font-black uppercase tracking-widest text-[#F9F9F7]">
-                  {unreadCount > 0 ? `${unreadCount} unread alerts` : 'All caught up!'}
+                <span
+                  className="text-[0.65rem] font-black uppercase tracking-widest text-[#F9F9F7]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  {unreadCount > 0 ? `${unreadCount} UNREAD` : 'ALL CLEAR'}
                 </span>
               </div>
-              
-              <h2 className="text-4xl font-black text-[#F9F9F7] flex flex-wrap items-center gap-3 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                <HiBell className="text-[#CC0000]" /> 
-                <span>Notifications & Alerts</span>
-              </h2>
-              
-              <p className="text-[#E5E5E0] mt-2 max-w-lg" style={{ fontFamily: "'Lora', serif" }}>
-                Stay informed about important security updates and account events
+
+              <h1
+                className="text-4xl md:text-5xl font-black text-[#F9F9F7] tracking-tighter leading-none"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                Notifications
+              </h1>
+              <p
+                className="text-[#A3A3A3] mt-2 text-sm leading-relaxed max-w-md"
+                style={{ fontFamily: "'Lora', serif" }}
+              >
+                Security updates, account alerts and sync events — all in one place.
               </p>
             </div>
-            
-            <div className="flex items-center gap-3 self-end">
+
+            {/* Right: action buttons */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-shrink-0">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="px-4 py-2.5 bg-[#F9F9F7] text-[#111111] font-black uppercase tracking-widest border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all flex items-center gap-2"
+                  className="px-4 py-2.5 bg-[#F9F9F7] text-[#111111] font-black uppercase tracking-widest
+                             text-xs border-2 border-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7]
+                             hover:border-[#CC0000] transition-all duration-200 flex items-center gap-2 w-full sm:w-auto"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
-                  <IoCheckmarkDoneCircle className="text-[#111111]" /> Mark All Read
+                  <IoCheckmarkDoneCircle />
+                  MARK ALL READ
                 </button>
               )}
-              
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={clearAllNotifications}
-                className="px-4 py-2.5 bg-white text-indigo-700 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-              >
-                <FaTrash /> Clear All
-              </motion.button>
-            </div>
-          </div>
-          
-          {unreadCount > 0 && (
-            <div className="mt-6 flex items-center gap-2">
-              <div className="relative flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(unreadCount / notifications.length) * 100}%` }}
-                  transition={{ duration: 0.8 }}
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-400 to-red-500"
-                ></motion.div>
-              </div>
-              <span className="text-sm font-medium text-white">
-                {unreadCount}/{notifications.length}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Enhanced filter and sort controls */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-5">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="text-sm text-gray-500 flex items-center gap-2">
-              <FaFilter className="text-indigo-400" />
-              <span>Filter by category:</span>
-            </div>
-            
-            <div className="flex items-center gap-3 self-end">
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
-                <FaSort className="text-gray-500" />
-                <select 
-                  value={sortBy} 
-                  onChange={(e) => setSortBy(e.target.value as 'newest' | 'priority')}
-                  className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
-                >
-                  <option value="newest">Sort by date</option>
-                  <option value="priority">Sort by priority</option>
-                </select>
-              </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              <button
                 onClick={clearAllNotifications}
-                className="p-3 rounded-xl transition-all hover:bg-red-50 border border-gray-200 text-red-500 hover:border-red-200"
+                className="px-4 py-2.5 bg-[#CC0000] text-[#F9F9F7] font-black uppercase tracking-widest
+                           text-xs border-2 border-[#CC0000] hover:bg-[#990000] hover:border-[#990000]
+                           transition-all duration-200 flex items-center gap-2 w-full sm:w-auto"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 <FaTrash />
-              </motion.button>
+                CLEAR ALL
+              </button>
             </div>
           </div>
-        </div>
-        
-        {/* Category tabs */}
-        <div className="bg-gray-50 border-t border-gray-200 px-5 py-3">
-          <div className="flex overflow-x-auto gap-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-1">
-            {categories.map(category => (
-              <motion.button
-                key={category.id}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setFilter(category.id)}
-                className={`px-4 py-2.5 rounded-full flex items-center gap-2 whitespace-nowrap transition-all ${
-                  filter === category.id 
-                    ? 'bg-indigo-600 text-white shadow-md' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 shadow-sm'
-                }`}
-              >
-                <category.icon className={filter === category.id ? 'text-indigo-200' : 'text-indigo-600'} />
-                <span className="font-medium">{category.label}</span>
-                {category.id === 'all' && unreadCount > 0 && (
-                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>
-                )}
-              </motion.button>
-            ))}
-          </div>
+
+          {/* Read-progress bar */}
+          {notifications.length > 0 && (
+            <div className="mt-7">
+              <div className="flex items-center justify-between mb-1.5">
+                <span
+                  className="text-[0.6rem] uppercase tracking-widest text-[#737373]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  READ PROGRESS
+                </span>
+                <span
+                  className="text-[0.6rem] text-[#737373]"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  {notifications.length - unreadCount} / {notifications.length}
+                </span>
+              </div>
+              <div className="w-full h-1 bg-[#333333]">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${((notifications.length - unreadCount) / Math.max(notifications.length, 1)) * 100}%`,
+                  }}
+                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                  className="h-full bg-[#CC0000]"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Loading state */}
-      {loading ? (
-        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading notifications...</p>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-          <div className="text-red-600 mb-2">
-            <FaExclamationTriangle className="inline-block text-2xl" />
-          </div>
-          <h3 className="text-lg font-semibold text-red-800 mb-1">Error Loading Notifications</h3>
-          <p className="text-red-600 mb-4">{error}</p>
-          <button
-            onClick={fetchNotifications}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      ) : filteredNotifications.length === 0 ? (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl shadow-sm p-12 text-center"
-        >
-          <div className="relative mx-auto w-20 h-20 mb-6">
-            <div className="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-50"></div>
-            <div className="relative bg-indigo-50 rounded-full w-full h-full flex items-center justify-center">
-              <FaBellSlash className="text-indigo-400 text-2xl" />
-            </div>
-          </div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">No notifications to display</h3>
-          <p className="text-gray-500 max-w-md mx-auto">
-            {filter !== 'all' 
-              ? `No ${filter} notifications are available. Try selecting a different category.`
-              : "You're all caught up! No new notifications at the moment."}
-          </p>
-          {filter !== 'all' && (
-            <button 
-              onClick={() => setFilter('all')} 
-              className="mt-4 px-4 py-2 text-indigo-600 hover:text-indigo-800 font-medium"
+      {/* ── FILTER CONTROLS ────────────────────────────────────────────────── */}
+      <div className="border-2 border-t-0 border-[#111111] bg-[#F9F9F7]">
+
+        {/* Control row */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 px-5 py-3.5 border-b-2 border-[#111111]">
+          <div className="flex items-center gap-2">
+            <FaFilter className="text-[#111111] text-xs" />
+            <span
+              className="text-xs font-black uppercase tracking-widest text-[#111111]"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
             >
-              View all notifications
+              FILTER NOTIFICATIONS
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 border-2 border-[#111111] px-3 py-2 bg-[#F9F9F7] hover:bg-[#E5E5E0] transition-colors">
+            <FaSort className="text-[#111111] text-xs" />
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value as 'newest' | 'priority')}
+              className="bg-transparent border-none text-[0.7rem] font-black uppercase tracking-widest
+                         focus:ring-0 focus:outline-none text-[#111111] cursor-pointer"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              <option value="newest">SORT BY DATE</option>
+              <option value="priority">SORT BY PRIORITY</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Category tabs */}
+        <div className="flex overflow-x-auto divide-x-2 divide-[#111111]">
+          {categories.map(category => (
+            <button
+              key={category.id}
+              onClick={() => setFilter(category.id)}
+              className={`px-4 py-3 flex items-center gap-1.5 whitespace-nowrap text-[0.65rem] font-black
+                          uppercase tracking-widest transition-colors duration-200 flex-shrink-0
+                          ${filter === category.id
+                  ? 'bg-[#111111] text-[#F9F9F7]'
+                  : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0]'
+                }`}
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              <category.icon className="text-[0.6rem]" />
+              {category.label}
+              {category.id === 'all' && unreadCount > 0 && (
+                <span className="bg-[#CC0000] text-[#F9F9F7] text-[0.55rem] px-1.5 py-0.5 font-black leading-tight">
+                  {unreadCount}
+                </span>
+              )}
             </button>
-          )}
-        </motion.div>
-      ) : (
-        <AnimatePresence mode="popLayout">
+          ))}
+        </div>
+      </div>
+
+      {/* ── CONTENT ────────────────────────────────────────────────────────── */}
+
+      {/* Loading */}
+      {loading && (
+        <div className="border-2 border-t-0 border-[#111111] bg-[#F9F9F7] p-16 flex flex-col items-center gap-6">
           <motion.div
-            key="notifications-list"
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            variants={{
-              hidden: { opacity: 0 },
-              visible: { 
-                opacity: 1,
-                transition: { staggerChildren: 0.1 }
-              }
-            }}
-            className="space-y-4"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            className="w-10 h-10 border-4 border-[#111111] border-t-[#CC0000]"
+          />
+          <p
+            className="text-xs font-black uppercase tracking-widest text-[#525252]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
           >
-            {filteredNotifications.map((notification) => (
+            LOADING NOTIFICATIONS...
+          </p>
+        </div>
+      )}
+
+      {/* Error */}
+      {!loading && error && (
+        <div className="border-2 border-t-0 border-[#111111] bg-[#F9F9F7] p-16 text-center">
+          <div className="border-4 border-dashed border-[#CC0000] p-10 max-w-sm mx-auto">
+            <FaExclamationTriangle className="text-[#CC0000] text-4xl mx-auto mb-5" />
+            <h3
+              className="text-2xl font-black uppercase tracking-tighter text-[#111111] mb-2"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              LOAD FAILED
+            </h3>
+            <p className="text-[#525252] mb-6 text-sm" style={{ fontFamily: "'Lora', serif" }}>
+              {error}
+            </p>
+            <button
+              onClick={fetchNotifications}
+              className="px-6 py-3 bg-[#111111] text-[#F9F9F7] font-black uppercase text-xs
+                         tracking-widest hover:bg-[#CC0000] transition-colors duration-200"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              TRY AGAIN
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && !error && filteredNotifications.length === 0 && (
+        <div className="border-2 border-t-0 border-[#111111] bg-[#F9F9F7] p-16 text-center">
+          <div className="border-4 border-dashed border-[#111111] p-12 max-w-sm mx-auto">
+            <FaBellSlash className="text-[#111111] text-5xl mx-auto mb-6" />
+            <h3
+              className="text-2xl font-black uppercase tracking-tighter text-[#111111] mb-2"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              INBOX CLEAR
+            </h3>
+            <p className="text-[#525252] text-sm" style={{ fontFamily: "'Lora', serif" }}>
+              {filter !== 'all'
+                ? `No ${filter.toLowerCase()} notifications to display.`
+                : "You're fully up to date. No new notifications."}
+            </p>
+            {filter !== 'all' && (
+              <button
+                onClick={() => setFilter('all')}
+                className="mt-6 px-6 py-3 border-2 border-[#111111] text-[#111111] font-black uppercase
+                           text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors duration-200"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                VIEW ALL
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Notification list */}
+      {!loading && !error && filteredNotifications.length > 0 && (
+        <AnimatePresence mode="popLayout">
+          <div className="border-2 border-t-0 border-[#111111] divide-y-2 divide-[#111111]">
+
+            {filteredNotifications.map((notification, index) => (
               <motion.div
                 key={notification._id}
                 layout
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                whileHover={{ y: -4, boxShadow: "0 12px 24px rgba(0, 0, 0, 0.05)" }}
-                transition={{ duration: 0.2 }}
-                className={`bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 ${
-                  !notification.isRead ? 'border-l-4 border-l-indigo-500' : ''
-                }`}
+                exit={{ opacity: 0, x: -80 }}
+                transition={{ duration: 0.18, delay: index * 0.025 }}
+                className={`relative bg-[#F9F9F7] transition-colors duration-150
+                  group hover:bg-[#ECECEA]
+                  ${!notification.isRead ? 'border-l-[3px] border-l-[#CC0000]' : ''}`}
               >
-              <div className="p-5 flex">
-                <div className="mr-4 flex-shrink-0">
+                <div className="p-5 md:p-6 flex gap-4 md:gap-5">
+
+                  {/* Icon */}
                   {getIcon(notification.type)}
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex flex-wrap gap-2 justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className={`font-semibold ${notification.isRead ? 'text-gray-800' : 'text-indigo-700'}`}>
-                          {notification.title}
-                        </h3>
-                        {!notification.isRead && (
-                          <span className="inline-flex h-2 w-2 relative">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-500 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+
+                    {/* Title + priority */}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3
+                            className={`font-black text-[0.95rem] tracking-tight leading-snug
+                              ${!notification.isRead ? 'text-[#111111]' : 'text-[#525252]'}`}
+                            style={{ fontFamily: "'Playfair Display', serif" }}
+                          >
+                            {notification.title}
+                          </h3>
+                          {!notification.isRead && (
+                            <motion.span
+                              animate={{ opacity: [1, 0.3, 1] }}
+                              transition={{ duration: 1.6, repeat: Infinity }}
+                              className="w-2 h-2 bg-[#CC0000] inline-block flex-shrink-0"
+                            />
+                          )}
+                        </div>
+
+                        <p
+                          className="text-[#525252] mt-1.5 text-sm leading-relaxed"
+                          style={{ fontFamily: "'Lora', serif" }}
+                        >
+                          {notification.message}
+                        </p>
+                      </div>
+
+                      {/* Priority badge */}
+                      <span
+                        className={`text-[0.6rem] px-2 py-1 border font-black uppercase tracking-widest
+                                    flex-shrink-0 ${getPriorityStyles(notification.priority)}`}
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        {notification.priority.toUpperCase()}
+                      </span>
+                    </div>
+
+                    {/* Metadata row */}
+                    {notification.metadata?.expiryFormatted && (
+                      <div
+                        className="mt-2 text-[0.65rem] text-[#CC0000] font-black uppercase tracking-widest"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        EXPIRES: {notification.metadata.expiryFormatted}
+                        {notification.metadata.daysUntilExpiry !== undefined &&
+                          ` — ${notification.metadata.daysUntilExpiry}D REMAINING`}
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#E5E5E0] flex-wrap gap-3">
+
+                      {/* Meta info */}
+                      <div className="flex items-center gap-4 flex-wrap">
+                        <div
+                          className="flex items-center gap-1.5 text-[0.65rem] text-[#737373] uppercase tracking-widest"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          <FaClock className="text-[0.5rem]" />
+                          {getRelativeTime(notification.createdAt)}
+                        </div>
+
+                        <span
+                          className="text-[0.65rem] text-[#737373] uppercase tracking-widest"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          {notification.category}
+                        </span>
+
+                        {notification.isRead ? (
+                          <span
+                            className="flex items-center gap-1 text-[0.65rem] text-[#111111] uppercase tracking-widest"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            <IoCheckmarkDoneCircle /> READ
+                          </span>
+                        ) : (
+                          <span
+                            className="flex items-center gap-1 text-[0.65rem] text-[#CC0000] uppercase tracking-widest"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            <FaRegBell /> UNREAD
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-600 mt-1.5 pr-4 text-sm">
-                        {notification.message}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${getPriorityColor(notification.priority)}`}>
-                        {notification.priority} priority
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <div className="flex items-center gap-1.5">
-                        <FaClock />
-                        <span>{getRelativeTime(notification.createdAt)}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1.5">
-                        {getPriorityDot(notification.category)}
-                        <span className="capitalize">{notification.category}</span>
-                      </div>
-                      
-                      {notification.isRead ? (
-                        <div className="flex items-center gap-1.5 text-green-600">
-                          <IoCheckmarkDoneCircle />
-                          <span>Read</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-indigo-600">
-                          <FaRegBell />
-                          <span>Unread</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {notification.action && (
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleAction(notification)}
-                          className="px-3.5 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium"
-                        >
-                          {notification.action.label}
-                          <FaChevronRight size={10} />
-                        </motion.button>
-                      )}
-                      
-                      <div className="flex items-center">
-                        {!notification.isRead && (
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => markAsRead(notification._id)}
-                            className="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600"
-                            title="Mark as read"
+
+                      {/* Action buttons */}
+                      <div className="flex items-center gap-2">
+                        {notification.action && (
+                          <button
+                            onClick={() => handleAction(notification)}
+                            className="px-3.5 py-2 bg-[#111111] text-[#F9F9F7] font-black uppercase text-[0.6rem]
+                                       tracking-widest hover:bg-[#CC0000] transition-colors duration-200
+                                       flex items-center gap-1.5"
+                            style={{ fontFamily: "'Inter', sans-serif" }}
                           >
-                            <FaEye className="w-4 h-4" />
-                          </motion.button>
+                            {notification.action.label}
+                            <FaChevronRight className="text-[0.5rem]" />
+                          </button>
                         )}
-                        
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
+
+                        {!notification.isRead && (
+                          <button
+                            onClick={() => markAsRead(notification._id)}
+                            title="Mark as read"
+                            className="p-2.5 border-2 border-[#111111] text-[#111111] hover:bg-[#111111]
+                                       hover:text-[#F9F9F7] transition-colors duration-200"
+                          >
+                            <FaEye className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        <button
                           onClick={() => deleteNotification(notification._id)}
-                          className="p-2 hover:bg-red-50 rounded-lg text-red-500 ml-1"
-                          title="Delete notification"
+                          title="Delete"
+                          className="p-2.5 border-2 border-[#111111] text-[#111111] hover:bg-[#CC0000]
+                                     hover:text-[#F9F9F7] hover:border-[#CC0000] transition-colors duration-200"
                         >
-                          <FaTrash className="w-4 h-4" />
-                        </motion.button>
+                          <FaTrash className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
+              </motion.div>
+            ))}
+
+            {/* View all strip */}
+            {filteredNotifications.length > 0 && filteredNotifications.length < notifications.length && (
+              <div className="p-4 bg-[#E5E5E0] border-t-2 border-[#111111] flex justify-center">
+                <button
+                  onClick={() => setFilter('all')}
+                  className="px-6 py-3 border-2 border-[#111111] text-[#111111] font-black uppercase
+                             text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7]
+                             transition-colors duration-200 flex items-center gap-2"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  <FaBell /> VIEW ALL NOTIFICATIONS
+                </button>
               </div>
-            </motion.div>
-          ))}
-          
-          {filteredNotifications.length > 0 && filteredNotifications.length < notifications.length && (
-            <div key="view-all-button" className="flex justify-center pt-4">
-              <button 
-                onClick={() => setFilter('all')}
-                className="px-5 py-2.5 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 text-gray-700 font-medium flex items-center gap-2"
-              >
-                <FaBell className="text-indigo-500" /> View all notifications
-              </button>
-            </div>
-          )}
-          </motion.div>
+            )}
+
+          </div>
         </AnimatePresence>
       )}
     </div>
