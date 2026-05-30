@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, QrCode, Clock, CheckCircle, XCircle, RefreshCw, AlertCircle, Copy, Loader2, Smartphone, Download, Image } from 'lucide-react';
+import {
+  Terminal, QrCode, Clock, CheckCircle, XCircle, AlertCircle,
+  Copy, Loader2, Smartphone
+} from 'lucide-react';
 import { terminalQrAPI } from '../services/api';
 import { QRCodeSVG } from 'qrcode.react';
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface TerminalQrScannerProps {
   onScanSuccess?: (passData: any) => void;
 }
@@ -16,12 +20,12 @@ interface QRSession {
   status: 'active' | 'scanned' | 'expired';
 }
 
-// Pass type templates
+// ─── Pass type templates ───────────────────────────────────────────────────────
 const PASS_TEMPLATES = {
   'boarding-pass': {
-    title: 'Flight to NYC',
-    description: 'Boarding pass for flight to New York',
-    icon: '✈️',
+    title: 'Boarding Pass',
+    description: 'Boarding pass for flight',
+    icon: '✈',
     airline: 'Sky Airlines',
     from: 'LAX',
     to: 'JFK',
@@ -36,9 +40,9 @@ const PASS_TEMPLATES = {
     category: 'travel'
   },
   'event-ticket': {
-    title: 'Concert Ticket',
+    title: 'Event Ticket',
     description: 'Event ticket for music festival',
-    icon: '🎟️',
+    icon: '▶',
     event: 'Summer Music Festival',
     venue: 'Madison Square Garden',
     date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -51,9 +55,9 @@ const PASS_TEMPLATES = {
     category: 'entertainment'
   },
   'loyalty-card': {
-    title: 'VIP Membership',
+    title: 'Loyalty Card',
     description: 'Loyalty card with rewards',
-    icon: '💳',
+    icon: '◆',
     program: 'Gold Member',
     memberNumber: 'GOLD-' + Math.random().toString(36).substr(2, 9).toUpperCase(),
     memberSince: '2024',
@@ -65,7 +69,7 @@ const PASS_TEMPLATES = {
   'parking-pass': {
     title: 'Parking Pass',
     description: 'Monthly parking permit',
-    icon: '🅿️',
+    icon: 'P',
     location: 'Downtown Parking Garage',
     level: 'Level 3',
     spot: 'A-45',
@@ -79,7 +83,7 @@ const PASS_TEMPLATES = {
   'gym-membership': {
     title: 'Gym Membership',
     description: 'Fitness center access pass',
-    icon: '💪',
+    icon: '+',
     gym: 'FitLife Fitness Center',
     memberName: 'John Doe',
     membershipType: 'Premium',
@@ -88,116 +92,181 @@ const PASS_TEMPLATES = {
     facilities: 'All Access',
     category: 'fitness'
   }
+} as const;
+
+// ─── Newsprint utility styles ──────────────────────────────────────────────────
+// TerminalQrScanner is embedded inside QrScan which already injects these,
+// but if this component is ever used standalone, the <style> tag is here.
+// The parent's `* { border-radius: 0 !important; }` rule covers the QR SVG
+// container too, so no further overrides are needed.
+// ─────────────────────────────────────────────────────────────────────────────
+const TerminalStyles = () => (
+  <style>{`
+    .tqs-hard-hover { transition: box-shadow 200ms ease-out, transform 200ms ease-out; }
+    .tqs-hard-hover:hover { box-shadow: 4px 4px 0px 0px #111111; transform: translate(-2px, -2px); }
+    @keyframes tqs-scan-line {
+      0%   { top: 0%; opacity: 1; }
+      95%  { top: 100%; opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+    .tqs-scan-line {
+      animation: tqs-scan-line 2.4s ease-in-out infinite;
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #CC0000;
+      box-shadow: 0 0 6px #CC0000;
+    }
+  `}</style>
+);
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const formatTime = (seconds: number): string => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-const TerminalQrScanner: React.FC<TerminalQrScannerProps> = ({ onScanSuccess }) => {
-  const [session, setSession] = useState<QRSession | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  const [selectedPassType, setSelectedPassType] = useState<string>('boarding-pass');
-  const [copied, setCopied] = useState(false);
+/**
+ * Returns Newsprint token colours for the countdown timer.
+ * ≤10s → editorial red (urgency), ≤30s → muted grey, else → ink black
+ */
+const getTimerColor = (seconds: number): string => {
+  if (seconds <= 10) return '#CC0000';
+  if (seconds <= 30) return '#737373';
+  return '#111111';
+};
 
-  // Cleanup on unmount - only cancel active sessions
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+/** Reusable message bar — error or success variant */
+const MessageBar: React.FC<{
+  type: 'error' | 'success';
+  message: string;
+  onDismiss?: () => void;
+}> = ({ type, message, onDismiss }) => (
+  <div className={`flex items-start gap-3 p-4 border-l-4 ${
+    type === 'error'
+      ? 'border-[#CC0000] bg-[#F9F9F7]'
+      : 'border-[#111111] bg-[#F9F9F7]'
+  }`}>
+    {type === 'error'
+      ? <AlertCircle className="h-5 w-5 text-[#CC0000] flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+      : <CheckCircle className="h-5 w-5 text-[#111111] flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+    }
+    <span className={`text-xs np-mono uppercase tracking-wide flex-1 ${
+      type === 'error' ? 'text-[#CC0000]' : 'text-[#111111]'
+    }`}>
+      {message}
+    </span>
+    {onDismiss && (
+      <button
+        onClick={onDismiss}
+        className="text-[#A3A3A3] hover:text-[#111111] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+        aria-label="Dismiss message"
+      >
+        <XCircle className="h-4 w-4" strokeWidth={1.5} />
+      </button>
+    )}
+  </div>
+);
+
+/** Divider with optional centered label */
+const SectionRule: React.FC<{ label?: string }> = ({ label }) =>
+  label ? (
+    <div className="flex items-center gap-3">
+      <div className="flex-1 h-px bg-[#E5E5E0]" />
+      <span className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3]">{label}</span>
+      <div className="flex-1 h-px bg-[#E5E5E0]" />
+    </div>
+  ) : (
+    <div className="h-px bg-[#E5E5E0]" />
+  );
+
+// ─── Main component ────────────────────────────────────────────────────────────
+const TerminalQrScanner: React.FC<TerminalQrScannerProps> = ({ onScanSuccess }) => {
+  const [session, setSession]               = useState<QRSession | null>(null);
+  const [isGenerating, setIsGenerating]     = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
+  const [success, setSuccess]               = useState<string | null>(null);
+  const [timeRemaining, setTimeRemaining]   = useState<number>(0);
+  const [selectedPassType, setSelectedPassType] = useState<string>('boarding-pass');
+  const [copied, setCopied]                 = useState(false);
+
+  // ── Cleanup on unmount — cancel active session only ──────────────────────
   useEffect(() => {
     return () => {
       if (session && session.status === 'active') {
         terminalQrAPI.cancelSession(session.sessionId).catch(() => {
-          // Silently ignore errors (session might already be cleaned up)
+          // Session may already be cleaned up server-side; silently ignore.
         });
       }
     };
   }, [session]);
 
-  // Countdown timer
+  // ── Countdown timer ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!session || session.status !== 'active') return;
-
     const timer = setInterval(() => {
-      const now = Date.now();
-      const remaining = Math.max(0, Math.floor((session.expiresAt - now) / 1000));
-      
+      const remaining = Math.max(0, Math.floor((session.expiresAt - Date.now()) / 1000));
       setTimeRemaining(remaining);
-
       if (remaining === 0) {
         setError('QR code expired. Please generate a new one.');
         setSession(null);
       }
     }, 1000);
-
     return () => clearInterval(timer);
   }, [session]);
 
-  // Poll session status
+  // ── Poll session status ───────────────────────────────────────────────────
   useEffect(() => {
     if (!session || session.status !== 'active') return;
-
     const pollInterval = setInterval(async () => {
       try {
         const response = await terminalQrAPI.getSessionStatus(session.sessionId);
-        
         console.log('📊 Session status:', response.data);
-        
+
         if (response.data.data.scanned) {
           setSession({ ...session, status: 'scanned' });
-          setSuccess('✅ Pass created successfully! Refreshing your passes...');
+          setSuccess('Pass created successfully — refreshing your passes...');
           setError(null);
-          
-          // Notify parent component
-          if (onScanSuccess) {
-            onScanSuccess(response.data.data);
-          }
-
-          // Trigger page refresh after a short delay
-          setTimeout(() => {
-            window.location.reload();
-          }, 3000);
+          if (onScanSuccess) onScanSuccess(response.data.data);
+          setTimeout(() => window.location.reload(), 3000);
         }
       } catch (err: any) {
-        // Handle 404/410 errors - session completed and cleaned up
         if (err.response?.status === 404 || err.response?.status === 410) {
-          console.log('✅ Session completed (410/404) - Pass was created successfully');
+          // 410 Gone = session cleaned up after successful scan
+          console.log('✅ Session completed (410/404) — pass created successfully');
           setSession({ ...session, status: 'scanned' });
-          setSuccess('✅ Pass created successfully! Refreshing your passes...');
+          setSuccess('Pass created successfully — refreshing your passes...');
           setError(null);
-          
-          // Trigger page refresh after showing success message
-          setTimeout(() => {
-            window.location.reload();
-          }, 3000);
+          setTimeout(() => window.location.reload(), 3000);
         } else {
-          // Only show errors for other issues
           console.error('❌ Error polling session:', err);
           setError(`Error: ${err.response?.data?.message || err.message}`);
         }
       }
     }, 2000);
-
     return () => clearInterval(pollInterval);
   }, [session, onScanSuccess]);
 
+  // ── API actions ───────────────────────────────────────────────────────────
   const generateQRSession = async () => {
     setIsGenerating(true);
     setError(null);
     setSuccess(null);
-
     try {
       const passData = PASS_TEMPLATES[selectedPassType as keyof typeof PASS_TEMPLATES];
-      
       const response = await terminalQrAPI.generateSession({
         passType: selectedPassType,
         passData,
         expirySeconds: 60
       });
-
       if (response.data.success) {
-        setSession({
-          ...response.data.data,
-          status: 'active'
-        });
+        setSession({ ...response.data.data, status: 'active' });
         setTimeRemaining(response.data.data.expirySeconds);
-        setSuccess('✅ QR code ready! Scan with your phone camera.');
+        setSuccess('QR code ready — scan with your phone camera.');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to generate QR session');
@@ -208,21 +277,14 @@ const TerminalQrScanner: React.FC<TerminalQrScannerProps> = ({ onScanSuccess }) 
 
   const cancelSession = async () => {
     if (!session) return;
-    
-    // Don't try to cancel already scanned/completed sessions
-    if (session.status !== 'active') {
-      setSession(null);
-      return;
-    }
-
+    if (session.status !== 'active') { setSession(null); return; }
     try {
       await terminalQrAPI.cancelSession(session.sessionId);
       setSession(null);
-      setSuccess('✅ Session cancelled successfully');
+      setSuccess('Session cancelled');
       setError(null);
       setTimeout(() => setSuccess(null), 2000);
     } catch (err: any) {
-      // Silently handle 404/410 errors - session already cleaned up
       if (err.response?.status === 404 || err.response?.status === 410) {
         console.log('✅ Session already cleaned up on backend');
         setSession(null);
@@ -235,256 +297,341 @@ const TerminalQrScanner: React.FC<TerminalQrScannerProps> = ({ onScanSuccess }) 
     }
   };
 
-  const copyCommand = () => {
-    navigator.clipboard.writeText('npm run generate-qr');
+  const copyUrl = () => {
+    if (!session) return;
+    navigator.clipboard.writeText(session.qrData);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setSuccess('URL copied — open in phone browser if camera scan fails');
+    setTimeout(() => {
+      setCopied(false);
+      setSuccess(null);
+    }, 3000);
   };
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const getTimeColor = (seconds: number): string => {
-    if (seconds <= 10) return 'text-rose-600';
-    if (seconds <= 30) return 'text-amber-600';
-    return 'text-emerald-600';
-  };
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-100 rounded-lg">
-            <Terminal className="h-5 w-5 text-indigo-600" />
+    <div className="bg-[#F9F9F7] border border-[#111111] overflow-hidden np-sans">
+      <TerminalStyles />
+
+      {/* ── Component Header — inverted ink bar ── */}
+      <div className="bg-[#111111] p-4 border-b-2 border-[#CC0000]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="border border-[#F9F9F7]/20 p-2 flex items-center justify-center w-9 h-9">
+              <Terminal className="h-4 w-4 text-[#F9F9F7]" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="font-black text-[#F9F9F7] text-xs uppercase tracking-widest np-mono">
+                Terminal QR Scanner
+              </h3>
+              <p className="text-[#737373] text-xs np-mono mt-0.5">
+                Generate &amp; scan QR pass via phone camera
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-slate-800">Terminal QR Scanner</h3>
-            <p className="text-sm text-slate-600">Generate QR code in terminal and scan with phone</p>
+          {/* Live indicator */}
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-1.5 h-1.5 bg-[#CC0000] animate-pulse" />
+            <span className="text-[#A3A3A3] np-mono text-xs uppercase tracking-widest">
+              {session ? 'SESSION ACTIVE' : 'STANDBY'}
+            </span>
           </div>
         </div>
       </div>
 
+      {/* ── Body ── */}
       <div className="p-6 space-y-6">
-        {/* Error Message */}
-        {error && (
-          <div className="bg-rose-50 border border-rose-200 p-4 rounded-lg flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-rose-500 flex-shrink-0" />
-            <span className="text-rose-600 text-sm">{error}</span>
-            <button onClick={() => setError(null)} className="ml-auto text-rose-400 hover:text-rose-600">
-              <XCircle className="h-4 w-4" />
-            </button>
-          </div>
-        )}
 
-        {/* Success Message */}
-        {success && (
-          <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-            <span className="text-emerald-600 text-sm">{success}</span>
-          </div>
-        )}
+        {/* Feedback messages */}
+        {error   && <MessageBar type="error"   message={error}   onDismiss={() => setError(null)} />}
+        {success && <MessageBar type="success" message={success} />}
 
+        {/* ══════════════════════════════════════════════════════════════
+            STATE A — No active session: pass-type picker + generate btn
+            ══════════════════════════════════════════════════════════════ */}
         {!session ? (
           <>
-            {/* Pass Type Selection */}
+            {/* Pass type selector — collapsed border button grid */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-3 np-mono">
                 Select Pass Type
               </label>
-              <select
-                value={selectedPassType}
-                onChange={(e) => setSelectedPassType(e.target.value)}
-                className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white shadow-sm"
-              >
-                <option value="boarding-pass">✈️ Boarding Pass</option>
-                <option value="event-ticket">🎟️ Event Ticket</option>
-                <option value="loyalty-card">💳 Loyalty Card</option>
-                <option value="parking-pass">🅿️ Parking Pass</option>
-                <option value="gym-membership">💪 Gym Membership</option>
-              </select>
+
+              {/*
+                5 templates → 2 columns on mobile (3rd item in col-2 spans full width)
+                On md+, show 3 items per row, keeping last row flush
+              */}
+              <div className="grid grid-cols-2 md:grid-cols-3 border border-[#111111]">
+                {Object.entries(PASS_TEMPLATES).map(([key, template], idx, arr) => {
+                  const isActive = selectedPassType === key;
+                  // On a 3-col grid the 4th item (idx=3) starts the 2nd row;
+                  // the 5th (idx=4) sits alone in col-1 and we want it to span 2 cols
+                  // so the grid fills cleanly. `col-span-2 md:col-span-1` achieves this
+                  // without breaking the md layout.
+                  const isSoloOnMobile = arr.length === 5 && idx === 4;
+
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedPassType(key)}
+                      className={[
+                        'flex flex-col items-center justify-center gap-2 py-4 px-3',
+                        'transition-all duration-200 min-h-[80px]',
+                        'border-r border-b border-[#111111]',
+                        // Remove right border for last column items
+                        idx % 2 === 1 ? 'border-r-0 md:border-r border-[#111111]' : '',
+                        idx % 3 === 2 ? 'md:border-r-0' : '',
+                        // Span full width on mobile for the lone 5th item
+                        isSoloOnMobile ? 'col-span-2 md:col-span-1' : '',
+                        isActive
+                          ? 'bg-[#111111] text-[#F9F9F7]'
+                          : 'bg-transparent text-[#111111] hover:bg-[#F5F5F5]',
+                      ].filter(Boolean).join(' ')}
+                      aria-pressed={isActive}
+                    >
+                      {/* Monospace icon character — editorial aesthetic */}
+                      <span className={`font-black np-mono text-lg leading-none ${isActive ? 'text-[#CC0000]' : 'text-[#111111]'}`}>
+                        {template.icon}
+                      </span>
+                      <span className="font-black text-xs uppercase tracking-widest np-mono leading-tight text-center">
+                        {template.title}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Selected type descriptor */}
+              <div className="mt-0 px-4 py-2.5 bg-[#F5F5F5] border border-t-0 border-[#111111] flex items-center gap-2">
+                <span className="text-[#CC0000] font-black np-mono text-xs">›</span>
+                <span className="text-xs text-[#525252] np-body">
+                  {PASS_TEMPLATES[selectedPassType as keyof typeof PASS_TEMPLATES]?.description}
+                </span>
+              </div>
             </div>
 
-            {/* Generate Button */}
+            {/* ── Generate button — full-width primary ── */}
             <button
               onClick={generateQRSession}
               disabled={isGenerating}
-              className="w-full p-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={[
+                'w-full px-6 py-3.5 border font-black uppercase text-xs tracking-widest',
+                'transition-all duration-200 flex items-center justify-center gap-2 min-h-[48px] np-mono',
+                isGenerating
+                  ? 'bg-[#E5E5E0] text-[#A3A3A3] border-[#A3A3A3] cursor-not-allowed'
+                  : 'bg-[#111111] text-[#F9F9F7] border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111]'
+              ].join(' ')}
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Generating QR Code...
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                  GENERATING QR CODE...
                 </>
               ) : (
                 <>
-                  <QrCode className="h-5 w-5" />
-                  Generate QR Code
+                  <QrCode className="h-4 w-4" strokeWidth={1.5} />
+                  GENERATE QR CODE
                 </>
               )}
             </button>
 
-            {/* Instructions */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-              <h4 className="font-medium text-slate-800 mb-3 flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-purple-600" />
-                How it works - No Terminal Required!
-              </h4>
-              <ol className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="font-semibold text-purple-600 flex-shrink-0">1.</span>
-                  <span>Select a pass type and click "Generate QR Code"</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-semibold text-purple-600 flex-shrink-0">2.</span>
-                  <span>QR code will appear directly in your browser</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-semibold text-purple-600 flex-shrink-0">3.</span>
-                  <span>Scan with your phone's Camera app (OR Google Lens)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-semibold text-purple-600 flex-shrink-0">4.</span>
-                  <span>Pass automatically created in your account!</span>
-                </li>
+            {/* ── How it works — editorial instruction block ── */}
+            <div className="border border-[#111111] overflow-hidden">
+              {/* Inverted header */}
+              <div className="bg-[#111111] px-4 py-2.5 flex items-center gap-2">
+                <Smartphone className="h-3.5 w-3.5 text-[#F9F9F7]" strokeWidth={1.5} />
+                <span className="text-[#F9F9F7] text-xs font-black uppercase tracking-widest np-mono">
+                  How It Works — No Terminal Required
+                </span>
+              </div>
+
+              {/* Numbered steps */}
+              <ol className="divide-y divide-[#E5E5E0]">
+                {[
+                  'Select a pass type above and click Generate QR Code',
+                  'A QR code appears directly in your browser window',
+                  'Scan with your phone\'s Camera app or Google Lens',
+                  'Your pass is automatically saved to your account',
+                ].map((step, i) => (
+                  <li key={i} className="flex items-start gap-4 px-4 py-3">
+                    {/* Editorial red step number */}
+                    <span className="flex-shrink-0 text-[#CC0000] font-black np-mono text-xs w-6 pt-0.5">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span className="text-[#525252] text-xs np-body leading-relaxed">{step}</span>
+                  </li>
+                ))}
               </ol>
-              <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-xs text-amber-800 flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <span><strong>Important:</strong> Your phone must be on the same WiFi network as your computer</span>
+
+              {/* Network note */}
+              <div className="border-t border-[#111111] flex items-start gap-3 px-4 py-3 bg-[#F5F5F5]">
+                <AlertCircle className="h-3.5 w-3.5 text-[#CC0000] flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                <p className="text-xs text-[#525252] np-mono">
+                  <strong className="text-[#111111]">Note:</strong> Your phone must be on the same WiFi network as your computer
                 </p>
               </div>
             </div>
           </>
         ) : (
+          /* ══════════════════════════════════════════════════════════════
+             STATE B — Active session: show QR code and controls
+             ══════════════════════════════════════════════════════════════ */
           <>
-            {/* Active Session - Show QR Code Directly in Browser! */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6">
-              <div className="text-center space-y-6">
-                {/* Title */}
-                <div>
-                  <div className="inline-flex items-center gap-2 mb-2">
-                    <Smartphone className="h-6 w-6 text-purple-600" />
-                    <h4 className="text-xl font-bold text-slate-800">
-                      Scan with Your Phone
-                    </h4>
-                  </div>
-                  <p className="text-sm text-slate-600">
-                    No terminal needed! Just scan this QR code with your phone camera
-                  </p>
-                </div>
+            {/* ── QR Code display panel ── */}
+            <div className="border-2 border-[#111111] overflow-hidden">
 
-                {/* QR Code Display - DIRECTLY IN BROWSER */}
-                <div className="bg-white p-6 rounded-xl shadow-lg inline-block mx-auto border-4 border-purple-200">
-                  {session.qrData ? (
-                    <QRCodeSVG
-                      value={session.qrData}
-                      size={280}
-                      level="H"
-                      includeMargin={true}
-                      bgColor="#FFFFFF"
-                      fgColor="#000000"
-                    />
-                  ) : (
-                    <div className="w-[280px] h-[280px] flex items-center justify-center bg-slate-100 rounded">
-                      <Loader2 className="h-12 w-12 animate-spin text-slate-400" />
-                    </div>
+              {/* Panel header */}
+              <div className="bg-[#111111] px-4 py-3 flex items-center justify-between">
+                <span className="text-[#F9F9F7] text-xs font-black uppercase tracking-widest np-mono flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" strokeWidth={1.5} />
+                  Scan With Your Phone Camera
+                </span>
+                <span className="text-[#737373] text-xs np-mono">
+                  No app needed
+                </span>
+              </div>
+
+              {/* QR code with editorial red corner accents */}
+              <div className="bg-[#F9F9F7] py-8 px-6 flex justify-center">
+                <div className="relative inline-block">
+                  {/* Targeting corners — pure CSS, no images */}
+                  <span className="absolute top-0 left-0  w-7 h-7 border-t-4 border-l-4 border-[#CC0000]" />
+                  <span className="absolute top-0 right-0 w-7 h-7 border-t-4 border-r-4 border-[#CC0000]" />
+                  <span className="absolute bottom-0 left-0  w-7 h-7 border-b-4 border-l-4 border-[#CC0000]" />
+                  <span className="absolute bottom-0 right-0 w-7 h-7 border-b-4 border-r-4 border-[#CC0000]" />
+
+                  {/* Animated scan line */}
+                  <div className="tqs-scan-line" />
+
+                  {/* White QR field */}
+                  <div className="bg-white p-5 border border-[#E5E5E0]">
+                    {session.qrData ? (
+                      <QRCodeSVG
+                        value={session.qrData}
+                        size={256}
+                        level="H"
+                        includeMargin={false}
+                        bgColor="#FFFFFF"
+                        fgColor="#111111"
+                      />
+                    ) : (
+                      <div className="w-[256px] h-[256px] flex items-center justify-center">
+                        <Loader2 className="h-10 w-10 animate-spin text-[#A3A3A3]" strokeWidth={1.5} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Timer + pass info — collapsed two-column row */}
+              <div className="border-t border-[#111111] grid grid-cols-2 divide-x divide-[#111111]">
+                {/* Timer */}
+                <div className="p-4">
+                  <p className="text-xs np-mono uppercase tracking-widest text-[#737373] mb-1">Time Remaining</p>
+                  <p
+                    className="text-4xl font-black np-mono tabular-nums leading-none transition-colors duration-300"
+                    style={{ color: getTimerColor(timeRemaining) }}
+                  >
+                    {formatTime(timeRemaining)}
+                  </p>
+                  {timeRemaining <= 30 && timeRemaining > 0 && (
+                    <p className="text-xs text-[#CC0000] np-mono uppercase tracking-wide mt-1.5 animate-pulse">
+                      EXPIRING SOON
+                    </p>
                   )}
                 </div>
 
-                {/* Timer */}
-                <div className="inline-flex items-center justify-center gap-3 bg-white/70 backdrop-blur-sm py-3 px-6 rounded-full">
-                  <Clock className={`h-6 w-6 ${getTimeColor(timeRemaining)}`} />
-                  <span className={`text-3xl font-bold tabular-nums ${getTimeColor(timeRemaining)}`}>
-                    {formatTime(timeRemaining)}
-                  </span>
+                {/* Pass info */}
+                <div className="p-4">
+                  <p className="text-xs np-mono uppercase tracking-widest text-[#737373] mb-1">Pass Type</p>
+                  <p className="font-black text-[#111111] np-mono text-sm uppercase tracking-wide leading-tight">
+                    {PASS_TEMPLATES[selectedPassType as keyof typeof PASS_TEMPLATES]?.title}
+                  </p>
+                  <p className="text-xs text-[#A3A3A3] np-mono mt-1.5 truncate">
+                    ID {session.sessionId.slice(0, 12)}…
+                  </p>
                 </div>
+              </div>
 
-                {/* Instructions */}
-                <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 text-left">
-                  <h5 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                    <Smartphone className="h-4 w-4 text-purple-600" />
-                    How to Scan:
-                  </h5>
-                  <ul className="space-y-2 text-sm text-slate-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">•</span>
-                      <span><strong>iPhone:</strong> Open Camera app, point at QR code, tap banner</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">•</span>
-                      <span><strong>Android:</strong> Open Camera app OR Google Lens, scan, tap notification</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">•</span>
-                      <span><strong>Tip:</strong> Hold phone steady 6-12 inches from screen</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-purple-600 font-bold">•</span>
-                      <span><strong>WiFi:</strong> Phone must be on same network as computer</span>
-                    </li>
-                  </ul>
+              {/* Scan instructions — collapsed list, editorial formatting */}
+              <div className="border-t border-[#111111] bg-[#F5F5F5]">
+                <div className="px-4 pt-3 pb-1">
+                  <p className="text-xs font-black uppercase tracking-widest np-mono text-[#111111] mb-2">How to Scan:</p>
                 </div>
+                <ul className="divide-y divide-[#E5E5E0]">
+                  {[
+                    { platform: 'iPhone',   tip: 'Open Camera app, point at QR code, tap banner' },
+                    { platform: 'Android',  tip: 'Open Camera app or Google Lens, tap notification' },
+                    { platform: 'Tip',      tip: 'Hold phone steady 6–12 inches from screen' },
+                    { platform: 'WiFi',     tip: 'Phone must be on same network as computer' },
+                  ].map(({ platform, tip }) => (
+                    <li key={platform} className="flex items-start gap-3 px-4 py-2.5">
+                      <span className="text-[#CC0000] font-black np-mono text-xs flex-shrink-0 w-16 uppercase pt-0.5">
+                        {platform}
+                      </span>
+                      <span className="text-[#525252] text-xs np-body leading-relaxed">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-                {/* Pass Info */}
-                <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-slate-500 mb-1">Pass Type</p>
-                      <p className="font-semibold text-slate-800 capitalize">
-                        {PASS_TEMPLATES[selectedPassType as keyof typeof PASS_TEMPLATES]?.icon} {PASS_TEMPLATES[selectedPassType as keyof typeof PASS_TEMPLATES]?.title}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500 mb-1">Session ID</p>
-                      <p className="font-mono text-xs text-slate-700">{session.sessionId.slice(0, 12)}...</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <button
-                    onClick={cancelSession}
-                    className="flex-1 p-3 bg-white/70 backdrop-blur-sm text-slate-700 rounded-lg hover:bg-white transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
-                  >
-                    <XCircle className="h-5 w-5" />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(session.qrData);
-                      setSuccess('✅ URL copied! Open in phone browser if camera scan fails');
-                      setTimeout(() => setSuccess(null), 3000);
-                    }}
-                    className="flex-1 p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
-                  >
-                    <Copy className="h-5 w-5" />
-                    Copy URL (Backup)
-                  </button>
-                </div>
+              {/* Action buttons — split bottom bar */}
+              <div className="border-t border-[#111111] grid grid-cols-2 divide-x divide-[#111111]">
+                <button
+                  onClick={cancelSession}
+                  className="flex items-center justify-center gap-2 p-3 bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 font-black text-xs uppercase tracking-widest np-mono min-h-[48px]"
+                >
+                  <XCircle className="h-4 w-4" strokeWidth={1.5} />
+                  Cancel
+                </button>
+                <button
+                  onClick={copyUrl}
+                  className={`flex items-center justify-center gap-2 p-3 transition-all duration-200 font-black text-xs uppercase tracking-widest np-mono min-h-[48px] ${
+                    copied
+                      ? 'bg-[#111111] text-[#F9F9F7]'
+                      : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
+                  }`}
+                >
+                  <Copy className="h-4 w-4" strokeWidth={1.5} />
+                  {copied ? 'COPIED!' : 'Copy URL'}
+                </button>
               </div>
             </div>
 
-            {/* Waiting Status or Success */}
+            {/* ── Status indicator ── */}
             {session.status === 'scanned' ? (
-              <div className="flex flex-col items-center justify-center gap-4 text-emerald-600 bg-emerald-50 rounded-lg p-6 border-2 border-emerald-200">
-                <div className="bg-emerald-100 rounded-full p-4">
-                  <CheckCircle className="h-12 w-12 text-emerald-600" />
+              /* Success — inverted ink panel with serif headline */
+              <div className="bg-[#111111] border border-[#111111] flex flex-col items-center gap-4 p-8 text-center">
+                <div className="border border-[#F9F9F7]/20 p-4 flex items-center justify-center w-16 h-16">
+                  <CheckCircle className="h-8 w-8 text-[#F9F9F7]" strokeWidth={1.5} />
                 </div>
-                <div className="text-center">
-                  <h4 className="text-xl font-bold text-emerald-700 mb-2">Successfully Scanned!</h4>
-                  <p className="text-emerald-600 font-medium">Your pass has been created and added to your account</p>
-                  <p className="text-sm text-emerald-500 mt-2">Go to QR Scan page to view your new pass</p>
+                <div>
+                  <p className="text-xs np-mono uppercase tracking-widest text-[#737373] mb-2">Scan Status</p>
+                  <h4 className="text-2xl font-black text-[#F9F9F7] np-serif leading-tight">
+                    Successfully Scanned!
+                  </h4>
+                  <p className="text-[#A3A3A3] text-xs np-mono mt-2 uppercase tracking-wider">
+                    Pass added · Refreshing page...
+                  </p>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center gap-3 text-slate-600 bg-slate-50 rounded-lg p-4">
-                <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
-                <span className="font-medium">Waiting for you to scan the QR code...</span>
+              /* Waiting — subtle animated indicator */
+              <div className="bg-[#F5F5F5] border border-[#111111] flex items-center justify-center gap-3 p-4">
+                <Loader2 className="h-4 w-4 animate-spin text-[#111111]" strokeWidth={1.5} />
+                <span className="font-black text-[#111111] text-xs uppercase tracking-widest np-mono">
+                  Waiting for scan...
+                </span>
+                {/* Dot-pulse progress */}
+                <span className="flex gap-1 ml-1">
+                  {[0, 1, 2].map(i => (
+                    <span
+                      key={i}
+                      className="inline-block w-1 h-1 bg-[#111111] animate-bounce"
+                      style={{ animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </span>
               </div>
             )}
           </>
