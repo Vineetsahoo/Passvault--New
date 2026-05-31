@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Smartphone, Laptop, Monitor, Tablet, 
-  Plus, AlertCircle, Activity, SignalHigh, 
+import {
+  Smartphone, Laptop, Monitor, Tablet,
+  Plus, AlertCircle, Activity, SignalHigh,
   MonitorSmartphone, Power, Trash2,
-  Shield, 
-  Tag, 
-  Users, 
+  Shield,
+  Tag,
+  Users,
   Lock,
   Settings2,
   RefreshCw,
@@ -19,60 +19,197 @@ import ScrollButton from '../../components/ScrollButton';
 import deviceService from '../../services/deviceService';
 import syncService from '../../services/syncService';
 
+// ─── Newsprint Design System ─────────────────────────────────────────────────
+// Font imports + utility classes enforcing the print-press aesthetic.
+// The global `* { border-radius: 0 }` rule nukes every rounded corner in the
+// subtree — no per-element overrides needed.
+// ─────────────────────────────────────────────────────────────────────────────
+const NewsprintStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
+
+    .np-serif  { font-family: 'Playfair Display', 'Times New Roman', serif; }
+    .np-body   { font-family: 'Lora', Georgia, serif; }
+    .np-sans   { font-family: 'Inter', 'Helvetica Neue', sans-serif; }
+    .np-mono   { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+    /* Zero radius — no exceptions */
+    * { border-radius: 0px !important; }
+
+    /* Hard offset shadow on hover — "newspaper cutout" lift */
+    .np-hard-hover { transition: box-shadow 200ms ease-out, transform 200ms ease-out; }
+    .np-hard-hover:hover { box-shadow: 4px 4px 0px 0px #111111; transform: translate(-2px, -2px); }
+
+    /* Subtle newsprint dot grid on background */
+    .np-dot-bg {
+      background-color: #F9F9F7;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+    }
+
+    /* Fine graph-paper line grid for inverted/heavy sections */
+    .np-texture {
+      position: relative;
+    }
+    .np-texture::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(0deg, transparent 98%, rgba(255,255,255,0.03) 100%),
+        linear-gradient(90deg, transparent 98%, rgba(255,255,255,0.03) 100%);
+      background-size: 3px 3px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+
+    /* Form fields — bottom-border only, monospace */
+    .np-input {
+      border: none;
+      border-bottom: 2px solid #111111;
+      background: transparent;
+      padding: 8px 12px;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875rem;
+      outline: none;
+      width: 100%;
+      transition: background 150ms ease-out;
+      color: #111111;
+    }
+    .np-input:focus { background: #F0F0F0; }
+    .np-input::placeholder { color: #A3A3A3; }
+    .np-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Focus ring for keyboard nav */
+    .np-focus:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px #F9F9F7, 0 0 0 4px #111111;
+    }
+
+    /* Animated loading sweep */
+    @keyframes np-sweep {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+    .np-loading-sweep::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      width: 25%;
+      background: #111111;
+      animation: np-sweep 1.1s ease-in-out infinite;
+    }
+  `}</style>
+);
+
+// ─── SectionHeader ─────────────────────────────────────────────────────────────
+// Reusable panel header: flat grey bar with icon, label, optional action slot.
+// ─────────────────────────────────────────────────────────────────────────────
+const SectionHeader: React.FC<{
+  icon?: React.ReactNode;
+  title: string;
+  action?: React.ReactNode;
+}> = ({ icon, title, action }) => (
+  <div className="bg-[#F5F5F5] px-4 py-3 border-b border-[#111111] flex items-center justify-between">
+    <h3 className="font-black flex items-center gap-2 text-[#111111] text-xs uppercase tracking-widest np-mono">
+      {icon}
+      {title}
+    </h3>
+    {action}
+  </div>
+);
+
+// ─── FeatureTemplate ──────────────────────────────────────────────────────────
+// Page-level wrapper: newsprint masthead, bordered container, ornamental footer.
+// Matches the pattern established in QrScan.tsx exactly.
+// ─────────────────────────────────────────────────────────────────────────────
 interface FeatureTemplateProps {
   title: string;
   description: string;
   icon: React.ReactNode;
+  edition?: string;
   children: React.ReactNode;
 }
 
-const FeatureTemplate: React.FC<FeatureTemplateProps> = ({ title, description, icon, children }) => {
+const FeatureTemplate: React.FC<FeatureTemplateProps> = ({
+  title, description, icon, edition, children
+}) => {
   const navigate = useNavigate();
-  
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
   return (
-    <div className="bg-[#F9F9F7] min-h-screen pt-28 pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="np-dot-bg min-h-screen pt-28 pb-20 np-sans">
+      <NewsprintStyles />
       <div className="container mx-auto px-4 sm:px-6 max-w-5xl">
-        {/* Go Back Button */}
-        <div className="mb-8">
-          <button 
+
+        {/* ── Back button ── */}
+        <div className="mb-6">
+          <button
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F9F9F7] border border-[#111111] text-[#111111] font-bold uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#F9F9F7] border border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[44px] np-mono np-focus"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
             BACK TO HOME
           </button>
         </div>
-        
+
+        {/* ── Main bordered container ── */}
         <div className="border-4 border-[#111111] bg-[#F9F9F7] overflow-hidden">
+
+          {/* Masthead / Edition bar */}
+          <div className="bg-[#111111] px-6 py-2 flex items-center justify-between np-texture">
+            <span className="text-[#A3A3A3] np-mono text-xs uppercase tracking-widest">
+              {edition ?? 'DEVICE MANAGEMENT EDITION'}
+            </span>
+            <span className="text-[#737373] np-mono text-xs">{today}</span>
+          </div>
+
+          {/* ── Page header ── */}
           <div className="p-8 md:p-12 border-b-4 border-[#111111]">
             <div className="flex flex-col md:flex-row md:items-center gap-8">
-              <div className="border-2 border-[#111111] p-6 flex items-center justify-center w-24 h-24 flex-shrink-0">
-                {React.cloneElement(icon as React.ReactElement, { 
-                  className: "h-12 w-12 text-[#111111]" 
+              {/* Icon box */}
+              <div className="border-2 border-[#111111] p-6 flex items-center justify-center w-24 h-24 flex-shrink-0 np-hard-hover cursor-default">
+                {React.cloneElement(icon as React.ReactElement, {
+                  className: 'h-12 w-12 text-[#111111]',
+                  strokeWidth: 1.5
                 })}
               </div>
-              
+
               <div className="space-y-4">
-                <div className="inline-block border border-[#111111] px-4 py-1 text-xs font-black uppercase tracking-widest text-[#111111]">
+                {/* Section badge */}
+                <div className="inline-block border border-[#CC0000] bg-[#CC0000] px-4 py-1 text-xs font-black uppercase tracking-widest text-[#F9F9F7] np-mono">
                   FEATURE
                 </div>
-                <h1 className="text-5xl md:text-6xl font-black leading-[0.9]" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</h1>
-                <p className="text-lg leading-relaxed max-w-2xl" style={{ fontFamily: "'Lora', serif" }}>{description}</p>
+                {/* Headline — Newsprint drama */}
+                <h1 className="text-4xl md:text-5xl font-black leading-[0.92] tracking-tight text-[#111111] np-serif">
+                  {title}
+                </h1>
+                {/* Deck / subhead */}
+                <p className="text-base leading-relaxed max-w-2xl text-[#525252] np-body border-l-2 border-[#E5E5E0] pl-4">
+                  {description}
+                </p>
               </div>
             </div>
           </div>
-          
+
+          {/* ── Content area ── */}
           <div className="p-8 md:p-12">
             {children}
           </div>
         </div>
-        
-        <div className="mt-8 h-1 bg-[#111111]"></div>
+
+        {/* ── Ornamental footer divider ── */}
+        <div className="mt-8 py-4 text-center np-serif text-xl text-[#A3A3A3] tracking-[1em]">
+          &#x2727; &#x2727; &#x2727;
+        </div>
+        <div className="h-1 bg-[#111111]" />
       </div>
     </div>
   );
 };
 
+// ─── Interfaces ───────────────────────────────────────────────────────────────
 interface Device {
   id: string;
   name: string;
@@ -97,27 +234,35 @@ interface DevicePermission {
   requiresVerification: boolean;
 }
 
+// ─── AuthPrompt ───────────────────────────────────────────────────────────────
+// Unauthenticated state — lock icon, sign-in CTA in newsprint style.
+// ─────────────────────────────────────────────────────────────────────────────
 const AuthPrompt = () => {
   const navigate = useNavigate();
-  
+
   return (
-    <div className="bg-white border border-slate-200/60 p-8 rounded-xl shadow-lg text-center backdrop-blur-sm">
-      <div className="bg-indigo-50 rounded-full p-4 w-20 h-20 flex items-center justify-center mx-auto mb-6">
-        <Lock className="h-10 w-10 text-indigo-600" />
+    <div className="border border-[#111111] bg-[#F9F9F7] p-8 text-center">
+      <div className="border-2 border-[#111111] p-4 w-16 h-16 flex items-center justify-center mx-auto mb-6">
+        <Lock className="h-8 w-8 text-[#111111]" strokeWidth={1.5} />
       </div>
-      <h3 className="text-xl font-semibold text-slate-800 mb-3">Sign in Required</h3>
-      <p className="text-slate-600 mb-6">Please sign in to manage your devices</p>
-      <button 
+      <h3 className="font-black text-[#111111] mb-2 text-xs uppercase tracking-widest np-mono">
+        Sign In Required
+      </h3>
+      <p className="text-[#525252] mb-6 text-sm np-body">
+        Please sign in to manage your devices
+      </p>
+      <button
         onClick={() => navigate('/signin')}
-        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
+        className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px] np-focus"
       >
-        <LogIn className="h-5 w-5" />
-        Sign In
+        <LogIn className="h-4 w-4" strokeWidth={1.5} />
+        SIGN IN NOW
       </button>
     </div>
   );
 };
 
+// ─── MultiDevice ──────────────────────────────────────────────────────────────
 const MultiDevice = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [devices, setDevices] = useState<Device[]>([]);
@@ -133,12 +278,12 @@ const MultiDevice = () => {
   });
   const [deviceGroups, setDeviceGroups] = useState<DeviceGroup[]>([]);
   const [devicePermissions, setDevicePermissions] = useState<Record<string, DevicePermission>>({});
-  
+
   // New state for device registration
   const [newDeviceName, setNewDeviceName] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
-  
+
   // Verification state
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [verificationDeviceId, setVerificationDeviceId] = useState<string | null>(null);
@@ -150,11 +295,11 @@ const MultiDevice = () => {
 
   const getDeviceIcon = (type: string) => {
     switch (type) {
-      case 'smartphone': return <Smartphone className="h-5 w-5" />;
-      case 'tablet': return <Tablet className="h-5 w-5" />;
-      case 'laptop': return <Laptop className="h-5 w-5" />;
-      case 'desktop': return <Monitor className="h-5 w-5" />;
-      default: return <MonitorSmartphone className="h-5 w-5" />;
+      case 'smartphone': return <Smartphone className="h-4 w-4" strokeWidth={1.5} />;
+      case 'tablet':     return <Tablet     className="h-4 w-4" strokeWidth={1.5} />;
+      case 'laptop':     return <Laptop     className="h-4 w-4" strokeWidth={1.5} />;
+      case 'desktop':    return <Monitor    className="h-4 w-4" strokeWidth={1.5} />;
+      default:           return <MonitorSmartphone className="h-4 w-4" strokeWidth={1.5} />;
     }
   };
 
@@ -164,19 +309,20 @@ const MultiDevice = () => {
       const token = localStorage.getItem('accessToken');
       const authStatus = !!token;
       setIsAuthenticated(authStatus);
-      
+
       console.log('🔐 Auth Status:', authStatus);
       console.log('🎫 Token exists:', !!token);
-      
+
       if (authStatus) {
         try {
           setDataLoading(true);
-          
+
           console.log('📡 Fetching devices from API...');
           // Fetch devices from API
           const devicesResponse = await deviceService.getDevices();
+
           console.log('✅ Devices response:', devicesResponse);
-          
+
           // Map API devices to component format
           const mappedDevices: Device[] = devicesResponse.devices.map((device: any) => ({
             id: device._id,
@@ -188,10 +334,10 @@ const MultiDevice = () => {
             os: device.operatingSystem,
             isCurrentDevice: device.isPrimary
           }));
-          
+
           console.log('📱 Mapped devices:', mappedDevices);
           setDevices(mappedDevices);
-          
+
           // Set device stats
           setDeviceStats({
             total: devicesResponse.stats.total,
@@ -199,11 +345,11 @@ const MultiDevice = () => {
             offline: devicesResponse.stats.offline
           });
           console.log('📊 Device stats:', devicesResponse.stats);
-          
+
           // Fetch device statistics for additional info
           const stats = await deviceService.getDeviceStats();
           console.log('📈 Additional stats:', stats);
-          
+
           // Initialize device permissions from API data
           const permissions: Record<string, DevicePermission> = {};
           devicesResponse.devices.forEach((device: any) => {
@@ -211,11 +357,11 @@ const MultiDevice = () => {
               canSync: device.syncEnabled,
               canShare: device.isTrusted,
               canModify: device.isTrusted,
-              requiresVerification: !device.isVerified // Check isVerified field
+              requiresVerification: !device.isVerified
             };
           });
           setDevicePermissions(permissions);
-          
+
           setLoading(false);
           setDataLoading(false);
         } catch (err: any) {
@@ -242,23 +388,19 @@ const MultiDevice = () => {
     if (!window.confirm('Are you sure you want to remove this device? This action cannot be undone.')) {
       return;
     }
-    
+
     try {
-      // Get device name before deletion
       const device = devices.find(d => d.id === deviceId);
       const deviceName = device?.name || 'Unknown Device';
-      
-      // Call API to remove device
+
       await deviceService.deleteDevice(deviceId, deviceName);
-      
-      // Update local state
+
       setDevices(prev => prev.filter(device => device.id !== deviceId));
       setDeviceStats(prev => ({
         ...prev,
         total: prev.total - 1
       }));
-      
-      // Remove device permissions
+
       setDevicePermissions(prev => {
         const newPerms = { ...prev };
         delete newPerms[deviceId];
@@ -272,13 +414,11 @@ const MultiDevice = () => {
 
   const handleUpdateDeviceName = async (deviceId: string, newName: string) => {
     try {
-      // Call API to update device name
       await deviceService.updateDevice(deviceId, {
         deviceName: newName
       });
-      
-      // Update local state
-      setDevices(prev => prev.map(device => 
+
+      setDevices(prev => prev.map(device =>
         device.id === deviceId ? { ...device, name: newName } : device
       ));
     } catch (err: any) {
@@ -289,21 +429,17 @@ const MultiDevice = () => {
 
   const handleUpdateDevicePermissions = async (deviceId: string, permissions: Partial<DevicePermission>) => {
     try {
-      // Map permissions to API format
       const updateData: any = {};
-      
+
       if ('canSync' in permissions) {
         updateData.syncEnabled = permissions.canSync;
       }
       if ('canShare' in permissions || 'canModify' in permissions) {
-        // isTrusted affects both canShare and canModify
         updateData.isTrusted = permissions.canShare || permissions.canModify;
       }
-      
-      // Call API to update device
+
       await deviceService.updateDevice(deviceId, updateData);
-      
-      // Update local state
+
       setDevicePermissions(prev => ({
         ...prev,
         [deviceId]: { ...prev[deviceId], ...permissions }
@@ -316,27 +452,23 @@ const MultiDevice = () => {
 
   const handleSyncDevice = async (deviceId: string) => {
     try {
-      // Update device status to syncing
-      setDevices(prev => prev.map(device => 
+      setDevices(prev => prev.map(device =>
         device.id === deviceId ? { ...device, status: 'idle' } : device
       ));
-      
-      // Trigger sync via API
+
       const response = await deviceService.triggerSync(deviceId);
-      
-      // Update device status back to online after sync
+
       setTimeout(() => {
-        setDevices(prev => prev.map(device => 
+        setDevices(prev => prev.map(device =>
           device.id === deviceId ? { ...device, status: 'online', lastActive: new Date() } : device
         ));
       }, 2000);
-      
+
     } catch (err: any) {
       console.error('Failed to sync device:', err);
       setError(err.response?.data?.message || 'Failed to sync device');
-      
-      // Revert status on error
-      setDevices(prev => prev.map(device => 
+
+      setDevices(prev => prev.map(device =>
         device.id === deviceId ? { ...device, status: 'online' } : device
       ));
     }
@@ -352,15 +484,13 @@ const MultiDevice = () => {
       setIsRegistering(true);
       setError(null);
 
-      // Get current device information automatically
       const deviceInfo = deviceService.getCurrentDeviceInfo();
-      
+
       console.log('Registering device with info:', {
         deviceName: newDeviceName,
         ...deviceInfo
       });
-      
-      // Register the device with custom name
+
       const registeredDevice = await deviceService.registerDevice({
         deviceName: newDeviceName,
         deviceType: deviceInfo.deviceType!,
@@ -370,7 +500,6 @@ const MultiDevice = () => {
 
       console.log('Device registered successfully:', registeredDevice);
 
-      // Map the new device to component format
       const newDevice: Device = {
         id: registeredDevice._id,
         name: registeredDevice.deviceName,
@@ -382,17 +511,14 @@ const MultiDevice = () => {
         isCurrentDevice: false
       };
 
-      // Add device to list
       setDevices(prev => [...prev, newDevice]);
-      
-      // Update stats
+
       setDeviceStats(prev => ({
         ...prev,
         total: prev.total + 1,
         online: prev.online + 1
       }));
 
-      // Initialize permissions for new device
       setDevicePermissions(prev => ({
         ...prev,
         [registeredDevice._id]: {
@@ -403,11 +529,9 @@ const MultiDevice = () => {
         }
       }));
 
-      // Show success state
       setRegistrationSuccess(true);
       setNewDeviceName('');
-      
-      // Reset form after 2 seconds
+
       setTimeout(() => {
         setShowAddDevice(false);
         setRegistrationSuccess(false);
@@ -422,8 +546,7 @@ const MultiDevice = () => {
         data: err.response?.data,
         message: err.message
       });
-      
-      // Show detailed error message
+
       let errorMessage = 'Failed to register device';
       if (err.response?.data?.message) {
         errorMessage = err.response.data.message;
@@ -432,7 +555,7 @@ const MultiDevice = () => {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsRegistering(false);
@@ -478,16 +601,14 @@ const MultiDevice = () => {
       setVerificationError(null);
 
       const result = await deviceService.verifyDevice(
-        verificationDeviceId, 
+        verificationDeviceId,
         verificationCode,
         verificationDeviceName
       );
 
       if (result.success) {
-        // Show success message
         setVerificationError('✓ Device verified successfully!');
-        
-        // Close modal and reload after 1.5 seconds
+
         setTimeout(() => {
           handleCloseVerificationModal();
           window.location.reload();
@@ -512,8 +633,7 @@ const MultiDevice = () => {
 
       await deviceService.resendVerificationCode(verificationDeviceId);
       setVerificationError('✓ New code sent! Check the backend console.');
-      
-      // Clear success message after 3 seconds
+
       setTimeout(() => {
         setVerificationError(null);
       }, 3000);
@@ -527,97 +647,166 @@ const MultiDevice = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  // ── Status helpers ─────────────────────────────────────────────────────────
+  // Returns newsprint-appropriate border/text/dot classes for each status.
+  const getStatusBadgeClass = (status: string) => {
     switch (status) {
-      case 'online': return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-      case 'idle': return 'text-amber-700 bg-amber-50 border-amber-200';
-      case 'offline': return 'text-slate-600 bg-slate-50 border-slate-200';
-      default: return 'text-slate-600 bg-slate-50 border-slate-200';
+      case 'online':  return 'border-[#111111] text-[#111111] bg-[#111111]/5';
+      case 'idle':    return 'border-[#A3A3A3] text-[#A3A3A3]';
+      case 'offline': return 'border-[#E5E5E0] text-[#A3A3A3]';
+      default:        return 'border-[#E5E5E0] text-[#A3A3A3]';
     }
   };
 
+  const getStatusDotClass = (status: string) => {
+    switch (status) {
+      case 'online':  return 'bg-[#111111]';
+      case 'idle':    return 'bg-[#A3A3A3]';
+      case 'offline': return 'bg-[#E5E5E0]';
+      default:        return 'bg-[#E5E5E0]';
+    }
+  };
+
+  const getDeviceHeaderClass = (status: string) => {
+    switch (status) {
+      case 'online':  return 'bg-[#111111]';
+      case 'idle':    return 'bg-[#A3A3A3]';
+      case 'offline': return 'bg-[#E5E5E0]';
+      default:        return 'bg-[#E5E5E0]';
+    }
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
       <Navbar />
       <FeatureTemplate
         title="Multi-Device Access"
-        description="Access your passes from any device, anywhere."
-        icon={<Smartphone className="h-8 w-8 text-slate-700" />}
+        description="Access your passes from any device, anywhere. Manage permissions, sync data, and verify trusted devices from a single command centre."
+        icon={<MonitorSmartphone />}
       >
         {!isAuthenticated ? (
           <AuthPrompt />
         ) : dataLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600 mb-4"></div>
-              <p className="text-gray-600">Loading device data...</p>
-            </div>
+
+          /* ── Loading state ─────────────────────────────────────────────── */
+          <div className="py-20 text-center border border-[#111111] bg-[#F9F9F7]">
+            <div className="relative w-48 h-3 bg-[#E5E5E0] border border-[#111111] mx-auto mb-6 overflow-hidden np-loading-sweep" />
+            <p className="text-[#111111] np-mono text-xs uppercase tracking-widest">
+              Loading Device Data...
+            </p>
           </div>
+
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-0">
+
+            {/* ── Error Banner ─────────────────────────────────────────────── */}
             {error && (
-              <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-center gap-3 shadow-sm">
-                <div className="bg-rose-100 p-2 rounded-full">
-                  <AlertCircle className="h-5 w-5 text-rose-500" />
-                </div>
-                <span className="text-rose-600 font-medium">{error}</span>
+              <div className="border border-[#CC0000] bg-[#F9F9F7] p-4 flex items-center gap-3 mb-6">
+                <AlertCircle className="h-4 w-4 text-[#CC0000] flex-shrink-0" strokeWidth={1.5} />
+                <span className="text-[#111111] np-mono text-xs uppercase tracking-widest">{error}</span>
               </div>
             )}
 
-            {/* Redesigned Device Stats */}
-            <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                  <Activity className="h-5 w-5 text-indigo-600" />
-                  Device Usage
-                </h3>
-              </div>
+            {/* ─────────────── Ornamental section divider ─────────────── */}
+            <div className="flex items-center gap-3 mb-0">
+              <div className="flex-1 h-px bg-[#111111]" />
+              <span className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3]">Overview</span>
+              <div className="flex-1 h-px bg-[#111111]" />
+            </div>
+
+            {/* ── Device Usage Stats ──────────────────────────────────────── */}
+            <div className="border border-[#111111] border-t-0 bg-[#F9F9F7] overflow-hidden">
+              <SectionHeader
+                icon={<Activity className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                title="Device Usage"
+              />
+
               <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-indigo-100 p-2 rounded-lg">
-                      <Smartphone className="h-5 w-5 text-indigo-600" />
+                {/* Stats grid — collapsed borders, no double lines */}
+                <div className="grid grid-cols-3 border border-[#111111] mb-6">
+                  <div className="p-4 border-r border-[#111111] text-center">
+                    <div className="np-mono text-2xl font-black text-[#111111] leading-none">
+                      {deviceStats.total}
                     </div>
-                    <div>
-                      <div className="text-sm text-slate-500">Connected Devices</div>
-                      <div className="text-2xl font-semibold text-slate-800">{devices.length} <span className="text-sm text-slate-500">of {deviceLimit}</span></div>
+                    <div className="np-mono text-xs uppercase tracking-widest text-[#737373] mt-1.5">
+                      Total
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-slate-500">Remaining Slots</div>
-                    <div className="text-2xl font-semibold text-slate-800">{deviceLimit - devices.length}</div>
+                  <div className="p-4 border-r border-[#111111] text-center">
+                    <div className="np-mono text-2xl font-black text-[#111111] leading-none">
+                      {deviceStats.online}
+                    </div>
+                    <div className="np-mono text-xs uppercase tracking-widest text-[#737373] mt-1.5">
+                      Online
+                    </div>
+                  </div>
+                  <div className="p-4 text-center">
+                    <div className="np-mono text-2xl font-black text-[#111111] leading-none">
+                      {deviceStats.offline}
+                    </div>
+                    <div className="np-mono text-xs uppercase tracking-widest text-[#737373] mt-1.5">
+                      Offline
+                    </div>
                   </div>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-2.5 mb-2">
-                  <div 
-                    className="bg-gradient-to-r from-indigo-500 to-blue-500 h-2.5 rounded-full transition-all duration-300" 
-                    style={{ width: `${(devices.length / deviceLimit) * 100}%` }}
-                  />
+
+                {/* Flat progress bar — no gradients, no rounded corners */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="np-mono text-xs uppercase tracking-widest text-[#111111]">
+                      {devices.length} of {deviceLimit} slots used
+                    </span>
+                    <span className="np-mono text-xs text-[#737373]">
+                      {deviceLimit - devices.length} remaining
+                    </span>
+                  </div>
+                  <div className="w-full h-3 bg-[#E5E5E0] border border-[#111111] overflow-hidden">
+                    <div
+                      className="h-full bg-[#111111] transition-all duration-300"
+                      style={{ width: `${(devices.length / deviceLimit) * 100}%` }}
+                    />
+                  </div>
+                  <div className="np-mono text-xs text-right text-[#737373] mt-1">
+                    {Math.round((devices.length / deviceLimit) * 100)}% USED
+                  </div>
                 </div>
-                <div className="text-xs text-slate-500 text-right">{Math.round((devices.length / deviceLimit) * 100)}% used</div>
               </div>
             </div>
 
-            {/* Redesigned Device Groups */}
-            <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                  <Users className="h-5 w-5 text-indigo-600" />
-                  Device Groups
-                </h3>
-              </div>
+            {/* ─────────────── Ornamental section divider ─────────────── */}
+            <div className="flex items-center gap-3 mt-8 mb-0">
+              <div className="flex-1 h-px bg-[#111111]" />
+              <span className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3]">Groups</span>
+              <div className="flex-1 h-px bg-[#111111]" />
+            </div>
+
+            {/* ── Device Groups ───────────────────────────────────────────── */}
+            <div className="border border-t-0 border-[#111111] bg-[#F9F9F7] overflow-hidden">
+              <SectionHeader
+                icon={<Users className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                title="Device Groups"
+              />
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {deviceGroups.length === 0 && (
+                  <div className="md:col-span-2 border border-dashed border-[#A3A3A3] p-6 text-center">
+                    <p className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3]">
+                      No device groups configured
+                    </p>
+                  </div>
+                )}
                 {deviceGroups.map(group => (
-                  <div key={group.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
-                    <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-3 border-b border-slate-200 flex items-center justify-between">
+                  <div key={group.id} className="border border-[#111111] overflow-hidden np-hard-hover">
+                    {/* Group header */}
+                    <div className="bg-[#F5F5F5] px-4 py-2 border-b border-[#111111] flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="bg-white p-1.5 rounded-lg shadow-sm">
-                          <Users className="h-4 w-4 text-indigo-600" />
-                        </div>
-                        <span className="font-medium">{group.name}</span>
+                        <Users className="h-3 w-3 text-[#111111]" strokeWidth={1.5} />
+                        <span className="font-black text-xs uppercase tracking-widest np-mono text-[#111111]">
+                          {group.name}
+                        </span>
                       </div>
-                      <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full">
-                        {group.devices.length} devices
+                      <span className="np-mono text-xs text-[#737373] uppercase tracking-wider">
+                        {group.devices.length} DEVICES
                       </span>
                     </div>
                     <div className="p-4">
@@ -625,19 +814,19 @@ const MultiDevice = () => {
                         {group.devices.map(deviceId => {
                           const device = devices.find(d => d.id === deviceId);
                           return device && (
-                            <span key={deviceId} className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-slate-100 border border-slate-200 text-slate-700">
+                            <span
+                              key={deviceId}
+                              className="text-xs px-3 py-1.5 flex items-center gap-1.5 border border-[#111111] bg-[#F9F9F7] np-mono text-[#111111]"
+                            >
                               {getDeviceIcon(device.type)}
                               {device.name}
-                              <span className={`w-2 h-2 rounded-full ${
-                                device.status === 'online' ? 'bg-emerald-500' : 
-                                device.status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'
-                              }`}></span>
+                              <span className={`w-1.5 h-1.5 ${getStatusDotClass(device.status)}`} />
                             </span>
                           );
                         })}
-                        <button className="text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 bg-white border border-dashed border-slate-300 text-slate-500 hover:bg-slate-50 transition-colors">
-                          <Plus className="h-3 w-3" />
-                          Add
+                        <button className="text-xs px-3 py-1.5 flex items-center gap-1.5 border border-[#111111] bg-transparent text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 np-mono np-focus">
+                          <Plus className="h-3 w-3" strokeWidth={1.5} />
+                          ADD
                         </button>
                       </div>
                     </div>
@@ -646,95 +835,122 @@ const MultiDevice = () => {
               </div>
             </div>
 
-            {/* Redesigned Device Management */}
-            <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60 flex items-center justify-between">
-                <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                  <SignalHigh className="h-5 w-5 text-indigo-600" />
-                  Connected Devices
-                </h3>
-                {devices.length < deviceLimit && (
-                  <button
-                    onClick={() => setShowAddDevice(!showAddDevice)}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm shadow-sm hover:shadow"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Device
-                  </button>
-                )}
-              </div>
+            {/* ─────────────── Ornamental section divider ─────────────── */}
+            <div className="flex items-center gap-3 mt-8 mb-0">
+              <div className="flex-1 h-px bg-[#111111]" />
+              <span className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3]">Connected Devices</span>
+              <div className="flex-1 h-px bg-[#111111]" />
+            </div>
+
+            {/* ── Connected Devices ───────────────────────────────────────── */}
+            <div className="border border-t-0 border-[#111111] bg-[#F9F9F7] overflow-hidden">
+              <SectionHeader
+                icon={<SignalHigh className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                title="Connected Devices"
+                action={
+                  devices.length < deviceLimit ? (
+                    <button
+                      onClick={() => setShowAddDevice(!showAddDevice)}
+                      className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[36px] np-focus"
+                    >
+                      <Plus className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      ADD DEVICE
+                    </button>
+                  ) : undefined
+                }
+              />
 
               <div className="p-6">
                 {loading ? (
-                  <div className="bg-slate-50 rounded-lg p-8 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-200 border-t-indigo-600 mb-3"></div>
-                    <p className="text-slate-500">Loading devices...</p>
+
+                  /* ── Device list loading ── */
+                  <div className="border border-[#111111] p-8 text-center bg-[#F5F5F5]">
+                    <div className="relative w-32 h-2 bg-[#E5E5E0] border border-[#111111] mx-auto mb-4 overflow-hidden np-loading-sweep" />
+                    <p className="np-mono text-xs uppercase tracking-widest text-[#737373]">Loading devices...</p>
                   </div>
+
+                ) : devices.length === 0 ? (
+
+                  /* ── Empty state ── */
+                  <div className="border border-dashed border-[#A3A3A3] p-10 text-center">
+                    <div className="border border-[#A3A3A3] p-4 w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                      <MonitorSmartphone className="h-6 w-6 text-[#A3A3A3]" strokeWidth={1.5} />
+                    </div>
+                    <p className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3] mb-1">No devices registered</p>
+                    <p className="text-sm text-[#737373] np-body">Add a device to get started</p>
+                  </div>
+
                 ) : (
                   <div className="space-y-4">
                     {devices.map(device => (
-                      <div key={device.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
-                        <div className={`p-4 border-b border-slate-200/60 ${
-                          device.status === 'online' ? 'bg-gradient-to-r from-emerald-50/50 to-blue-50/30' :
-                          device.status === 'idle' ? 'bg-gradient-to-r from-amber-50/50 to-slate-50/50' :
-                          'bg-gradient-to-r from-slate-50 to-slate-100/50'
-                        }`}>
+                      <div key={device.id} className="border border-[#111111] bg-[#F9F9F7] overflow-hidden np-hard-hover">
+
+                        {/* Status stripe — 2px coloured top rule */}
+                        <div className={`h-0.5 ${getDeviceHeaderClass(device.status)}`} />
+
+                        {/* ── Device card header ── */}
+                        <div className="p-4 border-b border-[#111111]">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className={`p-3 rounded-lg ${
-                                device.status === 'online' ? 'bg-emerald-100/70 text-emerald-600' :
-                                device.status === 'idle' ? 'bg-amber-100/70 text-amber-600' :
-                                'bg-slate-100 text-slate-600'
-                              }`}>
+                              {/* Device type icon in bordered box */}
+                              <div className="border border-[#111111] p-2.5 flex items-center justify-center w-10 h-10 flex-shrink-0 bg-[#F5F5F5]">
                                 {getDeviceIcon(device.type)}
                               </div>
                               <div>
-                                <div className="font-medium flex items-center gap-2">
+                                <div className="font-black text-sm text-[#111111] np-mono flex items-center gap-2 flex-wrap">
                                   {device.name}
                                   {device.isCurrentDevice && (
-                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                      Current
+                                    <span className="bg-[#111111] text-[#F9F9F7] px-2 py-0.5 np-mono text-xs uppercase tracking-widest font-black">
+                                      CURRENT
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-sm text-slate-500 flex items-center gap-1">
-                                  {device.browser} • {device.os}
-                                  <span className={`inline-block w-2 h-2 rounded-full ${
-                                    device.status === 'online' ? 'bg-emerald-500' : 
-                                    device.status === 'idle' ? 'bg-amber-500' : 'bg-slate-400'
-                                  }`}></span>
-                                  <span className="capitalize text-xs">{device.status}</span>
+                                <div className="text-xs text-[#737373] np-mono mt-0.5">
+                                  {device.browser} · {device.os}
                                 </div>
                               </div>
                             </div>
+
                             <div className="flex items-center gap-2">
+                              {/* Status badge */}
+                              <span className={`np-mono text-xs uppercase tracking-widest px-2 py-0.5 border font-black ${getStatusBadgeClass(device.status)}`}>
+                                {device.status.toUpperCase()}
+                              </span>
+
+                              {/* Remove button — only for non-current devices */}
                               {!device.isCurrentDevice && (
                                 <button
                                   onClick={() => handleRemoveDevice(device.id)}
-                                  className="p-1.5 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors"
+                                  className="border border-[#CC0000] p-1.5 text-[#CC0000] hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-all duration-200 min-h-[36px] min-w-[36px] flex items-center justify-center np-focus"
                                   title="Remove Device"
+                                  aria-label={`Remove ${device.name}`}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                                 </button>
                               )}
                               <button
-                                className="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+                                className="border border-[#111111] p-1.5 text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 min-h-[36px] min-w-[36px] flex items-center justify-center np-focus"
                                 title="Device Settings"
+                                aria-label={`Settings for ${device.name}`}
                               >
-                                <Settings2 className="h-4 w-4" />
+                                <Settings2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                               </button>
                             </div>
                           </div>
-                          <div className="mt-2 text-xs text-slate-500">
-                            Last active: {device.lastActive.toLocaleString()}
+
+                          {/* Last active metadata */}
+                          <div className="mt-2 np-mono text-xs text-[#737373] uppercase tracking-widest">
+                            LAST ACTIVE: {device.lastActive.toLocaleString()}
                           </div>
                         </div>
 
-                        {/* Device Settings Expansion */}
-                        <div className="p-5">
+                        {/* ── Device Settings Expansion ── */}
+                        <div className="p-5 bg-[#F9F9F7]">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-5">
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-700 block">
+
+                            {/* Device Nickname */}
+                            <div>
+                              <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
                                 Device Nickname
                               </label>
                               <div className="flex items-center gap-2">
@@ -742,30 +958,31 @@ const MultiDevice = () => {
                                   type="text"
                                   value={device.name}
                                   onChange={(e) => handleUpdateDeviceName(device.id, e.target.value)}
-                                  className="text-sm border border-slate-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+                                  className="np-input flex-1"
                                 />
-                                <Tag className="h-4 w-4 text-slate-400" />
+                                <Tag className="h-4 w-4 text-[#737373] flex-shrink-0" strokeWidth={1.5} />
                               </div>
                             </div>
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium text-slate-700 block">
+
+                            {/* Verification Status */}
+                            <div>
+                              <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
                                 Verification Status
                               </label>
                               {devicePermissions[device.id]?.requiresVerification ? (
                                 <button
                                   onClick={() => handleOpenVerificationModal(device.id, device.name)}
-                                  className="flex items-center gap-3 p-2 rounded-lg border bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100 transition-colors w-full group"
+                                  className="flex items-center gap-3 p-2.5 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 w-full np-focus group"
                                 >
-                                  <Shield className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                                  <span className="text-sm font-medium">
-                                    🔒 Click to Verify Device
+                                  <Shield className="h-4 w-4" strokeWidth={1.5} />
+                                  <span className="text-xs font-black uppercase tracking-widest np-mono">
+                                    Click to Verify Device
                                   </span>
                                 </button>
                               ) : (
-                                <div className="flex items-center gap-3 p-2 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-800">
-                                  <Shield className="h-5 w-5" />
-                                  <span className="text-sm font-medium">
+                                <div className="flex items-center gap-3 p-2.5 border border-[#111111] bg-[#F5F5F5] text-[#111111]">
+                                  <Shield className="h-4 w-4" strokeWidth={1.5} />
+                                  <span className="text-xs font-black uppercase tracking-widest np-mono">
                                     ✓ Verified
                                   </span>
                                 </div>
@@ -773,50 +990,64 @@ const MultiDevice = () => {
                             </div>
                           </div>
 
-                          <div className="border-t border-slate-200 pt-5">
-                            <h4 className="text-sm font-medium flex items-center gap-2 mb-3 text-slate-800">
-                              <Lock className="h-4 w-4 text-slate-600" />
+                          {/* ── Device Permissions ── */}
+                          <div className="border-t border-[#E5E5E0] pt-5">
+                            <h4 className="text-xs font-black uppercase tracking-widest np-mono flex items-center gap-2 mb-3 text-[#111111]">
+                              <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />
                               Device Permissions
                             </h4>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {/* Collapsed border grid for permission toggles */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 border border-[#111111]">
                               {Object.entries(devicePermissions[device.id] || {})
                                 .filter(([key]) => key !== 'requiresVerification')
-                                .map(([key, value]) => (
-                                  <label key={key} className="flex items-center gap-3 p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
-                                    <div className={`relative w-10 h-5 transition-colors duration-300 rounded-full ${value ? 'bg-indigo-500' : 'bg-slate-300'}`}>
-                                      <input
-                                        type="checkbox"
-                                        className="sr-only"
-                                        checked={!!value}
-                                        onChange={(e) => handleUpdateDevicePermissions(
-                                          device.id,
-                                          { [key]: e.target.checked }
-                                        )}
-                                      />
-                                      <div className={`absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-300 ${value ? 'transform translate-x-5' : ''}`}></div>
+                                .map(([key, value], idx, arr) => (
+                                  <label
+                                    key={key}
+                                    className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-[#F5F5F5] transition-colors np-focus
+                                      ${idx < arr.length - 1 ? 'border-r border-b border-[#111111]' : ''}
+                                    `}
+                                  >
+                                    {/* Newsprint square checkbox */}
+                                    <div className={`w-4 h-4 border border-[#111111] flex items-center justify-center flex-shrink-0 transition-colors duration-150 ${value ? 'bg-[#111111]' : 'bg-transparent'}`}>
+                                      {value && (
+                                        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 10 10">
+                                          <polyline points="1.5,5 3.5,7.5 8.5,2.5" stroke="#F9F9F7" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter" />
+                                        </svg>
+                                      )}
                                     </div>
-                                    <span className="text-sm capitalize">
-                                      Can {key.replace('can', '')}
+                                    <input
+                                      type="checkbox"
+                                      className="sr-only"
+                                      checked={!!value}
+                                      onChange={(e) => handleUpdateDevicePermissions(
+                                        device.id,
+                                        { [key]: e.target.checked }
+                                      )}
+                                    />
+                                    <span className="text-xs np-mono uppercase tracking-widest text-[#111111]">
+                                      {key.replace('can', 'Can ')}
                                     </span>
                                   </label>
                                 ))}
                             </div>
                           </div>
 
+                          {/* ── Action buttons ── */}
                           <div className="mt-5 flex justify-end gap-3">
-                            <button 
+                            <button
                               onClick={() => handleSyncDevice(device.id)}
-                              className="text-sm px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                              className="text-xs px-4 py-2.5 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] flex items-center gap-2 transition-all duration-200 np-mono uppercase tracking-widest font-black min-h-[44px] np-focus"
                             >
-                              <RefreshCw className="h-4 w-4" />
-                              Sync Now
+                              <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.5} />
+                              SYNC NOW
                             </button>
-                            <button className="text-sm px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-sm">
-                              <Settings2 className="h-4 w-4" />
-                              Advanced Settings
+                            <button className="text-xs px-4 py-2.5 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] flex items-center gap-2 transition-all duration-200 np-mono uppercase tracking-widest font-black min-h-[44px] np-focus">
+                              <Settings2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                              ADVANCED SETTINGS
                             </button>
                           </div>
                         </div>
+
                       </div>
                     ))}
                   </div>
@@ -824,117 +1055,141 @@ const MultiDevice = () => {
               </div>
             </div>
 
-            {/* Redesigned Add Device UI */}
+            {/* ─────────────── Ornamental section divider ─────────────── */}
             {showAddDevice && (
-              <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-indigo-50 to-blue-50/30 p-4 border-b border-slate-200/60">
-                  <h3 className="font-medium flex items-center gap-2 text-slate-800">
-                    <Plus className="h-5 w-5 text-indigo-600" />
-                    Register Current Device
-                  </h3>
-                </div>
+              <div className="flex items-center gap-3 mt-8 mb-0">
+                <div className="flex-1 h-px bg-[#111111]" />
+                <span className="np-mono text-xs uppercase tracking-widest text-[#A3A3A3]">Register Device</span>
+                <div className="flex-1 h-px bg-[#111111]" />
+              </div>
+            )}
+
+            {/* ── Register Device Panel ───────────────────────────────────── */}
+            {showAddDevice && (
+              <div className="border border-t-0 border-[#111111] bg-[#F9F9F7] overflow-hidden">
+                <SectionHeader
+                  icon={<Plus className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />}
+                  title="Register Current Device"
+                />
                 <div className="p-6">
                   {registrationSuccess ? (
-                    <div className="flex flex-col items-center justify-center p-8 border-2 border-emerald-200 rounded-xl bg-emerald-50/30">
-                      <div className="bg-emerald-100 p-4 rounded-full mb-4">
-                        <svg className="h-12 w-12 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+
+                    /* ── Success state ── */
+                    <div className="flex flex-col items-center justify-center p-10 border-2 border-[#111111] bg-[#F5F5F5]">
+                      <div className="border-2 border-[#111111] p-4 w-16 h-16 flex items-center justify-center mb-4 bg-[#F9F9F7]">
+                        <svg className="h-8 w-8 text-[#111111]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <polyline points="5,13 9,17 19,7" strokeLinecap="square" strokeLinejoin="miter" />
                         </svg>
                       </div>
-                      <h4 className="text-xl font-semibold text-emerald-800 mb-2">Device Registered Successfully!</h4>
-                      <p className="text-sm text-emerald-600">Your device has been added to your account</p>
+                      <h4 className="font-black text-[#111111] mb-2 text-xs uppercase tracking-widest np-mono">
+                        Device Registered Successfully
+                      </h4>
+                      <p className="text-sm text-[#525252] np-body">Your device has been added to your account</p>
                     </div>
+
                   ) : (
                     <>
-                      <div className="mb-6">
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                          <div className="flex items-start gap-3">
-                            <div className="bg-blue-100 p-2 rounded-lg">
-                              <Smartphone className="h-5 w-5 text-blue-600" />
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-medium text-blue-900 mb-1">Auto-Detected Device Info</h4>
-                              <div className="text-sm text-blue-700 space-y-1">
-                                {(() => {
-                                  const info = deviceService.getCurrentDeviceInfo();
-                                  return (
-                                    <>
-                                      <p><strong>Type:</strong> {info.deviceType}</p>
-                                      <p><strong>OS:</strong> {info.operatingSystem}</p>
-                                      <p><strong>Browser:</strong> {info.browser}</p>
-                                    </>
-                                  );
-                                })()}
-                              </div>
+                      {/* ── Auto-detected device info box ── */}
+                      <div className="border border-[#111111] bg-[#F5F5F5] p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                          <div className="border border-[#111111] p-2 flex items-center justify-center flex-shrink-0 bg-[#F9F9F7]">
+                            <Smartphone className="h-4 w-4 text-[#111111]" strokeWidth={1.5} />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-black text-xs uppercase tracking-widest np-mono text-[#111111] mb-2">
+                              Auto-Detected Device Info
+                            </h4>
+                            <div className="text-xs text-[#525252] space-y-1 np-mono">
+                              {(() => {
+                                const info = deviceService.getCurrentDeviceInfo();
+                                return (
+                                  <>
+                                    <p>
+                                      <span className="text-[#111111] font-black">TYPE: </span>
+                                      {info.deviceType}
+                                    </p>
+                                    <p>
+                                      <span className="text-[#111111] font-black">OS: </span>
+                                      {info.operatingSystem}
+                                    </p>
+                                    <p>
+                                      <span className="text-[#111111] font-black">BROWSER: </span>
+                                      {info.browser}
+                                    </p>
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
-
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-slate-700">
-                            Device Name / Nickname
-                          </label>
-                          <input
-                            type="text"
-                            value={newDeviceName}
-                            onChange={(e) => setNewDeviceName(e.target.value)}
-                            placeholder="e.g., My Laptop, Work PC, iPhone 13"
-                            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
-                            disabled={isRegistering}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter' && !isRegistering) {
-                                handleRegisterDevice();
-                              }
-                            }}
-                          />
-                          <p className="text-xs text-slate-500">
-                            Give your device a memorable name to identify it easily
-                          </p>
-                        </div>
                       </div>
 
+                      {/* ── Device name input ── */}
+                      <div className="mb-6">
+                        <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
+                          Device Name / Nickname <span className="text-[#CC0000]">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={newDeviceName}
+                          onChange={(e) => setNewDeviceName(e.target.value)}
+                          placeholder="e.g., My Laptop, Work PC, iPhone 13"
+                          className="np-input"
+                          disabled={isRegistering}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && !isRegistering) {
+                              handleRegisterDevice();
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-[#737373] mt-1 np-mono">
+                          Give your device a memorable name to identify it easily
+                        </p>
+                      </div>
+
+                      {/* ── Inline error ── */}
                       {error && (
-                        <div className="mb-4 bg-rose-50 border border-rose-200 p-3 rounded-lg flex items-center gap-2">
-                          <AlertCircle className="h-5 w-5 text-rose-500 flex-shrink-0" />
-                          <span className="text-sm text-rose-600">{error}</span>
+                        <div className="mb-4 border border-[#CC0000] p-3 flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4 text-[#CC0000] flex-shrink-0" strokeWidth={1.5} />
+                          <span className="text-xs text-[#111111] np-mono">{error}</span>
                         </div>
                       )}
 
+                      {/* ── Action buttons ── */}
                       <div className="flex gap-3">
-                        <button 
+                        <button
                           onClick={handleRegisterDevice}
                           disabled={isRegistering || !newDeviceName.trim()}
-                          className="flex-1 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 py-3 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] flex items-center justify-center gap-2 transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed np-focus"
                         >
                           {isRegistering ? (
                             <>
-                              <RefreshCw className="h-4 w-4 animate-spin" />
-                              Registering...
+                              <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                              REGISTERING...
                             </>
                           ) : (
                             <>
-                              <Plus className="h-4 w-4" />
-                              Register This Device
+                              <Plus className="h-4 w-4" strokeWidth={1.5} />
+                              REGISTER THIS DEVICE
                             </>
                           )}
                         </button>
-                        <button 
+                        <button
                           onClick={handleCancelAddDevice}
                           disabled={isRegistering}
-                          className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-1 py-3 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] flex items-center justify-center transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed np-focus"
                         >
-                          Cancel
+                          CANCEL
                         </button>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-slate-200">
-                        <div className="flex items-start gap-2 text-xs text-slate-500">
-                          <Shield className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                          <p>
-                            This will register the current browser/device you're using right now. 
-                            You can manage device permissions and settings after registration.
-                          </p>
-                        </div>
+                      {/* ── Security note ── */}
+                      <div className="mt-4 pt-4 border-t border-[#E5E5E0] flex items-start gap-2">
+                        <Shield className="h-4 w-4 text-[#737373] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                        <p className="text-xs text-[#737373] np-mono">
+                          This will register the current browser/device you're using right now.
+                          You can manage device permissions and settings after registration.
+                        </p>
                       </div>
                     </>
                   )}
@@ -942,142 +1197,159 @@ const MultiDevice = () => {
               </div>
             )}
 
-            {/* Verification Modal */}
-            {showVerificationModal && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in duration-200">
-                  {/* Modal Header */}
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-bold flex items-center gap-2">
-                        <Shield className="h-6 w-6" />
-                        Verify Device
-                      </h3>
-                      <button
-                        onClick={handleCloseVerificationModal}
-                        className="p-1 hover:bg-white/20 rounded-lg transition-colors"
-                        disabled={isVerifying}
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <p className="text-indigo-100 text-sm">
-                      Enter the 6-digit code from backend console
-                    </p>
-                  </div>
-
-                  {/* Modal Body */}
-                  <div className="p-6">
-                    <div className="mb-6">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <div className="flex items-start gap-3">
-                          <div className="bg-blue-100 p-2 rounded-lg">
-                            <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-blue-800 font-medium">Check backend console</p>
-                            <p className="text-xs text-blue-600 mt-1">
-                              The verification code for "<strong>{verificationDeviceName}</strong>" was printed in the backend terminal. Look for: 🔑 VERIFICATION CODE
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Verification Code
-                      </label>
-                      <input
-                        type="text"
-                        value={verificationCode}
-                        onChange={(e) => {
-                          // Only allow numbers and max 6 digits
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                          setVerificationCode(value);
-                          setVerificationError(null);
-                        }}
-                        placeholder="000000"
-                        maxLength={6}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-center text-2xl font-bold tracking-widest"
-                        disabled={isVerifying}
-                        autoFocus
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && verificationCode.length === 6 && !isVerifying) {
-                            handleVerifyDevice();
-                          }
-                        }}
-                      />
-                      <p className="text-xs text-slate-500 mt-2 text-center">
-                        Enter the 6-digit code from the terminal
-                      </p>
-                    </div>
-
-                    {verificationError && (
-                      <div className={`mb-4 p-3 rounded-lg flex items-center gap-2 ${
-                        verificationError.includes('✓') || verificationError.includes('successfully')
-                          ? 'bg-green-50 border border-green-200'
-                          : 'bg-rose-50 border border-rose-200'
-                      }`}>
-                        {verificationError.includes('✓') || verificationError.includes('successfully') ? (
-                          <svg className="h-5 w-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <AlertCircle className="h-5 w-5 text-rose-500 flex-shrink-0" />
-                        )}
-                        <span className={`text-sm ${
-                          verificationError.includes('✓') || verificationError.includes('successfully')
-                            ? 'text-green-700'
-                            : 'text-rose-600'
-                        }`}>
-                          {verificationError}
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      <button
-                        onClick={handleVerifyDevice}
-                        disabled={isVerifying || verificationCode.length !== 6}
-                        className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                      >
-                        {isVerifying ? (
-                          <>
-                            <RefreshCw className="h-5 w-5 animate-spin" />
-                            Verifying...
-                          </>
-                        ) : (
-                          <>
-                            <Shield className="h-5 w-5" />
-                            Verify Device
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        onClick={handleResendCode}
-                        disabled={isResendingCode || isVerifying}
-                        className="w-full py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isResendingCode ? 'Sending...' : 'Resend Code'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Modal Footer */}
-                  <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
-                    <p className="text-xs text-slate-500 text-center">
-                      Check your backend terminal for the verification code
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
+
+        {/* ── Verification Modal ───────────────────────────────────────────── */}
+        {showVerificationModal && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-md w-full overflow-hidden"
+              style={{ boxShadow: '8px 8px 0px 0px #111111' }}
+            >
+              {/* Modal Header — inverted bar */}
+              <div className="bg-[#111111] px-6 py-4 flex items-center justify-between np-texture">
+                <h3 className="text-xs font-black uppercase tracking-widest np-mono text-[#F9F9F7] flex items-center gap-2">
+                  <Shield className="h-4 w-4" strokeWidth={1.5} />
+                  VERIFY DEVICE
+                </h3>
+                <button
+                  onClick={handleCloseVerificationModal}
+                  className="p-1 border border-[#F9F9F7]/30 text-[#F9F9F7] hover:bg-[#F9F9F7]/20 transition-all duration-200 np-focus"
+                  disabled={isVerifying}
+                  aria-label="Close verification modal"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="square" strokeLinejoin="miter" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Sub-header caption */}
+              <div className="bg-[#F5F5F5] px-6 py-2 border-b border-[#111111]">
+                <p className="text-xs text-[#737373] np-mono uppercase tracking-widest">
+                  Enter the 6-digit code from backend console
+                </p>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6">
+
+                {/* Instruction box */}
+                <div className="border border-[#111111] bg-[#F5F5F5] p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="border border-[#111111] p-1.5 flex items-center justify-center flex-shrink-0 bg-[#F9F9F7]">
+                      <svg className="h-4 w-4 text-[#111111]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="square" strokeLinejoin="miter" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-black text-[#111111] np-mono uppercase tracking-widest mb-1">
+                        Check Backend Console
+                      </p>
+                      <p className="text-xs text-[#525252] np-mono">
+                        The verification code for{' '}
+                        <strong className="text-[#111111]">"{verificationDeviceName}"</strong>{' '}
+                        was printed in the backend terminal. Look for: 🔑 VERIFICATION CODE
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Code input */}
+                <div className="mb-6">
+                  <label className="block text-xs font-black uppercase tracking-widest text-[#111111] mb-2 np-mono">
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={(e) => {
+                      // Only allow numbers and max 6 digits
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setVerificationCode(value);
+                      setVerificationError(null);
+                    }}
+                    placeholder="000000"
+                    maxLength={6}
+                    className="w-full border-b-2 border-[#111111] bg-transparent px-3 py-3 text-center text-2xl font-black tracking-[0.5em] np-mono text-[#111111] outline-none focus:bg-[#F0F0F0] transition-colors disabled:opacity-50"
+                    disabled={isVerifying}
+                    autoFocus
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && verificationCode.length === 6 && !isVerifying) {
+                        handleVerifyDevice();
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-[#737373] mt-1.5 text-center np-mono uppercase tracking-widest">
+                    6-digit code from terminal
+                  </p>
+                </div>
+
+                {/* Verification feedback */}
+                {verificationError && (
+                  <div className={`mb-4 p-3 border flex items-center gap-2 ${
+                    verificationError.includes('✓') || verificationError.includes('successfully')
+                      ? 'border-[#111111] bg-[#F5F5F5]'
+                      : 'border-[#CC0000] bg-[#F9F9F7]'
+                  }`}>
+                    {verificationError.includes('✓') || verificationError.includes('successfully') ? (
+                      <svg className="h-4 w-4 text-[#111111] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <polyline points="5,13 9,17 19,7" strokeLinecap="square" strokeLinejoin="miter" />
+                      </svg>
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-[#CC0000] flex-shrink-0" strokeWidth={1.5} />
+                    )}
+                    <span className={`text-xs np-mono ${
+                      verificationError.includes('✓') || verificationError.includes('successfully')
+                        ? 'text-[#111111]'
+                        : 'text-[#CC0000]'
+                    }`}>
+                      {verificationError}
+                    </span>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="space-y-3">
+                  <button
+                    onClick={handleVerifyDevice}
+                    disabled={isVerifying || verificationCode.length !== 6}
+                    className="w-full py-3 bg-[#111111] text-[#F9F9F7] border border-transparent hover:bg-[#F9F9F7] hover:text-[#111111] hover:border-[#111111] flex items-center justify-center gap-2 transition-all duration-200 font-black uppercase text-xs tracking-widest np-mono min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed np-focus"
+                  >
+                    {isVerifying ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                        VERIFYING...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-4 w-4" strokeWidth={1.5} />
+                        VERIFY DEVICE
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleResendCode}
+                    disabled={isResendingCode || isVerifying}
+                    className="w-full py-2.5 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200 text-xs font-black uppercase tracking-widest np-mono min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed np-focus"
+                  >
+                    {isResendingCode ? 'SENDING...' : 'RESEND CODE'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-[#F5F5F5] px-6 py-3 border-t border-[#111111]">
+                <p className="text-xs text-[#737373] text-center np-mono uppercase tracking-widest">
+                  Check your backend terminal for the verification code
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
       </FeatureTemplate>
       <Footer />
       <ScrollButton />
