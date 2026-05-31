@@ -97,18 +97,20 @@ const Footer: React.FC<FooterProps> = ({ className = "" }) => {
             </p>
             <div className="flex gap-2">
               {[
-                { icon: <FaGithub size={16} />,   href: 'https://github.com/Vineetsahoo' },
-                { icon: <FaTwitter size={16} />,   href: 'https://twitter.com' },
-                { icon: <FaLinkedin size={16} />,  href: 'https://linkedin.com' },
-              ].map((social, i) => (
+                { icon: FaGithub, label: "GitHub", href: "https://github.com/Vineetsahoo" },
+                { icon: FaTwitter, label: "Twitter", href: "https://twitter.com" },
+                { icon: FaLinkedin, label: "LinkedIn", href: "https://linkedin.com" },
+              ].map((social) => (
                 <a
-                  key={i}
+                  key={social.label}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="border border-[#404040] p-2 flex items-center justify-center hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors"
+                  aria-label={social.label}
+                  className="border border-[#404040] h-11 w-11 flex items-center justify-center hover:bg-[#CC0000] hover:border-[#CC0000] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9F9F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111111] rounded-none"
+                  style={{ borderRadius: 0 }}
                 >
-                  {social.icon}
+                  <social.icon className="h-4 w-4 text-[#F9F9F7]" strokeWidth={1.5} />
                 </a>
               ))}
             </div>
