@@ -884,7 +884,7 @@ const DashboardHome: React.FC<{
 
               <div className="space-y-3">
                 {dashboardStats.breachedAccounts > 0 && (
-                  <div className="border-l-4 border-[#CC0000] p-4 bg-[#F9F9F7] border border-[#CC0000]">
+                  <div className="border-l-4 border-[#CC0000] p-4 bg-[#F9F9F7] border ">
                     <div className="flex items-start gap-3">
                       <FaExclamation className="text-[#CC0000] mt-0.5 flex-shrink-0" />
                       <div className="flex-1">
@@ -905,7 +905,7 @@ const DashboardHome: React.FC<{
                 )}
 
                 {dashboardStats.securityIncidents === 0 && (
-                  <div className="border-l-4 border-[#111111] p-4 bg-[#F9F9F7] border border-[#E5E5E0]">
+                  <div className="border-l-4 border-[#111111] p-4 bg-[#F9F9F7] border">
                     <div className="flex items-start gap-3">
                       <FaCheckCircle className="text-[#111111] mt-0.5 flex-shrink-0" />
                       <div>
