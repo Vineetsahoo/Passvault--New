@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   FaShieldAlt, FaExclamationTriangle, FaCheckCircle, FaEye, FaEyeSlash,
   FaGlobe, FaServer, FaDatabase, FaWifi, FaClock, FaChartLine,
   FaBell, FaDownload, FaShare, FaFilter, FaSync, FaPlay, FaPause,
@@ -15,7 +15,8 @@ import { FaShieldVirus, FaBinoculars, FaSignal } from 'react-icons/fa6';
 import { monitoringAPI } from '../../services/api';
 import alertService, { Alert } from '../../services/alertService';
 
-// New interfaces for real-time data visualization
+// ─── Interfaces (unchanged) ───────────────────────────────────────────────────
+
 interface RealTimeMetric {
   timestamp: number;
   value: number;
@@ -35,7 +36,6 @@ interface SecurityScore {
   trend: 'up' | 'down' | 'stable';
 }
 
-// Types for breach monitoring
 interface BreachAlert {
   id: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
@@ -74,7 +74,7 @@ interface ThreatIntelligence {
   first_seen: string;
   last_seen: string;
   indicators: string[];
-  ttps: string[]; // Tactics, Techniques, and Procedures
+  ttps: string[];
 }
 
 interface DarkWebMention {
@@ -87,7 +87,12 @@ interface DarkWebMention {
   hash: string;
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 const Monitoring: React.FC = () => {
+
+  // ── All state, logic, and handlers are 100% preserved ──────────────────────
+
   const [isRealTimeEnabled, setIsRealTimeEnabled] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState('24h');
   const [selectedSeverity, setSelectedSeverity] = useState('all');
@@ -98,15 +103,14 @@ const Monitoring: React.FC = () => {
   const [showFullScanModal, setShowFullScanModal] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
-  
-  // API State
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [securityData, setSecurityData] = useState<any>(null);
   const [performanceData, setPerformanceData] = useState<any>(null);
   const [alertsData, setAlertsData] = useState<any[]>([]);
-  
+
   const [scanResults, setScanResults] = useState<{
     scannedItems: number;
     threatsFound: number;
@@ -119,10 +123,9 @@ const Monitoring: React.FC = () => {
     status: 'idle'
   });
 
-  // Fetch monitoring data from API
   useEffect(() => {
     fetchMonitoringData();
-    const interval = setInterval(fetchMonitoringData, 30000); // Refresh every 30 seconds
+    const interval = setInterval(fetchMonitoringData, 30000);
     return () => clearInterval(interval);
   }, [selectedTimeframe]);
 
@@ -133,9 +136,9 @@ const Monitoring: React.FC = () => {
 
       const [dashboardRes, securityRes, performanceRes, alertsRes, dbAlertsRes] = await Promise.all([
         monitoringAPI.getDashboard(
-          selectedTimeframe === '24h' ? 'today' : 
-          selectedTimeframe === '7d' ? 'week' : 
-          selectedTimeframe === '30d' ? 'month' : 
+          selectedTimeframe === '24h' ? 'today' :
+          selectedTimeframe === '7d' ? 'week' :
+          selectedTimeframe === '30d' ? 'month' :
           'week'
         ),
         monitoringAPI.getSecurity(),
@@ -155,7 +158,6 @@ const Monitoring: React.FC = () => {
         setPerformanceData(performanceRes.data.data);
       }
       if (alertsRes.data.success) {
-        // Convert API alerts to component format
         const formattedAlerts = alertsRes.data.data.alerts.map((alert: any) => ({
           id: alert.id,
           severity: alert.severity,
@@ -171,7 +173,7 @@ const Monitoring: React.FC = () => {
         }));
         allAlerts = [...allAlerts, ...formattedAlerts];
       }
-      
+
       if (dbAlertsRes && dbAlertsRes.alerts) {
         const dbFormattedAlerts = dbAlertsRes.alerts.map((alert: Alert) => ({
           id: alert._id,
@@ -196,7 +198,7 @@ const Monitoring: React.FC = () => {
       setLoading(false);
     }
   };
-  
+
   const monitoringStats = useMemo(() => {
     if (!dashboardData) {
       return {
@@ -227,7 +229,6 @@ const Monitoring: React.FC = () => {
     };
   }, [dashboardData, securityData, alertsData]);
 
-  // Real-time data visualization states
   const [realTimeMetrics, setRealTimeMetrics] = useState<RealTimeMetric[]>([]);
   const [networkActivity, setNetworkActivity] = useState<NetworkActivityData[]>([]);
   const [securityScore, setSecurityScore] = useState<SecurityScore>({
@@ -236,7 +237,6 @@ const Monitoring: React.FC = () => {
     trend: 'up'
   });
 
-  // Update security score when data changes
   useEffect(() => {
     if (securityData?.securityScore !== undefined) {
       setSecurityScore(prev => ({
@@ -263,7 +263,6 @@ const Monitoring: React.FC = () => {
     return ['all', ...types];
   }, [alertsData]);
 
-  // Full scan handler
   const handleFullScan = () => {
     setShowFullScanModal(true);
     setIsScanning(true);
@@ -275,7 +274,6 @@ const Monitoring: React.FC = () => {
       status: 'scanning'
     });
 
-    // Simulate scanning process
     const scanInterval = setInterval(() => {
       setScanProgress(prev => {
         const newProgress = prev + Math.random() * 15;
@@ -300,33 +298,24 @@ const Monitoring: React.FC = () => {
     }, 500);
   };
 
-  // Real-time monitoring - refresh data periodically
   useEffect(() => {
     if (!isRealTimeEnabled) return;
-
     const interval = setInterval(() => {
       fetchMonitoringData();
-    }, 60000); // Refresh every minute
-
+    }, 60000);
     return () => clearInterval(interval);
   }, [isRealTimeEnabled]);
 
-  // Real-time data visualization effects
   useEffect(() => {
     if (!isRealTimeEnabled) return;
 
-    // Generate initial data
     const initialMetrics: RealTimeMetric[] = [];
     const initialNetwork: NetworkActivityData[] = [];
     const now = Date.now();
-    
+
     for (let i = 29; i >= 0; i--) {
-      const timestamp = now - (i * 2000); // 2-second intervals
-      initialMetrics.push({
-        timestamp,
-        value: Math.random() * 100,
-        label: `Metric ${i}`
-      });
+      const timestamp = now - (i * 2000);
+      initialMetrics.push({ timestamp, value: Math.random() * 100, label: `Metric ${i}` });
       initialNetwork.push({
         timestamp,
         inbound: Math.random() * 50 + 10,
@@ -334,11 +323,10 @@ const Monitoring: React.FC = () => {
         blocked: Math.random() * 10
       });
     }
-    
+
     setRealTimeMetrics(initialMetrics);
     setNetworkActivity(initialNetwork);
 
-    // Update live metrics every 2 seconds
     const metricsInterval = setInterval(() => {
       setLiveMetrics(prev => ({
         threatsBlocked: prev.threatsBlocked + Math.floor(Math.random() * 3),
@@ -347,17 +335,11 @@ const Monitoring: React.FC = () => {
         cpuUsage: 20 + Math.random() * 60
       }));
 
-      // Update real-time metrics
       setRealTimeMetrics(prev => {
-        const newMetric = {
-          timestamp: Date.now(),
-          value: Math.random() * 100,
-          label: `Metric ${prev.length}`
-        };
+        const newMetric = { timestamp: Date.now(), value: Math.random() * 100, label: `Metric ${prev.length}` };
         return [...prev.slice(1), newMetric];
       });
 
-      // Update network activity
       setNetworkActivity(prev => {
         const newActivity = {
           timestamp: Date.now(),
@@ -368,7 +350,6 @@ const Monitoring: React.FC = () => {
         return [...prev.slice(1), newActivity];
       });
 
-      // Occasionally update security score
       if (Math.random() < 0.1) {
         setSecurityScore(prev => {
           const change = (Math.random() - 0.5) * 4;
@@ -384,16 +365,6 @@ const Monitoring: React.FC = () => {
 
     return () => clearInterval(metricsInterval);
   }, [isRealTimeEnabled]);
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'red';
-      case 'high': return 'orange';
-      case 'medium': return 'amber';
-      case 'low': return 'blue';
-      default: return 'gray';
-    }
-  };
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
@@ -421,11 +392,10 @@ const Monitoring: React.FC = () => {
       .filter(alert => {
         const matchesCategory = selectedCategory === 'all' || alert.type === selectedCategory;
         const matchesSeverity = selectedSeverity === 'all' || alert.severity === selectedSeverity;
-        const matchesSearch: boolean = searchQuery === '' || 
+        const matchesSearch: boolean = searchQuery === '' ||
           alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           alert.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
           alert.affectedAccounts.some((account: string) => account.toLowerCase().includes(searchQuery.toLowerCase()));
-        
         return matchesCategory && matchesSeverity && matchesSearch;
       })
       .sort((a, b) => {
@@ -440,16 +410,12 @@ const Monitoring: React.FC = () => {
       });
   }, [breachAlerts, selectedCategory, selectedSeverity, searchQuery, sortBy]);
 
-  // Animation variants — mechanical, snappy
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { 
-        duration: 0.2,
-        ease: 'easeOut'
-      } 
+      transition: { duration: 0.2, ease: 'easeOut' }
     },
     hover: {
       y: -2,
@@ -463,406 +429,658 @@ const Monitoring: React.FC = () => {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.05
-      }
+      transition: { staggerChildren: 0.05 }
     }
   };
 
-  // ─── Loading State ───────────────────────────────────────────────────────────
+  // ── Shared style block ─────────────────────────────────────────────────────
+  const styleBlock = (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
+      .np-serif { font-family: 'Playfair Display', serif !important; }
+      .np-body  { font-family: 'Lora', serif !important; }
+      .np-sans  { font-family: 'Inter', sans-serif !important; }
+      .np-mono  { font-family: 'JetBrains Mono', monospace !important; }
+      .sharp-corners { border-radius: 0px !important; }
+      .np-hover { transition: box-shadow 0.15s ease-out, transform 0.15s ease-out; }
+      .np-hover:hover { box-shadow: 4px 4px 0px 0px #111111; transform: translate(-2px, -2px); }
+      .hard-shadow { box-shadow: 4px 4px 0px 0px #111111; }
+      .newsprint-texture { position: relative; }
+      .newsprint-texture::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(0deg, transparent 98%, rgba(0,0,0,0.02) 100%),
+          linear-gradient(90deg, transparent 98%, rgba(0,0,0,0.02) 100%);
+        background-size: 3px 3px;
+        pointer-events: none;
+        opacity: 0.5;
+      }
+    `}</style>
+  );
+
+  // ── Loading State ─────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div
-        className="flex items-center justify-center min-h-screen"
+        className="flex items-center justify-center min-h-[400px] bg-[#F9F9F7]"
         style={{
-          background: '#F9F9F7',
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
         }}
       >
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
-          .np-serif { font-family: 'Playfair Display', serif !important; }
-          .np-body  { font-family: 'Lora', serif !important; }
-          .np-sans  { font-family: 'Inter', sans-serif !important; }
-          .np-mono  { font-family: 'JetBrains Mono', monospace !important; }
-        `}</style>
-        <div className="text-center border border-[#111111] p-12">
-          <FaSpinner className="w-8 h-8 animate-spin text-[#111111] mx-auto mb-4" />
-          <p className="np-mono uppercase tracking-widest text-xs text-[#111111]">Loading monitoring data...</p>
-          <p className="np-mono text-xs text-[#737373] mt-2 uppercase tracking-wider">Fetching your security information</p>
+        {styleBlock}
+        <div className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center">
+          <div className="p-4 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] inline-flex items-center justify-center mb-6">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            >
+              <FaSync className="w-8 h-8" />
+            </motion.div>
+          </div>
+          <p
+            className="font-black text-lg uppercase tracking-widest text-[#111111]"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            LOADING INTELLIGENCE FEED
+          </p>
+          <p
+            className="text-xs text-[#525252] mt-2 uppercase tracking-widest"
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            Fetching security telemetry...
+          </p>
+          <div className="mt-6 flex gap-2 justify-center">
+            {[0, 1, 2, 3].map(i => (
+              <motion.div
+                key={i}
+                className="h-1 w-8 bg-[#CC0000]"
+                animate={{ opacity: [0.2, 1, 0.2] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  // ─── Error State ─────────────────────────────────────────────────────────────
+  // ── Error State ───────────────────────────────────────────────────────────
   if (error) {
     return (
       <div
-        className="flex items-center justify-center min-h-screen"
+        className="flex items-center justify-center min-h-[400px] bg-[#F9F9F7] p-8"
         style={{
-          background: '#F9F9F7',
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
         }}
       >
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
-          .np-serif { font-family: 'Playfair Display', serif !important; }
-          .np-body  { font-family: 'Lora', serif !important; }
-          .np-sans  { font-family: 'Inter', sans-serif !important; }
-          .np-mono  { font-family: 'JetBrains Mono', monospace !important; }
-        `}</style>
-        <div className="text-center max-w-md border-4 border-[#111111] p-8">
-          <FaExclamationTriangle className="w-12 h-12 text-[#CC0000] mx-auto mb-4" />
-          <h3 className="np-serif text-2xl font-bold text-[#111111] mb-3">Error Loading Data</h3>
-          <p className="np-body text-[#525252] mb-6">{error}</p>
-          <button
-            onClick={fetchMonitoringData}
-            className="px-6 py-3 bg-[#111111] text-[#F9F9F7] np-mono text-xs uppercase tracking-widest hover:bg-[#CC0000] border border-[#111111] transition-all duration-200"
-            style={{ borderRadius: 0 }}
-          >
-            Try Again
-          </button>
+        {styleBlock}
+        <div className="border-4 border-[#CC0000] bg-[#F9F9F7] p-8 max-w-lg w-full newsprint-texture">
+          <div className="flex flex-col md:flex-row items-start gap-6">
+            <div className="p-4 border-2 border-[#CC0000] bg-[#CC0000] text-[#F9F9F7] shrink-0">
+              <FaExclamationCircle className="h-8 w-8" />
+            </div>
+            <div className="flex-1">
+              <h3
+                className="font-black text-2xl text-[#CC0000] uppercase"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                SYSTEM ERROR DETECTED
+              </h3>
+              <p
+                className="text-[#111111] mt-2 font-bold"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                {error}
+              </p>
+              <div className="mt-6 flex flex-wrap gap-4">
+                <button
+                  onClick={() => setError(null)}
+                  className="px-6 py-3 border-2 border-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors text-[#111111]"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  DISMISS
+                </button>
+                <button
+                  onClick={fetchMonitoringData}
+                  className="px-6 py-3 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center gap-2"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  <FaSync /> RETRY OPERATION
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ─── Main Render ─────────────────────────────────────────────────────────────
+  // ── Main Render ───────────────────────────────────────────────────────────
   return (
     <div
-      className="border-4 border-[#111111] bg-[#F9F9F7] space-y-0 -mt-4"
+      className="bg-[#F9F9F7] space-y-0"
       style={{
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
       }}
     >
-      {/* ── Font & utility injection ── */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
-        .np-serif { font-family: 'Playfair Display', serif !important; }
-        .np-body  { font-family: 'Lora', serif !important; }
-        .np-sans  { font-family: 'Inter', sans-serif !important; }
-        .np-mono  { font-family: 'JetBrains Mono', monospace !important; }
-        .np-hover { transition: box-shadow 0.15s ease-out, transform 0.15s ease-out; }
-        .np-hover:hover { box-shadow: 4px 4px 0px 0px #111111; transform: translate(-2px, -2px); }
-      `}</style>
+      {styleBlock}
 
-      {/* ── Header ── */}
-      <div className="bg-[#111111] relative overflow-hidden">
-        <div className="relative z-10 p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ── PAGE HEADER                                                   ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="border-b-4 border-[#111111] bg-[#F9F9F7] p-8 md:p-12 relative overflow-hidden newsprint-texture">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
+
+          {/* Left: Title block */}
           <div>
-            <div className="inline-flex items-center gap-3 mb-3 border border-[#F9F9F7]/20 px-3 py-1.5">
-              <div
-                className={`w-2 h-2 ${isRealTimeEnabled ? 'bg-[#CC0000] animate-pulse' : 'bg-[#737373]'}`}
-              ></div>
-              <span className="np-mono text-xs uppercase tracking-widest text-[#F9F9F7]/70">
-                {isRealTimeEnabled ? 'Real-time Active' : 'Monitoring Paused'}
-              </span>
+            <div
+              className="inline-block border border-[#111111] px-3 py-1 mb-6 text-[0.65rem] font-black uppercase tracking-widest text-[#111111]"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              DATA SECURITY &bull; REAL-TIME MONITORING
             </div>
-
-            <h2 className="np-serif text-4xl font-bold text-[#F9F9F7] flex items-center gap-3">
-              <FaShieldVirus className="text-[#CC0000]" />
-              <span>Security Monitoring</span>
+            <h2
+              className="text-5xl md:text-7xl font-black leading-[0.85] tracking-tighter text-[#111111]"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              THREAT &amp;<br />
+              <span className="italic" style={{ color: "#CC0000" }}>MONITOR</span>
             </h2>
-
-            <p className="np-body text-[#F9F9F7]/60 mt-2 max-w-lg">
-              Real-time threat detection and breach monitoring for your digital identity
+            <p
+              className="mt-6 text-lg text-[#525252] max-w-2xl leading-relaxed border-l-4 border-[#CC0000] pl-4"
+              style={{ fontFamily: "'Lora', serif" }}
+            >
+              Real-time breach detection and threat intelligence for your digital identity across every connected system.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <motion.button
-              whileTap={{ scale: 0.98 }}
+          {/* Right: Action buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto mt-8 md:mt-0">
+            <button
               onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)}
-              className={`px-4 py-2.5 np-mono text-xs uppercase tracking-widest font-medium transition-all duration-200 flex items-center gap-2 border ${
-                isRealTimeEnabled
-                  ? 'bg-transparent border-[#F9F9F7]/30 text-[#F9F9F7] hover:bg-[#F9F9F7]/10'
-                  : 'bg-[#525252] border-[#525252] text-[#F9F9F7]'
+              className={`px-6 py-4 border-2 border-[#111111] font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 ${
+                !isRealTimeEnabled
+                  ? 'bg-[#111111] text-[#F9F9F7]'
+                  : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0] np-hover'
               }`}
-              style={{ borderRadius: 0 }}
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              {isRealTimeEnabled ? <FaPause className="text-[#CC0000]" /> : <FaPlay />}
-              {isRealTimeEnabled ? 'Pause Monitoring' : 'Resume Monitoring'}
-            </motion.button>
+              {isRealTimeEnabled
+                ? <><FaPause /> PAUSE MONITORING</>
+                : <><FaPlay /> RESUME MONITORING</>
+              }
+            </button>
 
-            <motion.button
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={handleFullScan}
-              className="px-4 py-2.5 bg-[#CC0000] text-[#F9F9F7] np-mono text-xs uppercase tracking-widest font-medium transition-all duration-200 flex items-center gap-2 border border-[#CC0000] hover:bg-[#F9F9F7] hover:text-[#CC0000]"
-              style={{ borderRadius: 0 }}
+              className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center justify-center gap-2"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              <FaSync /> Run Full Scan
-            </motion.button>
+              <FaSync /> RUN FULL SCAN
+            </button>
           </div>
         </div>
-        {/* Red editorial rule */}
-        <div className="h-1 bg-[#CC0000]"></div>
+
+        {/* ── Header Stats Bar ── */}
+        <div className="mt-12 pt-6 border-t-4 border-[#111111] grid grid-cols-2 md:grid-cols-5 gap-0 bg-[#111111]">
+
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [SECURITY SCORE]
+            </div>
+            <div
+              className="font-black text-[#111111] flex items-center gap-2 text-2xl"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              <FaShieldAlt className="text-lg" />
+              {Math.round(securityScore.score)}
+            </div>
+          </div>
+
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [LAST SCAN]
+            </div>
+            <div
+              className="font-bold text-[#111111] text-xs"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {monitoringStats.last_scan}
+            </div>
+          </div>
+
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [THREAT LEVEL]
+            </div>
+            <div
+              className={`font-bold text-sm ${
+                monitoringStats.threat_level === 'high' || monitoringStats.threat_level === 'critical'
+                  ? 'text-[#CC0000]'
+                  : 'text-[#111111]'
+              }`}
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {monitoringStats.threat_level.toUpperCase()}
+            </div>
+          </div>
+
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [ACTIVE THREATS]
+            </div>
+            <div
+              className="font-bold text-[#111111] text-sm"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {monitoringStats.active_threats} DETECTED
+            </div>
+          </div>
+
+          <div className="col-span-2 md:col-span-1 bg-[#111111]">
+            <button
+              onClick={() => setIsRealTimeEnabled(!isRealTimeEnabled)}
+              className="w-full h-full flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest p-4 transition-colors text-[#F9F9F7] hover:bg-[#CC0000]"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {isRealTimeEnabled
+                ? <><FaCircle className="text-[#CC0000] animate-pulse text-[8px]" /> LIVE</>
+                : <><FaPause /> PAUSED</>
+              }
+            </button>
+          </div>
+
+        </div>
       </div>
 
-      {/* ── Real-time Data Visualization Dashboard ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="grid grid-cols-1 lg:grid-cols-4 border-b border-[#111111]"
-      >
-        {/* Live Security Score */}
-        <div className="lg:col-span-1 bg-[#111111] p-6 text-[#F9F9F7] border-r border-[#F9F9F7]/10">
-          <div className="flex items-center justify-between mb-4">
-            <FaShieldVirus className="text-xl text-[#CC0000]" />
-            <div
-              className={`w-2 h-2 animate-pulse ${
-                securityScore.trend === 'up'
-                  ? 'bg-green-400'
-                  : securityScore.trend === 'down'
-                  ? 'bg-[#CC0000]'
-                  : 'bg-[#A3A3A3]'
-              }`}
-            ></div>
-          </div>
-          <p className="np-mono uppercase tracking-widest text-xs text-[#A3A3A3] mb-2">Security Score</p>
-          <div className="flex items-end gap-2">
-            <span className="np-serif text-5xl font-bold">{Math.round(securityScore.score)}</span>
-            <span className="text-lg text-[#A3A3A3] mb-1">/100</span>
-            <motion.div
-              animate={{
-                rotate:
-                  securityScore.trend === 'up' ? 0 : securityScore.trend === 'down' ? 180 : 90
-              }}
-              className={`ml-auto mb-1 ${
-                securityScore.trend === 'up'
-                  ? 'text-green-400'
-                  : securityScore.trend === 'down'
-                  ? 'text-[#CC0000]'
-                  : 'text-[#A3A3A3]'
-              }`}
-            >
-              <FaArrowUp size={16} />
-            </motion.div>
-          </div>
-        </div>
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ── LIVE INTELLIGENCE FEED                                        ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="border-b-4 border-[#111111]">
 
-        {/* Live Threat Counter */}
-        <div className="lg:col-span-1 bg-[#F9F9F7] p-6 border-r border-[#111111]">
-          <div className="flex items-center justify-between mb-4">
-            <FaRadiation className="text-xl text-[#CC0000]" />
-            <div className="w-2 h-2 bg-[#CC0000] animate-pulse"></div>
-          </div>
-          <p className="np-mono uppercase tracking-widest text-xs text-[#737373] mb-2">Threats Blocked</p>
-          <div className="flex items-end gap-2">
-            <motion.span
-              key={liveMetrics.threatsBlocked}
-              initial={{ scale: 1.1 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.2 }}
-              className="np-serif text-5xl font-bold text-[#111111]"
-            >
-              {liveMetrics.threatsBlocked.toLocaleString()}
-            </motion.span>
-            <span className="np-mono text-xs text-[#737373] mb-2">today</span>
-          </div>
-        </div>
-
-        {/* Network Activity Graph */}
-        <div className="lg:col-span-2 bg-[#F9F9F7] p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <FaNetworkWired className="text-lg text-[#111111]" />
-              <h3 className="np-mono text-xs uppercase tracking-widest font-semibold text-[#111111]">
-                Network Activity
+        {/* Inverted section header */}
+        <div className="bg-[#111111] text-[#F9F9F7] p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-5">
+            <div className="p-3 bg-[#F9F9F7] text-[#111111] border-2 border-[#F9F9F7]">
+              <FaShieldVirus className="h-6 w-6" />
+            </div>
+            <div>
+              <h3
+                className="text-2xl font-black uppercase tracking-widest"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                LIVE INTELLIGENCE FEED
               </h3>
-            </div>
-            <div className="flex items-center gap-4 np-mono text-xs">
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-[2px] bg-[#111111]"></div>
-                <span className="text-[#737373] uppercase tracking-wider">In</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-[2px] bg-[#525252]"></div>
-                <span className="text-[#737373] uppercase tracking-wider">Out</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-[2px] bg-[#CC0000]"></div>
-                <span className="text-[#737373] uppercase tracking-wider">Blocked</span>
-              </div>
+              <p
+                className="text-[#A3A3A3] mt-1"
+                style={{ fontFamily: "'Lora', serif" }}
+              >
+                Telemetry refreshed every 2 seconds.
+              </p>
             </div>
           </div>
 
-          {/* SVG Line Chart */}
           <div
-            className="relative h-32 w-full bg-[#E5E5E0] overflow-hidden border border-[#111111]"
-            style={{ borderRadius: 0 }}
+            className={`flex items-center gap-3 border px-4 py-2 text-[0.65rem] font-bold uppercase tracking-widest ${
+              isRealTimeEnabled ? 'border-[#CC0000] text-[#CC0000]' : 'border-[#404040] text-[#A3A3A3]'
+            }`}
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
           >
-            <svg className="w-full h-full" viewBox="0 0 400 100">
-              {[20, 40, 60, 80].map(y => (
-                <line
-                  key={y}
-                  x1="0"
-                  y1={y}
-                  x2="400"
-                  y2={y}
-                  stroke="#111111"
-                  strokeWidth="0.5"
-                  opacity="0.15"
-                />
-              ))}
-
-              {networkActivity.length > 1 && (
-                <>
-                  {/* Inbound */}
-                  <motion.polyline
-                    points={networkActivity
-                      .map(
-                        (point, index) =>
-                          `${(index / (networkActivity.length - 1)) * 400},${
-                            100 - (point.inbound / 60) * 80
-                          }`
-                      )
-                      .join(' ')}
-                    fill="none"
-                    stroke="#111111"
-                    strokeWidth="2"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.8 }}
-                  />
-                  {/* Outbound */}
-                  <motion.polyline
-                    points={networkActivity
-                      .map(
-                        (point, index) =>
-                          `${(index / (networkActivity.length - 1)) * 400},${
-                            100 - (point.outbound / 35) * 80
-                          }`
-                      )
-                      .join(' ')}
-                    fill="none"
-                    stroke="#525252"
-                    strokeWidth="2"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.8, delay: 0.15 }}
-                  />
-                  {/* Blocked */}
-                  <motion.polyline
-                    points={networkActivity
-                      .map(
-                        (point, index) =>
-                          `${(index / (networkActivity.length - 1)) * 400},${
-                            100 - (point.blocked / 10) * 80
-                          }`
-                      )
-                      .join(' ')}
-                    fill="none"
-                    stroke="#CC0000"
-                    strokeWidth="2"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 0.8, delay: 0.3 }}
-                  />
-                </>
-              )}
-            </svg>
-
-            {networkActivity.length > 0 && (
-              <div className="absolute top-2 right-2 space-y-1">
-                <motion.div
-                  className="flex items-center gap-2 np-mono text-xs"
-                  animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <FaCircle className="text-[#111111] text-[6px]" />
-                  <span className="text-[#525252]">
-                    {Math.round(networkActivity[networkActivity.length - 1]?.inbound || 0)} MB/s
-                  </span>
-                </motion.div>
-                <motion.div
-                  className="flex items-center gap-2 np-mono text-xs"
-                  animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                >
-                  <FaCircle className="text-[#525252] text-[6px]" />
-                  <span className="text-[#525252]">
-                    {Math.round(networkActivity[networkActivity.length - 1]?.outbound || 0)} MB/s
-                  </span>
-                </motion.div>
-              </div>
-            )}
+            <motion.div
+              className={`w-2 h-2 ${isRealTimeEnabled ? 'bg-[#CC0000]' : 'bg-[#737373]'}`}
+              animate={isRealTimeEnabled ? { scale: [1, 1.4, 1] } : {}}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+            {isRealTimeEnabled ? 'STREAM ACTIVE' : 'STREAM PAUSED'}
           </div>
         </div>
-      </motion.div>
 
-      {/* ── Real-time System Metrics ── */}
+        {/* Metric grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-1 lg:grid-cols-4"
+        >
+
+          {/* Live Security Score — inverted cell */}
+          <div className="lg:col-span-1 bg-[#111111] p-8 text-[#F9F9F7] border-r border-[#404040]">
+            <div className="flex items-center justify-between mb-6 border-b-2 border-[#404040] pb-4">
+              <div
+                className="text-[0.65rem] text-[#A3A3A3] font-bold uppercase tracking-widest"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                [SECURITY SCORE]
+              </div>
+              <motion.div
+                className={`w-2 h-2 ${
+                  securityScore.trend === 'up' ? 'bg-green-400' :
+                  securityScore.trend === 'down' ? 'bg-[#CC0000]' : 'bg-[#A3A3A3]'
+                }`}
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </div>
+            <div className="flex items-end gap-2 mb-4">
+              <span
+                className="font-black text-5xl tracking-tighter leading-none"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                {Math.round(securityScore.score)}
+              </span>
+              <span
+                className="text-[#A3A3A3] mb-1 text-lg"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                /100
+              </span>
+              <motion.div
+                animate={{
+                  rotate: securityScore.trend === 'up' ? 0 :
+                          securityScore.trend === 'down' ? 180 : 90
+                }}
+                className={`ml-auto mb-2 ${
+                  securityScore.trend === 'up' ? 'text-green-400' :
+                  securityScore.trend === 'down' ? 'text-[#CC0000]' : 'text-[#A3A3A3]'
+                }`}
+              >
+                <FaArrowUp size={16} />
+              </motion.div>
+            </div>
+            {/* Score bar */}
+            <div className="h-2 border border-[#404040] bg-[#222]">
+              <motion.div
+                className="h-full bg-[#CC0000]"
+                style={{ width: `${securityScore.score}%` }}
+                initial={{ width: '0%' }}
+                animate={{ width: `${securityScore.score}%` }}
+                transition={{ type: 'spring', damping: 20 }}
+              />
+            </div>
+          </div>
+
+          {/* Threats Blocked */}
+          <div className="lg:col-span-1 bg-[#F9F9F7] p-8 border-r border-[#111111] hover:bg-[#E5E5E0] transition-colors">
+            <div className="flex items-center justify-between mb-6 border-b-2 border-[#111111] pb-4">
+              <div
+                className="text-[0.65rem] text-[#CC0000] font-bold uppercase tracking-widest"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                [THREATS BLOCKED]
+              </div>
+              <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+                <FaRadiation className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="flex items-end gap-2 mb-2">
+              <motion.span
+                key={liveMetrics.threatsBlocked}
+                initial={{ scale: 1.1 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className="font-black text-4xl tracking-tighter text-[#111111]"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                {liveMetrics.threatsBlocked.toLocaleString()}
+              </motion.span>
+            </div>
+            <div
+              className="text-xs font-bold text-[#525252] uppercase tracking-widest border-l-2 border-[#111111] pl-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              TODAY
+            </div>
+          </div>
+
+          {/* Network Activity Chart — spans 2 cols */}
+          <div className="lg:col-span-2 bg-[#F9F9F7] p-8">
+            <div className="flex items-center justify-between mb-4 border-b-2 border-[#111111] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+                  <FaNetworkWired className="h-4 w-4" />
+                </div>
+                <div>
+                  <div
+                    className="text-[0.65rem] text-[#CC0000] font-bold uppercase tracking-widest"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    [NETWORK ACTIVITY]
+                  </div>
+                </div>
+              </div>
+              <div
+                className="flex items-center gap-4 text-[0.6rem] font-bold uppercase tracking-widest text-[#525252]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-[2px] bg-[#111111]"></div>
+                  <span>IN</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-[2px] bg-[#525252]"></div>
+                  <span>OUT</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-[2px] bg-[#CC0000]"></div>
+                  <span>BLOCKED</span>
+                </div>
+              </div>
+            </div>
+
+            {/* SVG Chart */}
+            <div className="relative h-28 w-full bg-[#E5E5E0] border-2 border-[#111111] overflow-hidden">
+              <svg className="w-full h-full" viewBox="0 0 400 100" preserveAspectRatio="none">
+                {[25, 50, 75].map(y => (
+                  <line
+                    key={y}
+                    x1="0" y1={y} x2="400" y2={y}
+                    stroke="#111111" strokeWidth="0.5" opacity="0.15"
+                  />
+                ))}
+                {networkActivity.length > 1 && (
+                  <>
+                    <motion.polyline
+                      points={networkActivity.map((p, i) =>
+                        `${(i / (networkActivity.length - 1)) * 400},${100 - (p.inbound / 60) * 80}`
+                      ).join(' ')}
+                      fill="none" stroke="#111111" strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.8 }}
+                    />
+                    <motion.polyline
+                      points={networkActivity.map((p, i) =>
+                        `${(i / (networkActivity.length - 1)) * 400},${100 - (p.outbound / 35) * 80}`
+                      ).join(' ')}
+                      fill="none" stroke="#525252" strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.8, delay: 0.15 }}
+                    />
+                    <motion.polyline
+                      points={networkActivity.map((p, i) =>
+                        `${(i / (networkActivity.length - 1)) * 400},${100 - (p.blocked / 10) * 80}`
+                      ).join(' ')}
+                      fill="none" stroke="#CC0000" strokeWidth="2"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.8, delay: 0.3 }}
+                    />
+                  </>
+                )}
+              </svg>
+              {networkActivity.length > 0 && (
+                <div className="absolute top-2 right-2 space-y-1">
+                  <motion.div
+                    className="flex items-center gap-2"
+                    animate={{ opacity: [1, 0.5, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <FaCircle className="text-[#111111] text-[5px]" />
+                    <span
+                      className="text-[0.6rem] text-[#525252] font-bold"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
+                      {Math.round(networkActivity[networkActivity.length - 1]?.inbound || 0)} MB/s
+                    </span>
+                  </motion.div>
+                  <motion.div
+                    className="flex items-center gap-2"
+                    animate={{ opacity: [1, 0.5, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                  >
+                    <FaCircle className="text-[#525252] text-[5px]" />
+                    <span
+                      className="text-[0.6rem] text-[#525252] font-bold"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
+                      {Math.round(networkActivity[networkActivity.length - 1]?.outbound || 0)} MB/s
+                    </span>
+                  </motion.div>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </motion.div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ── SYSTEM METRICS ROW                                            ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-b border-[#111111]"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-b-4 border-[#111111]"
       >
         {[
-          {
-            label: 'Scanning Rate',
-            value: `${Math.round(liveMetrics.scanningRate)}`,
-            unit: 'files/sec',
-            icon: FaBinoculars
-          },
-          {
-            label: 'Network Traffic',
-            value: `${Math.round(liveMetrics.networkTraffic)}`,
-            unit: 'MB/s',
-            icon: FaSignal
-          },
-          {
-            label: 'CPU Usage',
-            value: `${Math.round(liveMetrics.cpuUsage)}`,
-            unit: '%',
-            icon: FaChartLine
-          },
-          {
-            label: 'Active Scans',
-            value: `${monitoringStats.scanned_databases}`,
-            unit: 'DBs',
-            icon: FaDatabase
-          }
-        ].map((metric, index) => (
+          { label: 'Scanning Rate', value: `${Math.round(liveMetrics.scanningRate)}`, unit: 'files/sec', icon: FaBinoculars, index: 0 },
+          { label: 'Network Traffic', value: `${Math.round(liveMetrics.networkTraffic)}`, unit: 'MB/s', icon: FaSignal, index: 1 },
+          { label: 'CPU Usage', value: `${Math.round(liveMetrics.cpuUsage)}`, unit: '%', icon: FaChartLine, index: 2 },
+          { label: 'Active Databases', value: `${monitoringStats.scanned_databases.toLocaleString()}`, unit: 'DBs', icon: FaDatabase, index: 3 }
+        ].map((metric) => (
           <motion.div
             key={metric.label}
-            className={`bg-[#F9F9F7] p-6 np-hover ${index < 3 ? 'border-r border-[#111111]' : ''}`}
+            className={`bg-[#F9F9F7] p-8 hover:bg-[#E5E5E0] transition-colors np-hover ${
+              metric.index < 3 ? 'border-r border-[#111111]' : ''
+            }`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: index * 0.05 }}
+            transition={{ duration: 0.2, delay: metric.index * 0.05 }}
           >
-            <div className="flex items-center justify-between mb-3">
-              <metric.icon className="text-lg text-[#111111]" />
-              <motion.div
-                animate={{ scale: [1, 1.4, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-1.5 h-1.5 bg-[#CC0000]"
-              ></motion.div>
+            <div className="flex items-center justify-between mb-6 border-b-2 border-[#111111] pb-4">
+              <h3
+                className="text-xl font-black text-[#111111] uppercase tracking-tight"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                {metric.label.toUpperCase()}
+              </h3>
+              <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+                <metric.icon className="h-5 w-5" />
+              </div>
             </div>
-            <p className="np-mono uppercase tracking-widest text-xs text-[#737373] mb-1">
-              {metric.label}
-            </p>
-            <div className="flex items-end gap-1">
+
+            <div className="flex items-baseline gap-2 mb-2">
               <motion.span
                 key={metric.value}
                 initial={{ scale: 1.05 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.2 }}
-                className="np-serif text-3xl font-bold text-[#111111]"
+                className="font-black text-4xl tracking-tighter text-[#111111]"
+                style={{ fontFamily: "'Playfair Display', serif" }}
               >
                 {metric.value}
               </motion.span>
-              <span className="np-mono text-xs text-[#737373] mb-1">{metric.unit}</span>
+              <span
+                className="text-[0.65rem] border border-[#111111] text-[#111111] px-2 py-0.5 uppercase tracking-widest font-bold"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                {metric.unit}
+              </span>
+            </div>
+
+            <div className="pt-3 border-t border-[#111111] flex items-center gap-2">
+              <motion.div
+                className="w-1.5 h-1.5 bg-[#CC0000]"
+                animate={{ scale: [1, 1.4, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <span
+                className="text-[0.6rem] text-[#525252] uppercase tracking-widest font-bold"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                {isRealTimeEnabled ? 'LIVE' : 'PAUSED'}
+              </span>
             </div>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* ── Search & Filter ── */}
-      <div className="bg-[#F9F9F7] border-b border-[#111111]">
-        <div className="p-5 border-b border-[#E5E5E0]">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ── ALERT LOG & BREACH INTELLIGENCE                               ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="border-b-4 border-[#111111]">
+
+        {/* Inverted section header */}
+        <div className="bg-[#111111] text-[#F9F9F7] p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-5">
+            <div className="p-3 bg-[#F9F9F7] text-[#111111] border-2 border-[#F9F9F7]">
+              <FaShieldAlt className="h-6 w-6" />
+            </div>
+            <div>
+              <h3
+                className="text-3xl font-black tracking-tighter uppercase"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                ALERT LOG
+              </h3>
+              <p
+                className="text-[#A3A3A3] mt-1"
+                style={{ fontFamily: "'Lora', serif" }}
+              >
+                {filteredAlerts.length} alert{filteredAlerts.length !== 1 ? 's' : ''} matching current filters
+              </p>
+            </div>
+          </div>
+
+          {/* Timeframe selector */}
+          <div className="flex flex-wrap items-center gap-3">
+            {(['24h', '7d', '30d'] as const).map(tf => (
+              <button
+                key={tf}
+                onClick={() => setSelectedTimeframe(tf)}
+                className={`px-4 py-2 border font-black text-xs uppercase tracking-widest transition-all ${
+                  selectedTimeframe === tf
+                    ? 'bg-[#CC0000] text-[#F9F9F7] border-[#CC0000]'
+                    : 'border-[#404040] text-[#A3A3A3] hover:border-[#F9F9F7] hover:text-[#F9F9F7]'
+                }`}
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Filter bar */}
+        <div className="p-6 bg-[#F9F9F7] border-b-2 border-[#111111]">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+
             {/* Search input */}
             <div className="relative flex-1 w-full">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
@@ -873,47 +1091,46 @@ const Monitoring: React.FC = () => {
                 placeholder="Search alerts by title, description, or affected accounts..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border border-[#111111] bg-[#F9F9F7] np-sans text-sm text-[#111111] placeholder-[#737373] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-0 transition-all duration-200"
-                style={{ borderRadius: 0 }}
+                className="w-full pl-12 pr-4 py-3 border-2 border-[#111111] bg-white font-bold text-sm text-[#111111] placeholder-[#737373] focus:outline-none focus:ring-0"
+                style={{ fontFamily: "'Inter', sans-serif", borderRadius: 0 }}
               />
             </div>
 
-            <div className="flex items-center gap-3 self-end">
+            <div className="flex items-center gap-3 self-end flex-wrap">
+
               {/* Sort */}
               <div
-                className="flex items-center gap-2 px-4 py-3 bg-[#F9F9F7] border border-[#111111] hover:bg-[#E5E5E0] transition-colors duration-200"
-                style={{ borderRadius: 0 }}
+                className="flex items-center gap-2 px-4 py-3 bg-white border-2 border-[#111111] hover:bg-[#E5E5E0] transition-colors cursor-pointer"
               >
                 <FaSort className="text-[#525252]" />
                 <select
                   value={sortBy}
-                  onChange={e =>
-                    setSortBy(e.target.value as 'timestamp' | 'severity' | 'risk_score')
-                  }
-                  className="bg-transparent border-none np-mono text-xs uppercase tracking-wider focus:ring-0 text-[#111111] font-medium"
+                  onChange={e => setSortBy(e.target.value as 'timestamp' | 'severity' | 'risk_score')}
+                  className="bg-transparent border-none font-black text-xs uppercase tracking-widest focus:ring-0 text-[#111111] cursor-pointer"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  <option value="timestamp">Time</option>
-                  <option value="severity">Severity</option>
-                  <option value="risk_score">Risk Score</option>
+                  <option value="timestamp">SORT: TIME</option>
+                  <option value="severity">SORT: SEVERITY</option>
+                  <option value="risk_score">SORT: RISK</option>
                 </select>
               </div>
 
               {/* Severity filter */}
               <div
-                className="flex items-center gap-2 px-4 py-3 bg-[#F9F9F7] border border-[#111111] hover:bg-[#E5E5E0] transition-colors duration-200"
-                style={{ borderRadius: 0 }}
+                className="flex items-center gap-2 px-4 py-3 bg-white border-2 border-[#111111] hover:bg-[#E5E5E0] transition-colors cursor-pointer"
               >
                 <FaFilter className="text-[#525252]" />
                 <select
                   value={selectedSeverity}
                   onChange={e => setSelectedSeverity(e.target.value)}
-                  className="bg-transparent border-none np-mono text-xs uppercase tracking-wider focus:ring-0 text-[#111111] font-medium"
+                  className="bg-transparent border-none font-black text-xs uppercase tracking-widest focus:ring-0 text-[#111111] cursor-pointer"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  <option value="all">All Severities</option>
-                  <option value="critical">Critical</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
+                  <option value="all">ALL SEVERITIES</option>
+                  <option value="critical">CRITICAL</option>
+                  <option value="high">HIGH</option>
+                  <option value="medium">MEDIUM</option>
+                  <option value="low">LOW</option>
                 </select>
               </div>
             </div>
@@ -921,19 +1138,19 @@ const Monitoring: React.FC = () => {
         </div>
 
         {/* Category tabs */}
-        <div className="bg-[#E5E5E0] px-5 py-3">
-          <div className="flex overflow-x-auto gap-2 pb-1">
+        <div className="bg-[#E5E5E0] px-6 py-4 border-b-2 border-[#111111]">
+          <div className="flex overflow-x-auto gap-3 pb-1">
             {categories.map(category => (
               <motion.button
                 key={category}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 flex items-center gap-2 whitespace-nowrap transition-all duration-200 np-mono text-xs uppercase tracking-wider border border-[#111111] ${
+                className={`px-4 py-2 flex items-center gap-2 whitespace-nowrap transition-all duration-200 font-black text-xs uppercase tracking-widest border-2 border-[#111111] ${
                   selectedCategory === category
                     ? 'bg-[#111111] text-[#F9F9F7]'
                     : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7]'
                 }`}
-                style={{ borderRadius: 0 }}
+                style={{ fontFamily: "'JetBrains Mono', monospace", borderRadius: 0 }}
               >
                 {(
                   {
@@ -973,62 +1190,71 @@ const Monitoring: React.FC = () => {
                     className={selectedCategory === category ? 'text-[#F9F9F7]' : 'text-[#CC0000]'}
                   />
                 )}
-                <span className="font-medium">
-                  {category === 'all' ? 'All Threats' : category.replace('-', ' ')}
-                </span>
+                {category === 'all' ? 'ALL THREATS' : category.replace('-', ' ').toUpperCase()}
               </motion.button>
             ))}
           </div>
         </div>
+
       </div>
 
-      {/* ── Security Alerts ── */}
-      <div className="p-6">
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ── ALERT CARDS                                                   ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      <div className="p-6 md:p-8">
         {filteredAlerts.length === 0 ? (
+
+          /* Empty state */
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#F9F9F7] border border-[#111111] p-12 text-center"
+            className="text-center py-16 border-4 border-dashed border-[#111111]"
           >
-            <div
-              className="border border-[#111111] inline-flex items-center justify-center w-16 h-16 mb-6 mx-auto"
-              style={{ borderRadius: 0 }}
-            >
-              <FaCheckCircle className="text-[#111111] text-2xl" />
+            <div className="mx-auto w-20 h-20 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] flex items-center justify-center mb-6">
+              <FaCheckCircle className="text-3xl" />
             </div>
-            <h3 className="np-serif text-2xl font-bold text-[#111111] mb-2">
-              All Clear — No Active Threats
+            <h3
+              className="text-3xl font-black text-[#111111] mb-2 uppercase tracking-tight"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              ALL CLEAR
             </h3>
-            <p className="np-body text-[#737373] max-w-md mx-auto">
-              No security alerts match your current filters. Your accounts are being monitored
-              continuously for any threats.
+            <p
+              className="text-[#525252] max-w-md mx-auto mb-8"
+              style={{ fontFamily: "'Lora', serif" }}
+            >
+              No security alerts match your current filters. Your accounts are being continuously monitored for threats.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={() => {
                   setSelectedCategory('all');
                   setSelectedSeverity('all');
                   setSearchQuery('');
                 }}
-                className="px-5 py-2.5 border border-[#111111] text-[#111111] np-mono text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
-                style={{ borderRadius: 0 }}
+                className="px-6 py-3 border-2 border-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors text-[#111111]"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                Clear All Filters
+                CLEAR ALL FILTERS
               </button>
               <button
-                className="px-5 py-2.5 bg-[#111111] text-[#F9F9F7] np-mono text-xs uppercase tracking-widest hover:bg-[#CC0000] transition-all duration-200 flex items-center gap-2"
-                style={{ borderRadius: 0 }}
+                onClick={handleFullScan}
+                className="px-8 py-3 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center gap-2"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                <FaSync size={12} /> Run Security Scan
+                <FaSync /> RUN SECURITY SCAN
               </button>
             </div>
           </motion.div>
+
         ) : (
+
+          /* Alert card grid */
           <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 border border-[#111111]"
+            className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"
           >
             {filteredAlerts.map(alert => {
               const SeverityIcon = getSeverityIcon(alert.severity);
@@ -1039,146 +1265,153 @@ const Monitoring: React.FC = () => {
                   key={alert.id}
                   variants={cardVariants}
                   whileHover="hover"
-                  className="bg-[#F9F9F7] overflow-hidden np-hover border-r border-b border-[#111111] relative"
+                  className="border-2 border-[#111111] bg-white np-hover overflow-hidden"
                   style={{ borderRadius: 0 }}
                 >
-                  {/* Severity left-border accent */}
+                  {/* Severity accent bar at top */}
                   <div
-                    className={`absolute top-0 left-0 w-1 h-full ${
-                      alert.severity === 'critical'
-                        ? 'bg-[#CC0000]'
-                        : alert.severity === 'high'
-                        ? 'bg-[#E05C00]'
-                        : alert.severity === 'medium'
-                        ? 'bg-[#B38600]'
-                        : 'bg-[#525252]'
+                    className={`h-1 w-full ${
+                      alert.severity === 'critical' ? 'bg-[#CC0000]' :
+                      alert.severity === 'high'     ? 'bg-[#E05C00]' :
+                      alert.severity === 'medium'   ? 'bg-[#B38600]' :
+                                                      'bg-[#525252]'
                     }`}
-                  ></div>
+                  />
 
-                  <div className="pl-4">
-                    {/* Card header */}
-                    <div className="p-5 border-b border-[#E5E5E0] flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`p-2 border ${
-                            alert.severity === 'critical'
-                              ? 'border-[#CC0000] text-[#CC0000]'
-                              : alert.severity === 'high'
-                              ? 'border-[#E05C00] text-[#E05C00]'
-                              : alert.severity === 'medium'
-                              ? 'border-[#B38600] text-[#B38600]'
-                              : 'border-[#525252] text-[#525252]'
-                          }`}
-                          style={{ borderRadius: 0 }}
-                        >
-                          <SeverityIcon className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h3 className="np-sans font-semibold text-[#111111] text-sm">
-                            {alert.title}
-                          </h3>
-                          <div className="flex items-center gap-2 np-mono text-xs text-[#737373] mt-1 uppercase tracking-wider">
-                            <TypeIcon className="w-3 h-3" />
-                            <span>{alert.type.replace('-', ' ')}</span>
-                            <span>·</span>
-                            <span>{alert.detectedAt}</span>
-                          </div>
-                        </div>
+                  {/* Card header */}
+                  <div className="p-5 border-b-2 border-[#111111] flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`p-2 border-2 shrink-0 ${
+                          alert.severity === 'critical' ? 'border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]' :
+                          alert.severity === 'high'     ? 'border-[#E05C00] bg-[#E05C00] text-[#F9F9F7]' :
+                          alert.severity === 'medium'   ? 'border-[#B38600] text-[#B38600]' :
+                                                          'border-[#525252] text-[#525252]'
+                        }`}
+                      >
+                        <SeverityIcon className="w-4 h-4" />
                       </div>
-
-                      <div className="flex flex-col items-end gap-1">
-                        <span
-                          className={`px-2 py-0.5 np-mono text-xs uppercase tracking-widest border ${
-                            alert.severity === 'critical'
-                              ? 'border-[#CC0000] text-[#CC0000]'
-                              : alert.severity === 'high'
-                              ? 'border-[#E05C00] text-[#E05C00]'
-                              : alert.severity === 'medium'
-                              ? 'border-[#B38600] text-[#B38600]'
-                              : 'border-[#525252] text-[#525252]'
-                          }`}
-                          style={{ borderRadius: 0 }}
+                      <div>
+                        <h3
+                          className="font-black text-lg text-[#111111] leading-tight"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
                         >
-                          {alert.severity}
-                        </span>
-                        <span className="np-mono text-xs text-[#737373]">
-                          Risk: {alert.risk_score}
-                        </span>
+                          {alert.title}
+                        </h3>
+                        <div
+                          className="flex items-center gap-2 text-[0.6rem] font-bold uppercase tracking-widest text-[#525252] mt-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          <TypeIcon className="w-3 h-3" />
+                          <span>{alert.type.replace(/-/g, ' ')}</span>
+                          <span className="w-1 h-1 bg-[#525252] inline-block" />
+                          <span>{alert.detectedAt}</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Card body */}
-                    <div className="p-5">
-                      <p className="np-body text-[#525252] text-sm mb-4 line-clamp-2">
-                        {alert.description}
-                      </p>
-
-                      <div className="space-y-3">
-                        <div className="p-3 bg-[#E5E5E0] border-l-2 border-[#111111]">
-                          <div className="np-mono text-xs uppercase tracking-widest text-[#737373] mb-1">
-                            Affected Accounts
-                          </div>
-                          <div className="space-y-1">
-                            {alert.affectedAccounts
-                              .slice(0, 2)
-                              .map((account: string, index: number) => (
-                                <div key={index} className="flex items-center justify-between">
-                                  <span className="np-mono text-xs text-[#111111] truncate flex-1 mr-2">
-                                    {account}
-                                  </span>
-                                  <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={() => navigator.clipboard.writeText(account)}
-                                    className="p-1 text-[#737373] hover:text-[#111111] transition-colors"
-                                  >
-                                    <FaRegCopy className="w-3 h-3" />
-                                  </motion.button>
-                                </div>
-                              ))}
-                            {alert.affectedAccounts.length > 2 && (
-                              <div className="np-mono text-xs text-[#737373]">
-                                +{alert.affectedAccounts.length - 2} more
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 pt-4 border-t border-[#E5E5E0] flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-2 h-2 ${
-                              alert.status === 'active'
-                                ? 'bg-[#CC0000]'
-                                : alert.status === 'investigating'
-                                ? 'bg-[#B38600]'
-                                : alert.status === 'resolved'
-                                ? 'bg-[#111111]'
-                                : 'bg-[#737373]'
-                            }`}
-                          ></div>
-                          <span className="np-mono text-xs text-[#737373] uppercase tracking-widest">
-                            {alert.status}
-                          </span>
-                        </div>
-
-                        <motion.button
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() =>
-                            setShowThreatDetails(
-                              showThreatDetails === alert.id ? null : alert.id
-                            )
-                          }
-                          className="px-3 py-1.5 np-mono text-xs uppercase tracking-widest bg-[#111111] text-[#F9F9F7] hover:bg-[#CC0000] transition-colors duration-200 flex items-center gap-1"
-                          style={{ borderRadius: 0 }}
-                        >
-                          <span>View Details</span>
-                          <FaChevronRight size={8} />
-                        </motion.button>
-                      </div>
+                    {/* Severity badge */}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <span
+                        className={`text-[0.65rem] px-2 py-1 border font-black uppercase tracking-widest ${
+                          alert.severity === 'critical' ? 'border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]' :
+                          alert.severity === 'high'     ? 'border-[#E05C00] text-[#E05C00]' :
+                          alert.severity === 'medium'   ? 'border-[#B38600] text-[#B38600]' :
+                                                          'border-[#525252] text-[#525252]'
+                        }`}
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        {alert.severity.toUpperCase()}
+                      </span>
+                      <span
+                        className="text-[0.6rem] text-[#525252] font-bold"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        RISK: {alert.risk_score}
+                      </span>
                     </div>
                   </div>
+
+                  {/* Card body */}
+                  <div className="p-5">
+                    <p
+                      className="text-[#525252] text-sm mb-5 line-clamp-2 leading-relaxed"
+                      style={{ fontFamily: "'Lora', serif" }}
+                    >
+                      {alert.description}
+                    </p>
+
+                    {alert.affectedAccounts.length > 0 && (
+                      <div className="border-l-4 border-[#111111] bg-[#E5E5E0] p-3 mb-5">
+                        <div
+                          className="text-[0.6rem] font-bold uppercase tracking-widest text-[#525252] mb-2"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          AFFECTED ACCOUNTS
+                        </div>
+                        <div className="space-y-1">
+                          {alert.affectedAccounts.slice(0, 2).map((account: string, index: number) => (
+                            <div key={index} className="flex items-center justify-between">
+                              <span
+                                className="text-xs text-[#111111] font-bold truncate flex-1 mr-2"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                              >
+                                {account}
+                              </span>
+                              <motion.button
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                onClick={() => navigator.clipboard.writeText(account)}
+                                className="p-1 text-[#737373] hover:text-[#111111] transition-colors"
+                              >
+                                <FaRegCopy className="w-3 h-3" />
+                              </motion.button>
+                            </div>
+                          ))}
+                          {alert.affectedAccounts.length > 2 && (
+                            <div
+                              className="text-[0.6rem] text-[#737373] font-bold uppercase tracking-widest"
+                              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                            >
+                              +{alert.affectedAccounts.length - 2} MORE
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Card footer */}
+                    <div className="pt-4 border-t-2 border-[#111111] flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 ${
+                            alert.status === 'active'       ? 'bg-[#CC0000]' :
+                            alert.status === 'investigating'? 'bg-[#B38600]' :
+                            alert.status === 'resolved'     ? 'bg-[#111111]' :
+                                                              'bg-[#737373]'
+                          }`}
+                        />
+                        <span
+                          className="text-[0.6rem] font-bold text-[#525252] uppercase tracking-widest"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          {alert.status.toUpperCase()}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          setShowThreatDetails(showThreatDetails === alert.id ? null : alert.id)
+                        }
+                        className="px-4 py-2 bg-[#111111] text-[#F9F9F7] font-black text-xs uppercase tracking-widest hover:bg-[#CC0000] transition-colors flex items-center gap-1.5"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        VIEW DETAILS
+                        <FaChevronRight size={8} />
+                      </button>
+                    </div>
+                  </div>
+
                 </motion.div>
               );
             })}
@@ -1186,7 +1419,9 @@ const Monitoring: React.FC = () => {
         )}
       </div>
 
-      {/* ── Threat Details Modal ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ── THREAT DETAILS MODAL                                          ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {showThreatDetails && (
           <motion.div
@@ -1194,14 +1429,16 @@ const Monitoring: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-[#111111]/80 flex items-center justify-center p-4 z-50"
+            onClick={() => setShowThreatDetails(null)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="bg-[#F9F9F7] max-w-2xl w-full max-h-[85vh] overflow-hidden border border-[#111111]"
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-2xl w-full max-h-[90vh] overflow-hidden hard-shadow"
               style={{ borderRadius: 0 }}
+              onClick={e => e.stopPropagation()}
             >
               {(() => {
                 const alert = breachAlerts.find(a => a.id === showThreatDetails);
@@ -1211,96 +1448,141 @@ const Monitoring: React.FC = () => {
                 return (
                   <>
                     {/* Modal header */}
-                    <div className="bg-[#111111] p-5 flex justify-between items-center">
-                      <h3 className="np-serif text-lg font-bold text-[#F9F9F7] flex items-center gap-3">
-                        <SeverityIcon
-                          className={
-                            alert.severity === 'critical' || alert.severity === 'high'
-                              ? 'text-[#CC0000]'
-                              : 'text-[#F9F9F7]'
-                          }
-                        />
-                        Threat Details
-                      </h3>
+                    <div className="bg-[#111111] p-6 flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-[#F9F9F7] text-[#111111] border-2 border-[#F9F9F7]">
+                          <SeverityIcon className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h3
+                            className="text-2xl font-black text-[#F9F9F7] uppercase tracking-widest"
+                            style={{ fontFamily: "'Playfair Display', serif" }}
+                          >
+                            THREAT DETAILS
+                          </h3>
+                          <p
+                            className="text-[#A3A3A3] text-sm mt-1"
+                            style={{ fontFamily: "'Lora', serif" }}
+                          >
+                            Full intelligence report
+                          </p>
+                        </div>
+                      </div>
                       <button
                         onClick={() => setShowThreatDetails(null)}
-                        className="text-[#F9F9F7] bg-[#F9F9F7]/10 hover:bg-[#CC0000] p-2 transition-colors duration-200"
-                        style={{ borderRadius: 0 }}
+                        className="p-3 border-2 border-[#F9F9F7] text-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
                       >
                         <FaTimes />
                       </button>
                     </div>
-                    {/* Severity accent rule */}
+
+                    {/* Severity accent bar */}
                     <div
                       className={`h-1 ${
-                        alert.severity === 'critical'
-                          ? 'bg-[#CC0000]'
-                          : alert.severity === 'high'
-                          ? 'bg-[#E05C00]'
-                          : alert.severity === 'medium'
-                          ? 'bg-[#B38600]'
-                          : 'bg-[#525252]'
+                        alert.severity === 'critical' ? 'bg-[#CC0000]' :
+                        alert.severity === 'high'     ? 'bg-[#E05C00]' :
+                        alert.severity === 'medium'   ? 'bg-[#B38600]' :
+                                                        'bg-[#525252]'
                       }`}
-                    ></div>
+                    />
 
-                    <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
-                      <div className="space-y-6">
-                        <div>
-                          <h4 className="np-serif text-xl font-bold text-[#111111] mb-2">
-                            {alert.title}
-                          </h4>
-                          <p className="np-body text-[#525252]">{alert.description}</p>
+                    <div className="p-8 overflow-y-auto max-h-[calc(90vh-100px)] space-y-8">
+
+                      {/* Title + description */}
+                      <div>
+                        <h4
+                          className="text-3xl font-black text-[#111111] mb-3 tracking-tighter uppercase"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
+                          {alert.title}
+                        </h4>
+                        <p
+                          className="text-[#525252] leading-relaxed border-l-4 border-[#111111] pl-4"
+                          style={{ fontFamily: "'Lora', serif" }}
+                        >
+                          {alert.description}
+                        </p>
+                      </div>
+
+                      {/* Stats grid */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="border-2 border-[#111111] bg-white p-5">
+                          <div
+                            className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-3"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            [SEVERITY LEVEL]
+                          </div>
+                          <div
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 border-2 font-black text-xs uppercase tracking-widest ${
+                              alert.severity === 'critical' ? 'border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]' :
+                              alert.severity === 'high'     ? 'border-[#E05C00] text-[#E05C00]' :
+                              alert.severity === 'medium'   ? 'border-[#B38600] text-[#B38600]' :
+                                                              'border-[#525252] text-[#525252]'
+                            }`}
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            <SeverityIcon className="w-4 h-4" />
+                            {alert.severity.toUpperCase()}
+                          </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 border border-[#111111]">
-                            <div className="np-mono text-xs uppercase tracking-widest text-[#737373] mb-2">
-                              Severity Level
-                            </div>
-                            <div
-                              className={`inline-flex items-center gap-2 px-3 py-1 np-mono text-sm uppercase tracking-wider border ${
-                                alert.severity === 'critical'
-                                  ? 'border-[#CC0000] text-[#CC0000]'
-                                  : alert.severity === 'high'
-                                  ? 'border-[#E05C00] text-[#E05C00]'
-                                  : alert.severity === 'medium'
-                                  ? 'border-[#B38600] text-[#B38600]'
-                                  : 'border-[#525252] text-[#525252]'
-                              }`}
-                              style={{ borderRadius: 0 }}
+                        <div className="border-2 border-[#111111] bg-white p-5">
+                          <div
+                            className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-3"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            [RISK SCORE]
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span
+                              className="text-4xl font-black text-[#111111] tracking-tighter"
+                              style={{ fontFamily: "'Playfair Display', serif" }}
                             >
-                              <SeverityIcon className="w-4 h-4" />
-                              {alert.severity}
-                            </div>
-                          </div>
-
-                          <div className="p-4 border border-[#111111]">
-                            <div className="np-mono text-xs uppercase tracking-widest text-[#737373] mb-2">
-                              Risk Score
-                            </div>
-                            <div className="np-serif text-4xl font-bold text-[#111111]">
                               {alert.risk_score}
-                              <span className="np-sans text-lg text-[#737373]">/100</span>
-                            </div>
+                            </span>
+                            <span
+                              className="text-[#525252] font-bold"
+                              style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                              /100
+                            </span>
+                          </div>
+                          <div className="mt-2 h-2 border border-[#111111] bg-white">
+                            <div
+                              className="h-full bg-[#CC0000]"
+                              style={{ width: `${alert.risk_score}%` }}
+                            />
                           </div>
                         </div>
+                      </div>
 
+                      {/* Affected Accounts */}
+                      {alert.affectedAccounts.length > 0 && (
                         <div>
-                          <h5 className="np-mono text-xs uppercase tracking-widest text-[#111111] font-semibold mb-3">
-                            Affected Accounts
-                          </h5>
+                          <div
+                            className="font-black text-[#111111] uppercase tracking-widest text-xs flex items-center gap-2 border-b-2 border-[#111111] pb-2 mb-4"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            <FaDatabase /> AFFECTED ACCOUNTS ({alert.affectedAccounts.length})
+                          </div>
                           <div className="space-y-2">
                             {alert.affectedAccounts.map((account: string, index: number) => (
                               <div
                                 key={index}
-                                className="flex items-center justify-between p-3 bg-[#E5E5E0] border-l-2 border-[#111111]"
+                                className="flex items-center justify-between p-3 border-2 border-[#111111] bg-white hover:bg-[#E5E5E0] transition-colors"
                               >
-                                <span className="np-mono text-sm text-[#111111]">{account}</span>
+                                <span
+                                  className="text-sm font-bold text-[#111111]"
+                                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                >
+                                  {account}
+                                </span>
                                 <motion.button
                                   whileHover={{ scale: 1.1 }}
                                   whileTap={{ scale: 0.9 }}
                                   onClick={() => navigator.clipboard.writeText(account)}
-                                  className="p-2 text-[#737373] hover:text-[#111111] transition-colors"
+                                  className="p-2 border border-[#111111] text-[#737373] hover:text-[#111111] hover:bg-[#E5E5E0] transition-colors"
                                 >
                                   <FaRegCopy />
                                 </motion.button>
@@ -1308,47 +1590,51 @@ const Monitoring: React.FC = () => {
                             ))}
                           </div>
                         </div>
+                      )}
 
-                        <div>
-                          <h5 className="np-mono text-xs uppercase tracking-widest text-[#111111] font-semibold mb-3">
-                            Recommended Actions
-                          </h5>
-                          <div className="space-y-3">
-                            {alert.recommendations.map((rec: string, index: number) => (
-                              <div
-                                key={index}
-                                className="flex items-start gap-3 p-3 border-l-4 border-[#111111] bg-[#E5E5E0]"
-                              >
-                                <div className="text-[#CC0000] mt-0.5">
-                                  <FaBullseye className="w-3 h-3" />
-                                </div>
-                                <span className="np-body text-sm text-[#525252] flex-1">
-                                  {rec}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                      {/* Recommendations */}
+                      <div>
+                        <div
+                          className="font-black text-[#111111] uppercase tracking-widest text-xs flex items-center gap-2 border-b-2 border-[#111111] pb-2 mb-4"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          <FaBullseye /> RECOMMENDED ACTIONS
                         </div>
-
-                        <div className="pt-4 flex justify-end space-x-3 border-t border-[#E5E5E0]">
-                          <motion.button
-                            whileTap={{ scale: 0.98 }}
-                            type="button"
-                            onClick={() => setShowThreatDetails(null)}
-                            className="px-5 py-2.5 border border-[#111111] text-[#111111] np-mono text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
-                            style={{ borderRadius: 0 }}
-                          >
-                            Close
-                          </motion.button>
-                          <motion.button
-                            whileTap={{ scale: 0.98 }}
-                            className="px-5 py-2.5 bg-[#CC0000] text-[#F9F9F7] np-mono text-xs uppercase tracking-widest hover:bg-[#111111] transition-all duration-200"
-                            style={{ borderRadius: 0 }}
-                          >
-                            Mark as Resolved
-                          </motion.button>
+                        <div className="space-y-3">
+                          {alert.recommendations.map((rec: string, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-start gap-3 p-4 border-l-4 border-[#111111] bg-[#E5E5E0]"
+                            >
+                              <FaChevronRight className="text-[#CC0000] mt-0.5 shrink-0" size={10} />
+                              <span
+                                className="text-sm text-[#525252] flex-1 leading-relaxed"
+                                style={{ fontFamily: "'Lora', serif" }}
+                              >
+                                {rec}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </div>
+
+                      {/* Modal footer */}
+                      <div className="pt-6 border-t-4 border-[#111111] flex flex-wrap justify-end gap-4">
+                        <button
+                          onClick={() => setShowThreatDetails(null)}
+                          className="px-6 py-3 border-2 border-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors text-[#111111]"
+                          style={{ fontFamily: "'Inter', sans-serif" }}
+                        >
+                          CLOSE
+                        </button>
+                        <button
+                          className="px-8 py-3 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center gap-2"
+                          style={{ fontFamily: "'Inter', sans-serif" }}
+                        >
+                          <FaCheckCircle /> MARK AS RESOLVED
+                        </button>
+                      </div>
+
                     </div>
                   </>
                 );
@@ -1358,268 +1644,347 @@ const Monitoring: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* ── Full Scan Modal ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* ── FULL SCAN MODAL                                               ── */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {showFullScanModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-[#111111]/80 flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-[#111111]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => !isScanning && setShowFullScanModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="bg-[#F9F9F7] max-w-2xl w-full overflow-hidden border border-[#111111]"
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-lg w-full max-h-[90vh] overflow-y-auto hard-shadow"
               style={{ borderRadius: 0 }}
+              onClick={e => e.stopPropagation()}
             >
+
               {/* Modal header */}
-              <div className="bg-[#111111] p-5 flex justify-between items-center">
-                <h3 className="np-serif text-lg font-bold text-[#F9F9F7] flex items-center gap-3">
-                  <FaShieldAlt className="text-[#CC0000]" />
-                  {scanResults.status === 'completed' ? 'Scan Complete' : 'Full Security Scan'}
+              <div className="p-6 flex justify-between items-center bg-[#111111] text-[#F9F9F7]">
+                <h3
+                  className="text-2xl font-black uppercase tracking-widest flex items-center gap-3"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  <FaShieldAlt />
+                  {scanResults.status === 'completed' ? 'SCAN COMPLETE' : 'FULL SECURITY SCAN'}
                 </h3>
                 <button
-                  onClick={() => setShowFullScanModal(false)}
-                  className="text-[#F9F9F7] bg-[#F9F9F7]/10 hover:bg-[#CC0000] p-2 transition-colors duration-200"
-                  style={{ borderRadius: 0 }}
+                  onClick={() => !isScanning && setShowFullScanModal(false)}
                   disabled={isScanning}
+                  className="p-2 border-2 border-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors disabled:opacity-50"
                 >
                   <FaTimes />
                 </button>
               </div>
-              <div className="h-1 bg-[#CC0000]"></div>
+              <div className="h-1 bg-[#CC0000]" />
 
-              <div className="p-6">
+              <div className="p-8">
                 {isScanning ? (
-                  <div className="space-y-6">
-                    {/* Scanning state */}
+
+                  /* ── Scanning State ── */
+                  <div className="space-y-8">
                     <div className="text-center">
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                        className="inline-flex items-center justify-center w-16 h-16 border-2 border-[#CC0000] mb-4"
-                        style={{ borderRadius: 0 }}
+                        className="inline-flex items-center justify-center w-24 h-24 border-4 border-[#CC0000] bg-white mb-6"
                       >
-                        <FaSync className="text-2xl text-[#CC0000]" />
+                        <FaSync className="text-4xl text-[#CC0000]" />
                       </motion.div>
-                      <h4 className="np-serif text-xl font-bold text-[#111111] mb-2">
-                        Scanning in Progress
+                      <h4
+                        className="text-2xl font-black text-[#111111] uppercase mb-2"
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                      >
+                        SCANNING IN PROGRESS
                       </h4>
-                      <p className="np-body text-[#737373] text-sm">
-                        Please wait while we scan your accounts and data for security threats.
+                      <p
+                        className="text-[#525252] text-sm"
+                        style={{ fontFamily: "'Lora', serif" }}
+                      >
+                        Please wait while we scan your accounts for security threats.
                       </p>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between np-mono text-xs uppercase tracking-widest">
-                        <span className="text-[#111111]">Progress</span>
+                    {/* Progress bar */}
+                    <div className="space-y-3">
+                      <div
+                        className="flex justify-between text-xs font-bold uppercase tracking-widest"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        <span className="text-[#525252]">PROGRESS</span>
                         <span className="text-[#CC0000]">{Math.round(scanProgress)}%</span>
                       </div>
-                      <div
-                        className="h-3 bg-[#E5E5E0] border border-[#111111] overflow-hidden"
-                        style={{ borderRadius: 0 }}
-                      >
+                      <div className="w-full h-4 border-2 border-[#111111] bg-white">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${scanProgress}%` }}
                           className="h-full bg-[#CC0000]"
-                          style={{ borderRadius: 0 }}
+                          transition={{ type: 'spring', damping: 20 }}
                         />
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        {[25, 50, 75, 100].map(step => (
+                          <div
+                            key={step}
+                            className={`h-1.5 flex-1 border ${
+                              scanProgress >= step
+                                ? 'bg-[#CC0000] border-[#CC0000]'
+                                : 'bg-transparent border-[#E5E5E0]'
+                            }`}
+                          />
+                        ))}
                       </div>
                     </div>
 
-                    {/* Live Stats */}
-                    <div className="grid grid-cols-3 gap-0 border border-[#111111]">
-                      <div className="p-4 text-center border-r border-[#111111]">
-                        <FaDatabase className="w-5 h-5 text-[#111111] mx-auto mb-2" />
-                        <div className="np-serif text-2xl font-bold text-[#111111]">
+                    {/* Live stats */}
+                    <div className="grid grid-cols-3 gap-0 border-2 border-[#111111]">
+                      <div className="p-4 text-center border-r-2 border-[#111111]">
+                        <FaDatabase className="w-6 h-6 text-[#111111] mx-auto mb-2" />
+                        <div
+                          className="text-2xl font-black text-[#111111]"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
                           {scanResults.scannedItems.toLocaleString()}
                         </div>
-                        <div className="np-mono text-xs text-[#737373] mt-1 uppercase tracking-widest">
-                          Items Scanned
+                        <div
+                          className="text-[0.6rem] text-[#525252] font-bold uppercase tracking-widest mt-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          SCANNED
                         </div>
                       </div>
-                      <div className="p-4 text-center border-r border-[#111111]">
-                        <FaExclamationTriangle className="w-5 h-5 text-[#CC0000] mx-auto mb-2" />
-                        <div className="np-serif text-2xl font-bold text-[#111111]">
+                      <div className="p-4 text-center border-r-2 border-[#111111]">
+                        <FaExclamationTriangle className="w-6 h-6 text-[#CC0000] mx-auto mb-2" />
+                        <div
+                          className="text-2xl font-black text-[#111111]"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
                           {scanResults.threatsFound}
                         </div>
-                        <div className="np-mono text-xs text-[#737373] mt-1 uppercase tracking-widest">
-                          Threats Found
+                        <div
+                          className="text-[0.6rem] text-[#525252] font-bold uppercase tracking-widest mt-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          THREATS
                         </div>
                       </div>
                       <div className="p-4 text-center">
-                        <FaBug className="w-5 h-5 text-[#B38600] mx-auto mb-2" />
-                        <div className="np-serif text-2xl font-bold text-[#111111]">
+                        <FaBug className="w-6 h-6 text-[#B38600] mx-auto mb-2" />
+                        <div
+                          className="text-2xl font-black text-[#111111]"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
                           {scanResults.vulnerabilities}
                         </div>
-                        <div className="np-mono text-xs text-[#737373] mt-1 uppercase tracking-widest">
-                          Vulnerabilities
+                        <div
+                          className="text-[0.6rem] text-[#525252] font-bold uppercase tracking-widest mt-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          VULNS
                         </div>
                       </div>
                     </div>
 
-                    {/* Scanning Activity */}
-                    <div className="bg-[#E5E5E0] border-l-4 border-[#111111] p-4">
-                      <div className="flex items-center gap-2 mb-3">
+                    {/* Activity log */}
+                    <div className="border-2 border-[#111111] bg-white p-5">
+                      <div className="flex items-center gap-3 mb-4 border-b-2 border-[#111111] pb-3">
                         <motion.div
-                          animate={{ scale: [1, 1.3, 1] }}
+                          className="w-3 h-3 bg-[#CC0000] border border-[#111111]"
+                          animate={{ scale: [1, 1.2, 1] }}
                           transition={{ duration: 1, repeat: Infinity }}
-                          className="w-2 h-2 bg-[#CC0000]"
-                        ></motion.div>
-                        <span className="np-mono text-xs uppercase tracking-widest text-[#111111] font-medium">
-                          Current Activity
+                        />
+                        <span
+                          className="text-xs font-black uppercase tracking-widest text-[#111111]"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          CURRENT ACTIVITY
                         </span>
                       </div>
-                      <div className="space-y-2 np-body text-sm text-[#525252]">
-                        <motion.div
-                          animate={{ opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="flex items-center gap-2"
+                      <div
+                        className="space-y-2 text-sm text-[#525252] font-bold"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        {[
+                          'Scanning dark web databases...',
+                          'Checking for data breaches...',
+                          'Analyzing password security...'
+                        ].map((msg, i) => (
+                          <motion.div
+                            key={msg}
+                            className="flex items-center gap-2"
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity, delay: i * 0.5 }}
+                          >
+                            <FaChevronRight className="text-[#CC0000]" size={10} />
+                            <span>{msg}</span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Warning notice */}
+                    <div className="bg-[#111111] text-[#F9F9F7] p-4 flex items-start gap-4">
+                      <FaExclamationTriangle className="text-xl shrink-0 mt-1 text-[#CC0000]" />
+                      <div
+                        className="text-sm"
+                        style={{ fontFamily: "'Lora', serif" }}
+                      >
+                        <p
+                          className="font-black uppercase tracking-widest text-[0.65rem] mb-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
                         >
-                          <FaChevronRight className="text-[#CC0000]" size={10} />
-                          <span>Scanning dark web databases...</span>
-                        </motion.div>
-                        <motion.div
-                          animate={{ opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                          className="flex items-center gap-2"
-                        >
-                          <FaChevronRight className="text-[#CC0000]" size={10} />
-                          <span>Checking for data breaches...</span>
-                        </motion.div>
-                        <motion.div
-                          animate={{ opacity: [0.5, 1, 0.5] }}
-                          transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                          className="flex items-center gap-2"
-                        >
-                          <FaChevronRight className="text-[#CC0000]" size={10} />
-                          <span>Analyzing password security...</span>
-                        </motion.div>
+                          DO NOT CLOSE THE APPLICATION
+                        </p>
+                        <p>Your system is being scanned. Please wait for the operation to complete.</p>
                       </div>
                     </div>
                   </div>
+
                 ) : (
-                  <div className="space-y-6">
-                    {/* Success state */}
-                    <div className="text-center">
+
+                  /* ── Completed State ── */
+                  <div className="space-y-8">
+                    <div className="text-center py-4">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                        className="inline-flex items-center justify-center w-16 h-16 border-2 border-[#111111] mb-4"
-                        style={{ borderRadius: 0 }}
+                        className="inline-flex items-center justify-center w-24 h-24 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] mb-6"
                       >
-                        <FaCheckCircle className="text-2xl text-[#111111]" />
+                        <FaCheckCircle className="text-4xl" />
                       </motion.div>
-                      <h4 className="np-serif text-xl font-bold text-[#111111] mb-2">
-                        Security Scan Complete
+                      <h4
+                        className="text-3xl font-black text-[#111111] mb-2 uppercase"
+                        style={{ fontFamily: "'Playfair Display', serif" }}
+                      >
+                        SCAN COMPLETE
                       </h4>
-                      <p className="np-body text-[#737373]">
-                        We've completed a comprehensive security scan of your accounts.
+                      <p
+                        className="text-[#525252]"
+                        style={{ fontFamily: "'Lora', serif" }}
+                      >
+                        Comprehensive security scan of your accounts is done.
                       </p>
                     </div>
 
-                    {/* Final Results */}
+                    {/* Final results */}
                     <div className="grid grid-cols-3 gap-0 border-2 border-[#111111]">
-                      <div className="p-4 text-center border-r-2 border-[#111111]">
-                        <FaDatabase className="w-5 h-5 text-[#111111] mx-auto mb-2" />
-                        <div className="np-serif text-2xl font-bold text-[#111111]">
+                      <div className="p-5 text-center border-r-2 border-[#111111]">
+                        <FaDatabase className="w-6 h-6 text-[#111111] mx-auto mb-3" />
+                        <div
+                          className="text-3xl font-black text-[#111111]"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
                           {scanResults.scannedItems.toLocaleString()}
                         </div>
-                        <div className="np-mono text-xs text-[#737373] mt-1 uppercase tracking-widest">
-                          Items Scanned
+                        <div
+                          className="text-[0.6rem] font-bold uppercase tracking-widest text-[#525252] mt-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          ITEMS SCANNED
                         </div>
                       </div>
-                      <div className="p-4 text-center border-r-2 border-[#111111]">
-                        <FaExclamationTriangle className="w-5 h-5 text-[#CC0000] mx-auto mb-2" />
-                        <div className="np-serif text-2xl font-bold text-[#111111]">
+                      <div className="p-5 text-center border-r-2 border-[#111111]">
+                        <FaExclamationTriangle className="w-6 h-6 text-[#CC0000] mx-auto mb-3" />
+                        <div
+                          className="text-3xl font-black text-[#111111]"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
                           {scanResults.threatsFound}
                         </div>
-                        <div className="np-mono text-xs text-[#737373] mt-1 uppercase tracking-widest">
-                          Threats Found
+                        <div
+                          className="text-[0.6rem] font-bold uppercase tracking-widest text-[#525252] mt-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          THREATS FOUND
                         </div>
                       </div>
-                      <div className="p-4 text-center">
-                        <FaBug className="w-5 h-5 text-[#B38600] mx-auto mb-2" />
-                        <div className="np-serif text-2xl font-bold text-[#111111]">
+                      <div className="p-5 text-center">
+                        <FaBug className="w-6 h-6 text-[#B38600] mx-auto mb-3" />
+                        <div
+                          className="text-3xl font-black text-[#111111]"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
                           {scanResults.vulnerabilities}
                         </div>
-                        <div className="np-mono text-xs text-[#737373] mt-1 uppercase tracking-widest">
-                          Vulnerabilities
+                        <div
+                          className="text-[0.6rem] font-bold uppercase tracking-widest text-[#525252] mt-1"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          VULNERABILITIES
                         </div>
                       </div>
                     </div>
 
-                    {/* Scan Summary */}
-                    <div className="border-l-4 border-[#111111] bg-[#E5E5E0] p-4">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className="p-2 border border-[#111111] text-[#111111]"
-                          style={{ borderRadius: 0 }}
-                        >
-                          <FaShieldAlt className="w-4 h-4" />
+                    {/* Scan summary */}
+                    <div className="border-l-4 border-[#111111] bg-[#E5E5E0] p-5">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] shrink-0">
+                          <FaShieldAlt className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
-                          <h5 className="np-mono text-xs uppercase tracking-widest font-semibold text-[#111111] mb-1">
-                            Scan Summary
-                          </h5>
-                          <p className="np-body text-sm text-[#525252]">
+                          <div
+                            className="text-xs font-black uppercase tracking-widest text-[#111111] mb-2"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            SCAN SUMMARY
+                          </div>
+                          <p
+                            className="text-sm text-[#525252] leading-relaxed"
+                            style={{ fontFamily: "'Lora', serif" }}
+                          >
                             {scanResults.threatsFound > 0
-                              ? `We found ${scanResults.threatsFound} potential threat${
-                                  scanResults.threatsFound > 1 ? 's' : ''
-                                } and ${scanResults.vulnerabilities} vulnerabilit${
-                                  scanResults.vulnerabilities !== 1 ? 'ies' : 'y'
-                                }. Review the alerts above for details.`
+                              ? `Found ${scanResults.threatsFound} potential threat${scanResults.threatsFound > 1 ? 's' : ''} and ${scanResults.vulnerabilities} vulnerabilit${scanResults.vulnerabilities !== 1 ? 'ies' : 'y'}. Review the alerts above for details.`
                               : 'No new threats or vulnerabilities were detected during this scan.'}
                           </p>
                           {scanResults.threatsFound > 0 && (
-                            <div className="mt-3 space-y-2">
-                              <div className="flex items-center gap-2 np-body text-sm">
-                                <FaCheckCircle className="text-[#111111]" size={12} />
-                                <span className="text-[#525252]">
-                                  All detected threats have been logged
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 np-body text-sm">
-                                <FaCheckCircle className="text-[#111111]" size={12} />
-                                <span className="text-[#525252]">
-                                  Security recommendations generated
-                                </span>
-                              </div>
+                            <div className="mt-4 space-y-2">
+                              {[
+                                'All detected threats have been logged',
+                                'Security recommendations generated'
+                              ].map(item => (
+                                <div
+                                  key={item}
+                                  className="flex items-center gap-2 text-sm font-bold text-[#525252]"
+                                  style={{ fontFamily: "'Inter', sans-serif" }}
+                                >
+                                  <FaCheckCircle className="text-[#111111]" size={12} />
+                                  <span>{item}</span>
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="pt-4 flex justify-end space-x-3 border-t border-[#E5E5E0]">
-                      <motion.button
-                        whileTap={{ scale: 0.98 }}
+                    {/* Modal footer */}
+                    <div className="pt-6 border-t-4 border-[#111111] flex flex-wrap justify-end gap-4">
+                      <button
                         onClick={() => setShowFullScanModal(false)}
-                        className="px-5 py-2.5 border border-[#111111] text-[#111111] np-mono text-xs uppercase tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-all duration-200"
-                        style={{ borderRadius: 0 }}
+                        className="px-6 py-3 border-2 border-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors text-[#111111]"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
                       >
-                        Close
-                      </motion.button>
+                        CLOSE
+                      </button>
                       {scanResults.threatsFound > 0 && (
-                        <motion.button
-                          whileTap={{ scale: 0.98 }}
+                        <button
                           onClick={() => {
                             setShowFullScanModal(false);
                             setSelectedCategory('all');
                             setSelectedSeverity('all');
                           }}
-                          className="px-5 py-2.5 bg-[#CC0000] text-[#F9F9F7] np-mono text-xs uppercase tracking-widest hover:bg-[#111111] transition-all duration-200 flex items-center gap-2"
-                          style={{ borderRadius: 0 }}
+                          className="px-8 py-3 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center gap-2"
+                          style={{ fontFamily: "'Inter', sans-serif" }}
                         >
-                          <FaEye /> View All Threats
-                        </motion.button>
+                          <FaEye /> VIEW ALL THREATS
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1629,6 +1994,7 @@ const Monitoring: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };
