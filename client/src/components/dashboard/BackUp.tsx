@@ -881,7 +881,7 @@ const BackUp: React.FC = () => {
           </div>
           <h2 className="text-5xl md:text-7xl font-black leading-[0.85] tracking-tighter text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>
             BACKUP &<br />
-            <span className="text-[#CC0000]">SYNC</span>
+            <span className="italic" style={{ color: "#CC0000" }}>SYNC</span>
           </h2>
           <p className="mt-6 text-lg text-[#525252] max-w-2xl leading-relaxed border-l-4 border-[#CC0000] pl-4" style={{ fontFamily: "'Lora', serif" }}>
             Keep your sensitive information securely backed up and synchronized across all your registered devices.
@@ -1787,7 +1787,7 @@ const BackUp: React.FC = () => {
   }
 
   return (
-    <div className="border-4 border-[#111111] bg-[#F9F9F7] p-6 space-y-8"> {/* Newsprint wrapper */}
+    <div className="bg-[#F9F9F7] p-6 space-y-8">
       <BackupHeader />
       <BackupSummary />
       <SyncProgress />
