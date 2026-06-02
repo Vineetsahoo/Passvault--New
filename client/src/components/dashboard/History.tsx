@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaPassport, FaIdCard, FaCreditCard, FaFingerprint, 
-  FaFileAlt, FaShieldAlt, FaUserShield, 
+import {
+  FaPassport, FaIdCard, FaCreditCard, FaFingerprint,
+  FaFileAlt, FaShieldAlt, FaUserShield,
   FaFilter, FaSort, FaSearch, FaHistory,
   FaCalendarAlt, FaDesktop, FaGlobe, FaCheckCircle,
   FaExclamationCircle, FaChevronDown, FaEye,
@@ -11,6 +11,8 @@ import {
   FaToggleOn, FaToggleOff, FaExclamation, FaSpinner
 } from 'react-icons/fa';
 import { historyAPI } from '../../services/api';
+
+// ─── Interfaces (unchanged) ───────────────────────────────────────────────────
 
 interface HistoryEvent {
   id: string;
@@ -26,7 +28,72 @@ interface HistoryEvent {
   success: boolean;
 }
 
+// ─── Newsprint Switch atom (mirrors BackUp.tsx Switch exactly) ────────────────
+
+interface SettingToggleProps {
+  checked: boolean;
+  onChange: () => void;
+  label: string;
+  description: string;
+  badge?: string;
+  badgeType?: 'recommended' | 'important' | 'critical';
+}
+
+const SettingToggle: React.FC<SettingToggleProps> = ({
+  checked, onChange, label, description, badge, badgeType,
+}) => (
+  <div className="flex items-start justify-between py-4 px-5 border-b border-[#E5E5E0] last:border-b-0 hover:bg-[#F9F9F7] transition-colors">
+    <div className="flex-1 pr-6">
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <span
+          className="font-black text-xs uppercase tracking-widest text-[#111111]"
+          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+        >
+          {label}
+        </span>
+        {badge && (
+          <span
+            className={`text-[0.6rem] px-2 py-0.5 font-black uppercase tracking-widest border ${
+              badgeType === 'critical'
+                ? 'bg-[#CC0000] text-[#F9F9F7] border-[#CC0000]'
+                : badgeType === 'important'
+                  ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]'
+                  : 'bg-[#E5E5E0] text-[#111111] border-[#111111]'
+            }`}
+            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+      <p className="text-sm text-[#525252] leading-relaxed" style={{ fontFamily: "'Lora', serif" }}>
+        {description}
+      </p>
+    </div>
+
+    {/* Exact Switch from BackUp.tsx */}
+    <label className="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="sr-only peer"
+      />
+      <div
+        className="w-14 h-7 bg-[#E5E5E0] border-2 border-[#111111] peer-focus:outline-none
+                   peer-checked:after:translate-x-full after:content-['']
+                   after:absolute after:top-[2px] after:left-[2px] after:bg-[#111111]
+                   after:border-2 after:border-[#111111] after:h-5 after:w-6 after:transition-all
+                   peer-checked:bg-[#CC0000]"
+      />
+    </label>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 const History: React.FC = () => {
+  // ── State (unchanged) ──────────────────────────────────────────────────────
   const [filter, setFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,7 +101,7 @@ const History: React.FC = () => {
   const [activeFiltersCount, setActiveFiltersCount] = useState<number>(0);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [showSecuritySettings, setShowSecuritySettings] = useState<boolean>(false);
-  
+
   // API State
   const [historyEvents, setHistoryEvents] = useState<HistoryEvent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -48,7 +115,7 @@ const History: React.FC = () => {
   });
   const [page, setPage] = useState(1);
   const limit = 20;
-  
+
   // Security Settings States
   const [securitySettings, setSecuritySettings] = useState({
     twoFactorAuth: true,
@@ -60,12 +127,12 @@ const History: React.FC = () => {
     breachMonitoring: true,
     deviceTracking: true,
     locationBasedAccess: false,
-    biometricAuth: true
+    biometricAuth: true,
   });
-  
+
   const [settingsChanged, setSettingsChanged] = useState(false);
 
-  // Fetch history data from API
+  // ── Effects & Handlers (unchanged) ────────────────────────────────────────
   useEffect(() => {
     fetchHistory();
     fetchStats();
@@ -75,14 +142,12 @@ const History: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
       const response = await historyAPI.getHistory({
         page,
         limit,
         type: filter !== 'all' ? filter : undefined,
-        sortBy: sortBy === 'newest' ? '-createdAt' : 'createdAt'
+        sortBy: sortBy === 'newest' ? '-createdAt' : 'createdAt',
       });
-
       if (response.data.success) {
         const formattedEvents = response.data.data.history.map((item: any, index: number) => ({
           id: item._id || item.id || `event-${index}-${Date.now()}`,
@@ -93,9 +158,8 @@ const History: React.FC = () => {
           action: item.action,
           metadata: item.metadata,
           ipAddress: item.ipAddress,
-          success: true
+          success: true,
         }));
-        
         setHistoryEvents(formattedEvents);
         setPagination(response.data.data.pagination);
       }
@@ -121,24 +185,19 @@ const History: React.FC = () => {
   const handleSettingToggle = (setting: keyof typeof securitySettings) => {
     setSecuritySettings(prev => ({
       ...prev,
-      [setting]: typeof prev[setting] === 'boolean' ? !prev[setting] : prev[setting]
+      [setting]: typeof prev[setting] === 'boolean' ? !prev[setting] : prev[setting],
     }));
     setSettingsChanged(true);
   };
 
   const handleSessionTimeoutChange = (value: string) => {
-    setSecuritySettings(prev => ({
-      ...prev,
-      sessionTimeout: value
-    }));
+    setSecuritySettings(prev => ({ ...prev, sessionTimeout: value }));
     setSettingsChanged(true);
   };
 
   const handleSaveSettings = () => {
-    // Here you would typically save to backend
     console.log('Saving security settings:', securitySettings);
     setSettingsChanged(false);
-    // Show success notification
     alert('Security settings saved successfully!');
   };
 
@@ -146,33 +205,20 @@ const History: React.FC = () => {
     setPage(prev => prev + 1);
   };
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const getEventIcon = (eventType: string) => {
-    switch (eventType) {
-      case 'password': 
-        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
-          <FaKey className="text-[#111111] w-5 h-5" />
-        </div>;
-      case 'document': 
-        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
-          <FaFileAlt className="text-[#111111] w-5 h-5" />
-        </div>;
-      case 'qrcode': 
-        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
-          <FaCreditCard className="text-[#111111] w-5 h-5" />
-        </div>;
-      case 'backup': 
-        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
-          <FaShieldAlt className="text-[#111111] w-5 h-5" />
-        </div>;
-      case 'login': 
-        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
-          <FaPassport className="text-[#111111] w-5 h-5" />
-        </div>;
-      default: 
-        return <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
-          <FaFingerprint className="text-[#111111] w-5 h-5" />
-        </div>;
-    }
+    const iconMap: Record<string, React.ReactNode> = {
+      password: <FaKey className="text-[#111111] w-5 h-5" />,
+      document: <FaFileAlt className="text-[#111111] w-5 h-5" />,
+      qrcode:   <FaCreditCard className="text-[#111111] w-5 h-5" />,
+      backup:   <FaShieldAlt className="text-[#111111] w-5 h-5" />,
+      login:    <FaPassport className="text-[#111111] w-5 h-5" />,
+    };
+    return (
+      <div className="p-2.5 bg-[#F9F9F7] border-2 border-[#111111]">
+        {iconMap[eventType] ?? <FaFingerprint className="text-[#111111] w-5 h-5" />}
+      </div>
+    );
   };
 
   const getSeverityColor = (action: string) => {
@@ -180,185 +226,259 @@ const History: React.FC = () => {
       case 'deleted': return 'text-[#CC0000] bg-[#F9F9F7] border-2 border-[#CC0000]';
       case 'updated': return 'text-[#111111] bg-[#E5E5E0] border-2 border-[#111111]';
       case 'created': return 'text-[#111111] bg-[#F9F9F7] border-2 border-[#111111]';
-      default: return 'text-[#111111] bg-[#F9F9F7] border-2 border-[#111111]';
+      default:        return 'text-[#111111] bg-[#F9F9F7] border-2 border-[#111111]';
     }
   };
 
-  const getStatusBadge = (success: boolean) => {
-    return success ? (
-      <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-black bg-[#F9F9F7] text-[#111111] border border-[#111111]">
-        <FaCheckCircle size={12} />
-        Success
+  const getStatusBadge = (success: boolean) =>
+    success ? (
+      <span className="flex items-center gap-1 px-2.5 py-1 text-[0.65rem] font-black bg-[#F9F9F7] text-[#111111] border border-[#111111] uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        <FaCheckCircle size={10} /> SUCCESS
       </span>
     ) : (
-      <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-black bg-[#CC0000] text-[#F9F9F7] border border-[#111111]">
-        <FaExclamationCircle size={12} />
-        Failed
+      <span className="flex items-center gap-1 px-2.5 py-1 text-[0.65rem] font-black bg-[#CC0000] text-[#F9F9F7] border border-[#CC0000] uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        <FaExclamationCircle size={10} /> FAILED
       </span>
     );
-  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
   const eventTypes = [
-    { id: 'all', label: 'All Activities', icon: FaShieldAlt },
-    { id: 'password', label: 'Passwords', icon: FaKey },
-    { id: 'document', label: 'Documents', icon: FaFileAlt },
-    { id: 'qrcode', label: 'QR Codes', icon: FaCreditCard },
-    { id: 'backup', label: 'Backups', icon: FaShieldVirus },
-    { id: 'login', label: 'Logins', icon: FaUserShield }
+    { id: 'all',      label: 'All Activities', icon: FaShieldAlt },
+    { id: 'password', label: 'Passwords',       icon: FaKey },
+    { id: 'document', label: 'Documents',       icon: FaFileAlt },
+    { id: 'qrcode',   label: 'QR Codes',        icon: FaCreditCard },
+    { id: 'backup',   label: 'Backups',          icon: FaShieldVirus },
+    { id: 'login',    label: 'Logins',           icon: FaUserShield },
   ];
 
   const filteredEvents = historyEvents.filter(event => {
-    if (searchTerm && !event.description.toLowerCase().includes(searchTerm.toLowerCase()) && 
-        !event.target.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (
+      searchTerm &&
+      !event.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      !event.target.toLowerCase().includes(searchTerm.toLowerCase())
+    ) {
       return false;
     }
     return true;
   });
 
-  // Animation variants
+  // Animation variants (unchanged)
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        type: "spring", 
-        stiffness: 100,
-        damping: 15
-      } 
+    visible: {
+      opacity: 1, y: 0,
+      transition: { type: 'spring', stiffness: 100, damping: 15 },
     },
-    exit: { 
-      opacity: 0, 
-      y: -20,
-      transition: {
-        duration: 0.2
-      }
-    }
+    exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
   };
 
   const staggerContainer = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════════════════════════════════════
   return (
-    <div className="space-y-6 -mt-4">
-      {/* Redesigned header with more sophisticated gradient and visual elements */}
-      <div className="relative border-4 border-[#111111] bg-[#111111]">
-        <div className="relative z-10 p-7">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <div className="inline-flex items-center gap-3 mb-2 border border-[#F9F9F7] px-3 py-1.5">
-                <FaClock className="text-[#CC0000]" />
-                <span className="text-xs font-black uppercase tracking-widest text-[#F9F9F7]">Activity Log</span>
-              </div>
-              <h2 className="text-4xl font-black text-[#F9F9F7] flex flex-wrap items-center gap-3 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>
-                <FaHistory className="text-[#CC0000]" /> 
-                <span>Security Timeline</span>
-              </h2>
-              <p className="text-[#E5E5E0] mt-2 max-w-lg" style={{ fontFamily: "'Lora', serif" }}>
-                Monitor and track access patterns to keep your sensitive information secure
-              </p>
+    <div
+      className="space-y-0 -mt-4 bg-[#F9F9F7]"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`,
+      }}
+    >
+
+      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      {/* Mirrors BackupHeader exactly: off-white bg, border-b-4, newsprint-texture */}
+      <div className="border-b-4 border-[#111111] bg-[#F9F9F7] p-8 md:p-12 relative overflow-hidden newsprint-texture">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
+
+          {/* Left: editorial title block */}
+          <div>
+            <div
+              className="inline-block border border-[#111111] px-3 py-1 mb-6 text-[0.65rem] font-black uppercase tracking-widest text-[#111111]"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              SECURITY AUDIT &bull; ACTIVITY LOG
             </div>
-            
-            <div className="flex items-center gap-3 self-start">
-              <button
-                onClick={() => setShowSecuritySettings(true)}
-                className="px-4 py-2.5 bg-[#F9F9F7] text-[#111111] font-black uppercase tracking-widest border-2 border-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-all flex items-center gap-2"
-              >
-                <FaLock className="text-[#111111]" /> Security Settings
-              </button>
-              
-              <button
-                className="px-4 py-2.5 bg-[#CC0000] text-[#F9F9F7] font-black uppercase tracking-widest border-2 border-[#111111] hover:bg-[#F9F9F7] hover:text-[#CC0000] transition-all flex items-center gap-2"
-              >
-                <FaEye /> View Full Logs
-              </button>
+
+            <h2
+              className="text-5xl md:text-7xl font-black leading-[0.85] tracking-tighter text-[#111111]"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              SECURITY<br />
+              <span className="italic" style={{ color: "#CC0000" }}>TIMELINE</span>
+            </h2>
+
+            <p
+              className="mt-6 text-lg text-[#525252] max-w-2xl leading-relaxed border-l-4 border-[#CC0000] pl-4"
+              style={{ fontFamily: "'Lora', serif" }}
+            >
+              Monitor and track every access pattern, change, and security event to keep
+              your sensitive information protected and fully auditable.
+            </p>
+          </div>
+
+          {/* Right: action buttons — mirrors BackUp.tsx button pair */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto mt-8 md:mt-0">
+            <button
+              onClick={() => setShowSecuritySettings(true)}
+              className="px-6 py-4 border-2 border-[#111111] font-black uppercase text-xs tracking-widest transition-all bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0] hard-shadow-hover flex items-center justify-center gap-2"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              <FaLock /> SECURITY SETTINGS
+            </button>
+
+            <button
+              className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center justify-center gap-2"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              <FaEye /> VIEW FULL LOGS
+            </button>
+          </div>
+        </div>
+
+        {/* Stats ticker bar — exact structure from BackupHeader */}
+        <div className="mt-12 pt-6 border-t-4 border-[#111111] grid grid-cols-2 md:grid-cols-5 gap-0 bg-[#111111]">
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [TOTAL EVENTS]
+            </div>
+            <div
+              className="font-black text-[#111111] text-2xl"
+              style={{ fontFamily: "'Playfair Display', serif" }}
+            >
+              {pagination.totalItems}
             </div>
           </div>
-          
-          <div className="mt-6 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1.5">
-              <FaCalendarAlt className="text-[#CC0000]" size={12} />
-              <span className="text-xs uppercase tracking-widest font-black text-[#F9F9F7]">Last 30 days</span>
+
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [PERIOD]
             </div>
-            <div className="flex items-center gap-2 border border-[#F9F9F7] px-3 py-1.5">
-              <FaInfoCircle className="text-[#CC0000]" size={12} />
-              <span className="text-xs uppercase tracking-widest font-black text-[#F9F9F7]">{pagination.totalItems} events recorded</span>
+            <div
+              className="font-bold text-[#111111] text-xs flex items-center gap-1.5"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              <FaCalendarAlt size={10} /> LAST 30 DAYS
             </div>
-            {stats && (
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <FaShieldAlt className="text-blue-200" size={12} />
-                <span className="text-xs text-blue-50">{stats.totalActivities} total activities</span>
-              </div>
-            )}
+          </div>
+
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [ACTIVE FILTER]
+            </div>
+            <div
+              className="font-bold text-[#111111] text-sm uppercase"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {filter === 'all' ? 'ALL TYPES' : filter}
+            </div>
+          </div>
+
+          <div className="col-span-2 md:col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+            <div
+              className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              [TOTAL ACTIVITIES]
+            </div>
+            <div
+              className="font-bold text-[#111111] text-sm"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              {stats ? stats.totalActivities : '—'}
+            </div>
+          </div>
+
+          {/* Rightmost cell — always-visible sort toggle, mirrors SELECT ITEMS pattern */}
+          <div className="col-span-2 md:col-span-1 bg-[#111111]">
+            <button
+              onClick={() => setSortBy(s => s === 'newest' ? 'oldest' : 'newest')}
+              className="w-full h-full flex items-center justify-center gap-2 bg-[#111111] text-[#F9F9F7] font-black text-xs uppercase tracking-widest p-4 hover:bg-[#CC0000] transition-colors"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              <FaSort /> {sortBy === 'newest' ? 'NEWEST FIRST' : 'OLDEST FIRST'}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Redesigned search and filter section */}
-      <div className="border-4 border-[#111111] bg-[#F9F9F7] overflow-hidden">
-        <div className="p-5">
+      {/* ── SEARCH & FILTER BAR ─────────────────────────────────────────────── */}
+      <div className="border-b-4 border-[#111111] bg-[#F9F9F7] overflow-hidden newsprint-texture">
+        <div className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+
+            {/* Search input */}
             <div className="relative flex-1 w-full">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                 <FaSearch className="text-[#111111]" />
               </div>
               <input
                 type="text"
-                placeholder="Search security events by description, target or location..."
+                placeholder="Search security events by description, target or location…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 border-b-2 border-[#111111] bg-[#F9F9F7] text-[#111111] focus:bg-[#E5E5E0] focus:outline-none transition-all"
+                className="w-full pl-12 pr-4 py-3.5 border-b-2 border-[#111111] bg-[#F9F9F7] text-[#111111] focus:bg-[#E5E5E0] focus:outline-none transition-all font-bold"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               />
             </div>
-            
-            <div className="flex items-center gap-3 self-end">
+
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Sort select */}
               <div className="flex items-center gap-2 px-4 py-3 bg-[#E5E5E0] border-2 border-[#111111] hover:bg-[#F9F9F7] transition-colors">
-                <FaSort className="text-gray-500" />
-                <select 
-                  value={sortBy} 
+                <FaSort className="text-[#111111]" />
+                <select
+                  value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest')}
-                  className="bg-transparent border-none text-sm focus:ring-0 text-[#111111] font-black"
+                  className="bg-transparent border-none text-xs focus:ring-0 text-[#111111] font-black uppercase tracking-widest cursor-pointer focus:outline-none"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  <option value="newest">Sort: Newest first</option>
-                  <option value="oldest">Sort: Oldest first</option>
+                  <option value="newest">NEWEST FIRST</option>
+                  <option value="oldest">OLDEST FIRST</option>
                 </select>
               </div>
-              
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+
+              {/* Filter toggle */}
+              <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`p-3.5 border-2 transition-all flex items-center gap-2 ${
-                  showFilters ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]' : 'hover:bg-[#E5E5E0] bg-[#F9F9F7] text-[#111111] border-[#111111]'
+                className={`px-4 py-3 border-2 transition-all flex items-center gap-2 font-black text-xs uppercase tracking-widest ${
+                  showFilters
+                    ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]'
+                    : 'hover:bg-[#E5E5E0] bg-[#F9F9F7] text-[#111111] border-[#111111]'
                 }`}
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                <FaFilter className={showFilters ? 'text-[#F9F9F7]' : 'text-[#111111]'} />
+                <FaFilter />
+                FILTERS
                 {activeFiltersCount > 0 && (
                   <span className="w-5 h-5 flex items-center justify-center bg-[#CC0000] text-[#F9F9F7] text-xs font-black">
                     {activeFiltersCount}
                   </span>
                 )}
-              </motion.button>
+              </button>
             </div>
           </div>
-          
+
+          {/* Expandable filters panel */}
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -367,78 +487,94 @@ const History: React.FC = () => {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="mt-4 pt-4 border-t-2 border-[#111111]">
-                  {/* Filter options would go here */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-6 pt-6 border-t-2 border-[#111111]">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    {/* Event Type */}
                     <div>
-                      <label className="text-xs font-black text-[#111111] uppercase tracking-widest">Event Type</label>
-                      <div className="mt-2 space-y-2">
+                      <div
+                        className="text-[0.6rem] font-black text-[#111111] uppercase tracking-widest mb-3 pb-2 border-b-2 border-[#111111]"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        EVENT TYPE
+                      </div>
+                      <div className="space-y-2.5">
                         {eventTypes.map(type => (
-                          <label key={type.id} className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
+                          <label key={type.id} className="flex items-center gap-3 cursor-pointer group">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]"
                             />
-                            <span className="text-sm text-[#111111] font-medium">{type.label}</span>
+                            <span
+                              className="text-sm text-[#111111] font-bold uppercase tracking-widest group-hover:text-[#CC0000] transition-colors"
+                              style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                              {type.label}
+                            </span>
                           </label>
                         ))}
                       </div>
                     </div>
-                    
+
+                    {/* Severity */}
                     <div>
-                      <label className="text-xs font-black text-[#111111] uppercase tracking-widest">Severity</label>
-                      <div className="mt-2 space-y-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
-                          />
-                          <span className="text-sm text-[#111111] font-medium">High</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
-                          />
-                          <span className="text-sm text-[#111111] font-medium">Medium</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
-                          />
-                          <span className="text-sm text-[#111111] font-medium">Low</span>
-                        </label>
+                      <div
+                        className="text-[0.6rem] font-black text-[#111111] uppercase tracking-widest mb-3 pb-2 border-b-2 border-[#111111]"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        SEVERITY
+                      </div>
+                      <div className="space-y-2.5">
+                        {['High', 'Medium', 'Low'].map(lvl => (
+                          <label key={lvl} className="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" />
+                            <span
+                              className="text-sm text-[#111111] font-bold uppercase tracking-widest group-hover:text-[#CC0000] transition-colors"
+                              style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                              {lvl}
+                            </span>
+                          </label>
+                        ))}
                       </div>
                     </div>
-                    
+
+                    {/* Status */}
                     <div>
-                      <label className="text-xs font-black text-[#111111] uppercase tracking-widest">Status</label>
-                      <div className="mt-2 space-y-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
-                          />
-                          <span className="text-sm text-[#111111] font-medium">Success</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" 
-                          />
-                          <span className="text-sm text-[#111111] font-medium">Failed</span>
-                        </label>
+                      <div
+                        className="text-[0.6rem] font-black text-[#111111] uppercase tracking-widest mb-3 pb-2 border-b-2 border-[#111111]"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        STATUS
+                      </div>
+                      <div className="space-y-2.5">
+                        {['Success', 'Failed'].map(s => (
+                          <label key={s} className="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" className="w-4 h-4 border-2 border-[#111111] accent-[#CC0000]" />
+                            <span
+                              className="text-sm text-[#111111] font-bold uppercase tracking-widest group-hover:text-[#CC0000] transition-colors"
+                              style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                              {s}
+                            </span>
+                          </label>
+                        ))}
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="mt-4 flex justify-end gap-3">
-                    <button className="px-4 py-2 text-sm font-black text-[#111111] hover:text-[#CC0000]">
-                      Reset Filters
+
+                  <div className="mt-6 flex justify-end gap-3">
+                    <button
+                      className="px-5 py-2.5 text-xs font-black uppercase tracking-widest text-[#111111] hover:text-[#CC0000] transition-colors border-b-2 border-transparent hover:border-[#CC0000]"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      RESET FILTERS
                     </button>
-                    <button className="px-4 py-2 bg-[#111111] hover:bg-[#F9F9F7] text-[#F9F9F7] hover:text-[#111111] text-sm font-black border-2 border-[#111111] transition-colors">
-                      Apply Filters
+                    <button
+                      className="px-6 py-2.5 bg-[#111111] text-[#F9F9F7] text-xs font-black uppercase tracking-widest hover:bg-[#CC0000] transition-colors border-2 border-[#111111]"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      APPLY FILTERS
                     </button>
                   </div>
                 </div>
@@ -446,356 +582,523 @@ const History: React.FC = () => {
             )}
           </AnimatePresence>
         </div>
-        
-        {/* Redesigned category selector */}
-        <div className="bg-[#E5E5E0] border-t-2 border-[#111111] px-5 py-3">
-          <div className="flex overflow-x-auto gap-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-1">
+
+        {/* Category tab strip — sharp buttons on muted grey background */}
+        <div className="bg-[#E5E5E0] border-t-2 border-[#111111] px-6 py-3">
+          <div className="flex overflow-x-auto gap-2 pb-1">
             {eventTypes.map(type => (
-              <motion.button
+              <button
                 key={type.id}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => setFilter(type.id)}
-                className={`px-4 py-2.5 flex items-center gap-2 whitespace-nowrap transition-all border-2 ${
-                  filter === type.id 
-                    ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]' 
+                className={`px-4 py-2.5 flex items-center gap-2 whitespace-nowrap transition-all border-2 font-black text-xs uppercase tracking-widest flex-shrink-0 ${
+                  filter === type.id
+                    ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]'
                     : 'bg-[#F9F9F7] text-[#111111] hover:bg-[#E5E5E0] border-[#111111]'
                 }`}
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 <type.icon className={filter === type.id ? 'text-[#F9F9F7]' : 'text-[#111111]'} />
-                <span className="font-black">{type.label}</span>
-              </motion.button>
+                {type.label}
+              </button>
             ))}
           </div>
         </div>
       </div>
 
-      {loading && page === 1 ? (
-        <div className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center">
-          <FaSpinner className="animate-spin text-[#111111] text-4xl mx-auto mb-4" />
-          <p className="text-[#111111]">Loading history...</p>
-        </div>
-      ) : error ? (
-        <div className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center">
-          <FaExclamationCircle className="text-[#CC0000] text-4xl mx-auto mb-4" />
-          <h3 className="text-xl font-black text-[#111111] mb-2">Error Loading History</h3>
-          <p className="text-[#111111] mb-4">{error}</p>
-          <button 
-            onClick={() => fetchHistory()}
-            className="px-5 py-2.5 bg-[#111111] text-[#F9F9F7] border-2 border-[#111111] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors font-black"
-          >
-            Try Again
-          </button>
-        </div>
-      ) : filteredEvents.length === 0 ? (
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="border-4 border-[#111111] bg-[#F9F9F7] p-12 text-center"
-        >
-          <div className="relative mx-auto w-20 h-20 mb-6">
-            <div className="absolute inset-0 border-4 border-[#111111] bg-[#E5E5E0]"></div>
-            <div className="relative border-4 border-[#111111] bg-[#F9F9F7] w-full h-full flex items-center justify-center">
-              <FaHistory className="text-[#111111] text-2xl" />
+      {/* ── CONTENT STATES ─────────────────────────────────────────────────── */}
+      <div className="p-6 md:p-8 space-y-4">
+
+        {/* Loading */}
+        {loading && page === 1 ? (
+          <div className="border-4 border-[#111111] bg-[#F9F9F7] p-16 text-center newsprint-texture">
+            <div className="mx-auto w-16 h-16 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] flex items-center justify-center mb-6">
+              <FaSpinner className="animate-spin text-2xl" />
+            </div>
+            <p
+              className="text-[#111111] font-black uppercase tracking-widest text-xs"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              LOADING HISTORY…
+            </p>
+          </div>
+
+        ) : error ? (
+          /* Error state */
+          <div className="border-4 border-[#CC0000] bg-[#F9F9F7] p-8 newsprint-texture">
+            <div className="flex flex-col md:flex-row items-start gap-6">
+              <div className="p-4 border-2 border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]">
+                <FaExclamationCircle className="h-8 w-8" />
+              </div>
+              <div className="flex-1">
+                <h3
+                  className="font-black text-2xl text-[#CC0000] uppercase"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  ERROR LOADING HISTORY
+                </h3>
+                <p className="text-[#111111] mt-2 font-bold" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  {error}
+                </p>
+                <button
+                  onClick={() => fetchHistory()}
+                  className="mt-5 px-6 py-3 bg-[#111111] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#CC0000] transition-colors border-2 border-[#111111]"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  RETRY
+                </button>
+              </div>
             </div>
           </div>
-          <h3 className="text-xl font-black text-[#111111] mb-2">No matching activity found</h3>
-          <p className="text-[#111111] max-w-md mx-auto">
-            Try adjusting your search terms or filters to view more results. Security events will appear here when they occur.
-          </p>
-          <button onClick={() => {setFilter('all'); setSearchTerm('');}} className="mt-6 px-5 py-2.5 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors">
-            Reset filters
-          </button>
-        </motion.div>
-      ) : (
-        <motion.div 
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-          className="space-y-4"
-        >
-          {filteredEvents.map(event => (
-            <motion.div
-              key={event.id}
-              variants={cardVariants}
-              className="border-l-4 border-b-2 border-r-2 border-t-2 border-[#111111] bg-[#F9F9F7] overflow-hidden"
-              layout
+
+        ) : filteredEvents.length === 0 ? (
+          /* Empty state */
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border-4 border-dashed border-[#111111] bg-[#F9F9F7] p-16 text-center newsprint-texture"
+          >
+            <div className="mx-auto w-20 h-20 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] flex items-center justify-center mb-6">
+              <FaHistory className="text-2xl" />
+            </div>
+            <h3
+              className="text-2xl font-black text-[#111111] mb-2 uppercase tracking-tight"
+              style={{ fontFamily: "'Playfair Display', serif" }}
             >
-              <div className="flex">
-                <div className={`w-2 ${
-                  event.action === 'deleted' ? 'bg-[#CC0000]' : 
-                  event.action === 'updated' ? 'bg-[#E5E5E0]' :
-                  event.eventType === 'password' ? 'bg-[#111111]' : 
-                  event.eventType === 'document' ? 'bg-[#111111]' :
-                  event.eventType === 'qrcode' ? 'bg-[#111111]' :
-                  'bg-[#111111]'
-                }`}></div>
-                
-                <div className="flex-1">
-                  <div className="p-5">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                      <div className="flex gap-4">
-                        <div className="flex-shrink-0 mt-1">
-                          {getEventIcon(event.eventType)}
-                        </div>
-                        
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <span className="text-xs font-black bg-[#E5E5E0] px-2 py-1 text-[#111111]">
-                              {formatDate(event.date)}
-                            </span>
-                            
-                            {event.action && (
-                              <span className={`px-2 py-1 text-xs font-black ${getSeverityColor(event.action)}`}>
-                                {event.action.charAt(0).toUpperCase() + event.action.slice(1)}
-                              </span>
-                            )}
-                            
-                            {getStatusBadge(event.success)}
+              NO MATCHING ACTIVITY FOUND
+            </h3>
+            <p
+              className="text-[#525252] max-w-md mx-auto mb-8 leading-relaxed"
+              style={{ fontFamily: "'Lora', serif" }}
+            >
+              Try adjusting your search terms or filters to view more results. Security events
+              will appear here when they occur.
+            </p>
+            <button
+              onClick={() => { setFilter('all'); setSearchTerm(''); }}
+              className="px-8 py-4 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              RESET FILTERS
+            </button>
+          </motion.div>
+
+        ) : (
+          /* ── EVENT CARDS ─────────────────────────────────────────────────── */
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
+            {filteredEvents.map(event => (
+              <motion.div
+                key={event.id}
+                variants={cardVariants}
+                layout
+                className="border-2 border-[#111111] bg-white overflow-hidden hard-shadow-hover transition-all"
+              >
+                {/* Left accent stripe */}
+                <div className="flex">
+                  <div className={`w-1.5 flex-shrink-0 ${
+                    event.action === 'deleted'              ? 'bg-[#CC0000]' :
+                    event.action === 'updated'              ? 'bg-[#E5E5E0]' :
+                    event.eventType === 'login'             ? 'bg-[#111111]' :
+                    'bg-[#111111]'
+                  }`} />
+
+                  <div className="flex-1">
+                    <div className="p-5 md:p-6">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+
+                        {/* Icon + metadata */}
+                        <div className="flex gap-4">
+                          <div className="flex-shrink-0 mt-1">
+                            {getEventIcon(event.eventType)}
                           </div>
-                          
-                          <h3 className="font-black text-[#111111] text-lg">{event.description}</h3>
-                          <p className="text-[#111111] mt-1">{event.target}</p>
-                          
-                          <div className="mt-4 flex flex-wrap items-center gap-3">
-                            {event.metadata?.device && (
-                              <div className="flex items-center gap-1.5 text-sm text-[#111111] bg-[#E5E5E0] px-2.5 py-1 border border-[#111111]">
-                                <FaDesktop className="text-[#111111]" size={12} />
-                                {event.metadata.device}
-                              </div>
-                            )}
-                            
-                            {event.ipAddress && (
-                              <div className="flex items-center gap-1.5 text-sm text-[#111111] bg-[#E5E5E0] px-2.5 py-1 border border-[#111111]">
-                                <FaGlobe className="text-[#111111]" size={12} />
-                                {event.ipAddress}
-                              </div>
-                            )}
-                            
-                            {event.metadata?.location && (
-                              <div className="flex items-center gap-1.5 text-sm text-[#111111] bg-[#E5E5E0] px-2.5 py-1 border border-[#111111]">
-                                <FaCalendarAlt className="text-[#111111]" size={12} />
-                                {event.metadata.location}
-                              </div>
-                            )}
-                            
-                            <div className="flex items-center gap-1.5 text-sm font-black text-[#CC0000] bg-[#F9F9F7] px-2.5 py-1 border-2 border-[#CC0000]">
-                              Type: {event.eventType}
+
+                          <div className="flex-1 min-w-0">
+                            {/* Badge row */}
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              <span
+                                className="text-[0.6rem] font-black bg-[#E5E5E0] px-2 py-1 text-[#111111] uppercase tracking-widest"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                              >
+                                {formatDate(event.date)}
+                              </span>
+
+                              {event.action && (
+                                <span
+                                  className={`px-2 py-1 text-[0.6rem] font-black uppercase tracking-widest ${getSeverityColor(event.action)}`}
+                                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                >
+                                  {event.action}
+                                </span>
+                              )}
+
+                              {getStatusBadge(event.success)}
+
+                              <span
+                                className="text-[0.6rem] font-black px-2 py-1 border-2 border-[#CC0000] text-[#CC0000] uppercase tracking-widest"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                              >
+                                {event.eventType}
+                              </span>
+                            </div>
+
+                            {/* Title & target */}
+                            <h3
+                              className="font-black text-[#111111] text-lg leading-tight"
+                              style={{ fontFamily: "'Playfair Display', serif" }}
+                            >
+                              {event.description}
+                            </h3>
+                            <p
+                              className="text-[#525252] mt-1 border-l-2 border-[#CC0000] pl-2"
+                              style={{ fontFamily: "'Lora', serif" }}
+                            >
+                              {event.target}
+                            </p>
+
+                            {/* Metadata chips */}
+                            <div className="mt-4 flex flex-wrap items-center gap-2">
+                              {event.metadata?.device && (
+                                <div
+                                  className="flex items-center gap-1.5 text-[0.65rem] text-[#111111] bg-[#E5E5E0] px-2.5 py-1.5 border border-[#111111] uppercase tracking-widest font-bold"
+                                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                >
+                                  <FaDesktop size={10} /> {event.metadata.device}
+                                </div>
+                              )}
+                              {event.ipAddress && (
+                                <div
+                                  className="flex items-center gap-1.5 text-[0.65rem] text-[#111111] bg-[#E5E5E0] px-2.5 py-1.5 border border-[#111111] uppercase tracking-widest font-bold"
+                                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                >
+                                  <FaGlobe size={10} /> {event.ipAddress}
+                                </div>
+                              )}
+                              {event.metadata?.location && (
+                                <div
+                                  className="flex items-center gap-1.5 text-[0.65rem] text-[#111111] bg-[#E5E5E0] px-2.5 py-1.5 border border-[#111111] uppercase tracking-widest font-bold"
+                                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                >
+                                  <FaCalendarAlt size={10} /> {event.metadata.location}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
+
+                        {/* Detail toggle button */}
+                        <button
+                          onClick={() => setShowDetailId(showDetailId === event.id ? null : event.id)}
+                          className={`self-start flex items-center gap-2 px-4 py-2.5 font-black text-xs uppercase tracking-widest transition-colors border-2 flex-shrink-0 ${
+                            showDetailId === event.id
+                              ? 'bg-[#111111] text-[#F9F9F7] border-[#111111]'
+                              : 'bg-[#E5E5E0] hover:bg-[#111111] hover:text-[#F9F9F7] text-[#111111] border-[#111111]'
+                          }`}
+                          style={{ fontFamily: "'Inter', sans-serif" }}
+                        >
+                          {showDetailId === event.id ? 'HIDE' : 'DETAILS'}
+                          <FaChevronDown
+                            className={`transition-transform duration-200 ${showDetailId === event.id ? 'rotate-180' : ''}`}
+                            size={10}
+                          />
+                        </button>
                       </div>
-                      
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        onClick={() => setShowDetailId(showDetailId === event.id ? null : event.id)}
-                        className={`self-start flex items-center gap-2 px-3.5 py-2 font-black text-sm transition-colors border-2 ${
-                          showDetailId === event.id ? 
-                          'bg-[#111111] text-[#F9F9F7] border-[#111111]' : 
-                          'bg-[#E5E5E0] hover:bg-[#111111] hover:text-[#F9F9F7] text-[#111111] border-[#111111]'
-                        }`}
-                      >
-                        {showDetailId === event.id ? 'Hide details' : 'View details'}
-                        <FaChevronDown className={`transition-transform ${showDetailId === event.id ? 'rotate-180' : ''}`} size={10} />
-                      </motion.button>
                     </div>
-                  </div>
-                  
-                  <AnimatePresence>
-                    {showDetailId === event.id && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="border-t border-gray-100 bg-gray-50 px-5 py-4"
-                      >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                              <FaShieldAlt className="text-indigo-500" />
-                              Event Details
-                            </h4>
-                            <dl className="grid grid-cols-2 gap-y-2 text-sm">
-                              <dt className="text-gray-500 font-medium">Event ID:</dt>
-                              <dd className="font-mono bg-gray-50 px-2 py-0.5 rounded text-gray-800">{event.id}</dd>
-                              <dt className="text-gray-500 font-medium">Event Type:</dt>
-                              <dd className="capitalize">{event.eventType}</dd>
-                              <dt className="text-gray-500 font-medium">Action:</dt>
-                              <dd className="capitalize">{event.action}</dd>
-                              <dt className="text-gray-500 font-medium">Date & Time:</dt>
-                              <dd>{event.date}</dd>
-                            </dl>
-                          </div>
-                          
-                          <div className="bg-white p-4 rounded-lg border border-gray-200">
-                            <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                              <FaUserShield className="text-indigo-500" />
-                              Access Information
-                            </h4>
-                            <dl className="grid grid-cols-2 gap-y-2 text-sm">
-                              {event.metadata?.device && (
-                                <React.Fragment key="device">
-                                  <dt className="text-gray-500 font-medium">Device:</dt>
-                                  <dd>{event.metadata.device}</dd>
-                                </React.Fragment>
-                              )}
-                              {event.ipAddress && (
-                                <React.Fragment key="ip">
-                                  <dt className="text-gray-500 font-medium">IP Address:</dt>
-                                  <dd className="font-mono bg-gray-50 px-2 py-0.5 rounded">{event.ipAddress}</dd>
-                                </React.Fragment>
-                              )}
-                              {event.metadata?.location && (
-                                <React.Fragment key="location">
-                                  <dt className="text-gray-500 font-medium">Location:</dt>
-                                  <dd>{event.metadata.location}</dd>
-                                </React.Fragment>
-                              )}
-                              <dt className="text-gray-500 font-medium">Status:</dt>
-                              <dd className={event.success ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                                {event.success ? 'Successful' : 'Failed'} action
-                              </dd>
-                            </dl>
+
+                    {/* ── DETAIL EXPAND PANEL ───────────────────────────── */}
+                    <AnimatePresence>
+                      {showDetailId === event.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="overflow-hidden border-t-2 border-[#111111] bg-[#F9F9F7] newsprint-texture"
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+
+                            {/* Event Details cell */}
+                            <div className="border-b-2 md:border-b-0 md:border-r-2 border-[#111111]">
+                              {/* Cell header */}
+                              <div className="bg-[#111111] text-[#F9F9F7] px-5 py-3 flex items-center gap-2">
+                                <FaShieldAlt size={12} className="text-[#CC0000]" />
+                                <span
+                                  className="text-[0.6rem] font-black uppercase tracking-widest"
+                                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                >
+                                  EVENT DETAILS
+                                </span>
+                              </div>
+
+                              {/* Cell body */}
+                              <div className="p-5">
+                                <dl className="space-y-3">
+                                  {[
+                                    { dt: 'EVENT ID',   dd: event.id,        mono: true },
+                                    { dt: 'EVENT TYPE', dd: event.eventType,  mono: false },
+                                    { dt: 'ACTION',     dd: event.action,     mono: false },
+                                    { dt: 'DATE & TIME',dd: event.date,       mono: false },
+                                  ].map(({ dt, dd, mono }) => (
+                                    <div key={dt} className="flex gap-4">
+                                      <dt
+                                        className="w-28 flex-shrink-0 text-[0.6rem] font-black uppercase tracking-widest text-[#525252]"
+                                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                      >
+                                        {dt}
+                                      </dt>
+                                      <dd
+                                        className={`text-sm font-bold text-[#111111] capitalize break-all ${
+                                          mono ? 'font-mono bg-[#E5E5E0] px-2 py-0.5 text-xs' : ''
+                                        }`}
+                                        style={{ fontFamily: mono ? "'JetBrains Mono', monospace" : "'Inter', sans-serif" }}
+                                      >
+                                        {dd}
+                                      </dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </div>
+                            </div>
+
+                            {/* Access Information cell */}
+                            <div>
+                              {/* Cell header */}
+                              <div className="bg-[#111111] text-[#F9F9F7] px-5 py-3 flex items-center gap-2">
+                                <FaUserShield size={12} className="text-[#CC0000]" />
+                                <span
+                                  className="text-[0.6rem] font-black uppercase tracking-widest"
+                                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                >
+                                  ACCESS INFORMATION
+                                </span>
+                              </div>
+
+                              {/* Cell body */}
+                              <div className="p-5">
+                                <dl className="space-y-3">
+                                  {event.metadata?.device && (
+                                    <div className="flex gap-4">
+                                      <dt
+                                        className="w-28 flex-shrink-0 text-[0.6rem] font-black uppercase tracking-widest text-[#525252]"
+                                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                      >
+                                        DEVICE
+                                      </dt>
+                                      <dd
+                                        className="text-sm font-bold text-[#111111]"
+                                        style={{ fontFamily: "'Inter', sans-serif" }}
+                                      >
+                                        {event.metadata.device}
+                                      </dd>
+                                    </div>
+                                  )}
+                                  {event.ipAddress && (
+                                    <div className="flex gap-4">
+                                      <dt
+                                        className="w-28 flex-shrink-0 text-[0.6rem] font-black uppercase tracking-widest text-[#525252]"
+                                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                      >
+                                        IP ADDRESS
+                                      </dt>
+                                      <dd
+                                        className="text-sm font-bold text-[#111111] font-mono bg-[#E5E5E0] px-2 py-0.5"
+                                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                      >
+                                        {event.ipAddress}
+                                      </dd>
+                                    </div>
+                                  )}
+                                  {event.metadata?.location && (
+                                    <div className="flex gap-4">
+                                      <dt
+                                        className="w-28 flex-shrink-0 text-[0.6rem] font-black uppercase tracking-widest text-[#525252]"
+                                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                      >
+                                        LOCATION
+                                      </dt>
+                                      <dd
+                                        className="text-sm font-bold text-[#111111]"
+                                        style={{ fontFamily: "'Inter', sans-serif" }}
+                                      >
+                                        {event.metadata.location}
+                                      </dd>
+                                    </div>
+                                  )}
+                                  <div className="flex gap-4">
+                                    <dt
+                                      className="w-28 flex-shrink-0 text-[0.6rem] font-black uppercase tracking-widest text-[#525252]"
+                                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                    >
+                                      STATUS
+                                    </dt>
+                                    <dd>
+                                      <span
+                                        className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 border ${
+                                          event.success
+                                            ? 'bg-[#F9F9F7] text-[#111111] border-[#111111]'
+                                            : 'bg-[#CC0000] text-[#F9F9F7] border-[#CC0000]'
+                                        }`}
+                                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                      >
+                                        {event.success ? 'SUCCESSFUL' : 'FAILED'}
+                                      </span>
+                                    </dd>
+                                  </div>
+                                </dl>
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="md:col-span-2 flex justify-end">
-                            <button className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-                              View complete details
-                              <FaAngleRight size={14} />
+                          {/* Detail footer — "View complete details" link */}
+                          <div className="border-t-2 border-[#111111] px-5 py-3 bg-[#E5E5E0] flex justify-end">
+                            <button
+                              className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#111111] hover:text-[#CC0000] transition-colors border-b-2 border-[#111111] hover:border-[#CC0000] pb-0.5"
+                              style={{ fontFamily: "'Inter', sans-serif" }}
+                            >
+                              VIEW COMPLETE DETAILS <FaAngleRight size={12} />
                             </button>
                           </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-          
-          {filteredEvents.length > 0 && pagination.hasNextPage && (
-            <div className="flex justify-center mt-8">
-              <button 
-                onClick={handleLoadMore}
-                disabled={loading}
-                className="px-6 py-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 text-gray-600 font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <FaSpinner className="text-gray-400 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <FaHistory className="text-gray-400" />
-                    Load more activity
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </motion.div>
-      )}
+              </motion.div>
+            ))}
 
-      {/* Security Settings Modal */}
+            {/* ── LOAD MORE ──────────────────────────────────────────────── */}
+            {filteredEvents.length > 0 && pagination.hasNextPage && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loading}
+                  className="px-8 py-4 border-2 border-[#111111] text-[#111111] bg-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hard-shadow-hover"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
+                  {loading ? (
+                    <><FaSpinner className="animate-spin" /> LOADING…</>
+                  ) : (
+                    <><FaHistory /> LOAD MORE ACTIVITY</>
+                  )}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </div>
+
+      {/* ── SECURITY SETTINGS MODAL ─────────────────────────────────────────── */}
       <AnimatePresence>
         {showSecuritySettings && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-900/70 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-[#111111]/80 flex items-center justify-center p-4 z-50"
             onClick={() => setShowSecuritySettings(false)}
           >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0, y: 8 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.18 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-[#F9F9F7] border-4 border-[#111111] max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col newsprint-texture"
             >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 flex justify-between items-center">
-                <div>
-                  <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-                    <FaShieldAlt className="text-indigo-200" />
-                    Security Settings
-                  </h3>
-                  <p className="text-indigo-100 text-sm mt-1">Configure your security preferences and access controls</p>
+
+              {/* Modal Header — inverted black, exact RecoveryPanel pattern */}
+              <div className="bg-[#111111] text-[#F9F9F7] p-6 border-b-4 border-[#CC0000] flex justify-between items-center flex-shrink-0">
+                <div className="flex items-center gap-5">
+                  <div className="p-3 border-2 border-[#F9F9F7]">
+                    <FaShieldAlt className="h-6 w-6 text-[#F9F9F7]" />
+                  </div>
+                  <div>
+                    <h3
+                      className="text-2xl font-black uppercase tracking-tight text-[#F9F9F7]"
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      Security Settings
+                    </h3>
+                    <p
+                      className="text-[#A3A3A3] text-sm mt-0.5"
+                      style={{ fontFamily: "'Lora', serif" }}
+                    >
+                      Configure your security preferences and access controls
+                    </p>
+                  </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setShowSecuritySettings(false)}
-                  className="text-white bg-white/20 hover:bg-white/30 p-2.5 rounded-xl transition-colors"
+                  className="p-2 border border-[#404040] text-[#F9F9F7] hover:bg-[#CC0000] hover:border-[#CC0000] transition-colors"
                 >
-                  <FaTimes size={20} />
+                  <FaTimes size={18} />
                 </button>
               </div>
-              
-              {/* Modal Content */}
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-                <div className="space-y-6">
-                  {/* Authentication Section */}
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaKey className="text-indigo-600" />
+
+              {/* Modal Scrollable Content */}
+              <div className="overflow-y-auto flex-1 p-6 md:p-8 space-y-6">
+
+                {/* ── AUTHENTICATION & ACCESS SECTION ── */}
+                <div className="border-2 border-[#111111]">
+                  {/* Section header — inverted */}
+                  <div className="bg-[#111111] text-[#F9F9F7] px-5 py-4 flex items-center gap-3 border-b-2 border-[#111111]">
+                    <div className="p-2 border border-[#404040]">
+                      <FaKey className="text-[#CC0000]" />
+                    </div>
+                    <span
+                      className="font-black text-xs uppercase tracking-widest"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
                       Authentication & Access
-                    </h4>
-                    
-                    <div className="space-y-4">
-                      {/* Two-Factor Authentication */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h5 className="font-semibold text-gray-800">Two-Factor Authentication</h5>
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                              Recommended
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600">Add an extra layer of security with 2FA</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('twoFactorAuth')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.twoFactorAuth ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.twoFactorAuth ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
+                    </span>
+                  </div>
 
-                      {/* Biometric Authentication */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Biometric Authentication</h5>
-                          <p className="text-sm text-gray-600">Use fingerprint or face recognition to sign in</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('biometricAuth')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.biometricAuth ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.biometricAuth ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
+                  {/* Toggles */}
+                  <div className="bg-white divide-y-0">
+                    <SettingToggle
+                      checked={securitySettings.twoFactorAuth}
+                      onChange={() => handleSettingToggle('twoFactorAuth')}
+                      label="Two-Factor Authentication"
+                      description="Add an extra layer of security with 2FA"
+                      badge="Recommended"
+                      badgeType="recommended"
+                    />
+                    <SettingToggle
+                      checked={securitySettings.biometricAuth}
+                      onChange={() => handleSettingToggle('biometricAuth')}
+                      label="Biometric Authentication"
+                      description="Use fingerprint or face recognition to sign in"
+                    />
+                    <SettingToggle
+                      checked={securitySettings.locationBasedAccess}
+                      onChange={() => handleSettingToggle('locationBasedAccess')}
+                      label="Location-Based Access"
+                      description="Restrict access from specific geographic locations"
+                    />
 
-                      {/* Session Timeout */}
-                      <div className="p-4 bg-white rounded-lg border border-gray-200">
-                        <h5 className="font-semibold text-gray-800 mb-3">Session Timeout</h5>
-                        <p className="text-sm text-gray-600 mb-3">Auto logout after period of inactivity</p>
+                    {/* Session Timeout — special input row */}
+                    <div className="py-4 px-5 border-t border-[#E5E5E0]">
+                      <div
+                        className="text-[0.6rem] font-black uppercase tracking-widest text-[#111111] mb-1"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        SESSION TIMEOUT
+                      </div>
+                      <p
+                        className="text-sm text-[#525252] mb-3"
+                        style={{ fontFamily: "'Lora', serif" }}
+                      >
+                        Auto logout after period of inactivity
+                      </p>
+                      <div className="relative">
                         <select
                           value={securitySettings.sessionTimeout}
                           onChange={(e) => handleSessionTimeoutChange(e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full border-2 border-[#111111] bg-white text-[#111111] font-bold px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-1 appearance-none cursor-pointer"
+                          style={{ fontFamily: "'Inter', sans-serif" }}
                         >
                           <option value="15">15 minutes</option>
                           <option value="30">30 minutes</option>
@@ -803,224 +1106,150 @@ const History: React.FC = () => {
                           <option value="120">2 hours</option>
                           <option value="never">Never</option>
                         </select>
-                      </div>
-
-                      {/* Location-Based Access */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Location-Based Access</h5>
-                          <p className="text-sm text-gray-600">Restrict access from specific geographic locations</p>
+                        <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                          <FaChevronDown size={10} className="text-[#111111]" />
                         </div>
-                        <button
-                          onClick={() => handleSettingToggle('locationBasedAccess')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.locationBasedAccess ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.locationBasedAccess ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Notifications Section */}
-                  <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-100">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaBell className="text-orange-600" />
+                {/* ── ALERTS & NOTIFICATIONS SECTION ── */}
+                <div className="border-2 border-[#111111]">
+                  <div className="bg-[#111111] text-[#F9F9F7] px-5 py-4 flex items-center gap-3 border-b-2 border-[#111111]">
+                    <div className="p-2 border border-[#404040]">
+                      <FaBell className="text-[#CC0000]" />
+                    </div>
+                    <span
+                      className="font-black text-xs uppercase tracking-widest"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
                       Alerts & Notifications
-                    </h4>
-                    
-                    <div className="space-y-4">
-                      {/* Login Notifications */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Login Notifications</h5>
-                          <p className="text-sm text-gray-600">Get notified when someone logs into your account</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('loginNotifications')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.loginNotifications ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.loginNotifications ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Suspicious Activity Alerts */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h5 className="font-semibold text-gray-800">Suspicious Activity Alerts</h5>
-                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-                              Important
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600">Receive alerts for unusual account activity</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('suspiciousActivityAlerts')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.suspiciousActivityAlerts ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.suspiciousActivityAlerts ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Data Export Notification */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Data Export Notification</h5>
-                          <p className="text-sm text-gray-600">Alert when your data is exported or downloaded</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('dataExportNotification')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.dataExportNotification ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.dataExportNotification ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Password Change Reminder */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Password Change Reminder</h5>
-                          <p className="text-sm text-gray-600">Remind to update passwords periodically</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('passwordChangeReminder')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.passwordChangeReminder ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.passwordChangeReminder ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                    </span>
                   </div>
 
-                  {/* Monitoring Section */}
-                  <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-5 border border-red-100">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                      <FaShieldVirus className="text-red-600" />
+                  <div className="bg-white divide-y-0">
+                    <SettingToggle
+                      checked={securitySettings.loginNotifications}
+                      onChange={() => handleSettingToggle('loginNotifications')}
+                      label="Login Notifications"
+                      description="Get notified when someone logs into your account"
+                    />
+                    <SettingToggle
+                      checked={securitySettings.suspiciousActivityAlerts}
+                      onChange={() => handleSettingToggle('suspiciousActivityAlerts')}
+                      label="Suspicious Activity Alerts"
+                      description="Receive alerts for unusual account activity"
+                      badge="Important"
+                      badgeType="important"
+                    />
+                    <SettingToggle
+                      checked={securitySettings.dataExportNotification}
+                      onChange={() => handleSettingToggle('dataExportNotification')}
+                      label="Data Export Notification"
+                      description="Alert when your data is exported or downloaded"
+                    />
+                    <SettingToggle
+                      checked={securitySettings.passwordChangeReminder}
+                      onChange={() => handleSettingToggle('passwordChangeReminder')}
+                      label="Password Change Reminder"
+                      description="Remind to update passwords periodically"
+                    />
+                  </div>
+                </div>
+
+                {/* ── SECURITY MONITORING SECTION ── */}
+                <div className="border-2 border-[#111111]">
+                  <div className="bg-[#111111] text-[#F9F9F7] px-5 py-4 flex items-center gap-3 border-b-2 border-[#111111]">
+                    <div className="p-2 border border-[#404040]">
+                      <FaShieldVirus className="text-[#CC0000]" />
+                    </div>
+                    <span
+                      className="font-black text-xs uppercase tracking-widest"
+                      style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                    >
                       Security Monitoring
-                    </h4>
-                    
-                    <div className="space-y-4">
-                      {/* Breach Monitoring */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h5 className="font-semibold text-gray-800">Breach Monitoring</h5>
-                            <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">
-                              Critical
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600">Monitor for data breaches and compromised credentials</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('breachMonitoring')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.breachMonitoring ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.breachMonitoring ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-
-                      {/* Device Tracking */}
-                      <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-800 mb-1">Device Tracking</h5>
-                          <p className="text-sm text-gray-600">Track and manage devices that access your account</p>
-                        </div>
-                        <button
-                          onClick={() => handleSettingToggle('deviceTracking')}
-                          className={`ml-4 p-1 rounded-full transition-colors ${
-                            securitySettings.deviceTracking ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                        >
-                          {securitySettings.deviceTracking ? (
-                            <FaToggleOn className="text-white text-3xl" />
-                          ) : (
-                            <FaToggleOff className="text-gray-600 text-3xl" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
+                    </span>
                   </div>
 
-                  {/* Info Box */}
+                  <div className="bg-white divide-y-0">
+                    <SettingToggle
+                      checked={securitySettings.breachMonitoring}
+                      onChange={() => handleSettingToggle('breachMonitoring')}
+                      label="Breach Monitoring"
+                      description="Monitor for data breaches and compromised credentials"
+                      badge="Critical"
+                      badgeType="critical"
+                    />
+                    <SettingToggle
+                      checked={securitySettings.deviceTracking}
+                      onChange={() => handleSettingToggle('deviceTracking')}
+                      label="Device Tracking"
+                      description="Track and manage devices that access your account"
+                    />
+                  </div>
+                </div>
+
+                {/* Unsaved Changes Warning — mirrors ErrorDisplay red border pattern */}
+                <AnimatePresence>
                   {settingsChanged && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3"
+                      exit={{ opacity: 0, y: -10 }}
+                      className="border-4 border-[#CC0000] bg-[#F9F9F7] p-5 flex items-start gap-4"
                     >
-                      <FaExclamation className="text-amber-600 mt-0.5" />
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-amber-800 mb-1">Unsaved Changes</h5>
-                        <p className="text-sm text-amber-700">You have unsaved changes. Click "Save Settings" to apply them.</p>
+                      <div className="p-3 border-2 border-[#CC0000] bg-[#CC0000] text-[#F9F9F7] flex-shrink-0">
+                        <FaExclamation className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h5
+                          className="font-black uppercase tracking-tight text-[#CC0000]"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
+                          UNSAVED CHANGES
+                        </h5>
+                        <p
+                          className="text-sm text-[#111111] mt-1"
+                          style={{ fontFamily: "'Lora', serif" }}
+                        >
+                          You have unsaved changes. Click <strong>"SAVE SETTINGS"</strong> to apply them.
+                        </p>
                       </div>
                     </motion.div>
                   )}
-                </div>
+                </AnimatePresence>
               </div>
-              
-              {/* Modal Footer */}
-              <div className="bg-gray-50 border-t border-gray-200 p-6 flex justify-between items-center">
+
+              {/* Modal Footer — sharp buttons, exact BackUp.tsx action footer pattern */}
+              <div className="bg-[#E5E5E0] border-t-4 border-[#111111] p-6 flex justify-between items-center flex-shrink-0">
                 <button
                   onClick={() => setShowSecuritySettings(false)}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors"
+                  className="px-6 py-3 border-2 border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
-                  Cancel
+                  CANCEL
                 </button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+
+                <button
                   onClick={handleSaveSettings}
                   disabled={!settingsChanged}
-                  className={`px-6 py-3 rounded-lg font-medium shadow-sm transition-all flex items-center gap-2 ${
+                  className={`px-8 py-3 font-black uppercase text-xs tracking-widest transition-colors flex items-center gap-2 border-2 ${
                     settingsChanged
-                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      ? 'bg-[#CC0000] text-[#F9F9F7] border-[#CC0000] hover:bg-[#990000] hover:border-[#990000]'
+                      : 'bg-[#E5E5E0] text-[#525252] border-[#E5E5E0] cursor-not-allowed'
                   }`}
+                  style={{ fontFamily: "'Inter', sans-serif" }}
                 >
                   <FaSave />
-                  Save Settings
-                </motion.button>
+                  SAVE SETTINGS
+                </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
     </div>
   );
 };
