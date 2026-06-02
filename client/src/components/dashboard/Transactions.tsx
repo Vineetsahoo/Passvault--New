@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaMoneyBillWave, FaSearch, FaFilter, FaArrowUp, FaArrowDown, 
+import {
+  FaMoneyBillWave, FaSearch, FaFilter, FaArrowUp, FaArrowDown,
   FaFileDownload, FaPlus, FaRegCalendarAlt, FaTags, FaRupeeSign,
   FaReceipt, FaCreditCard, FaCashRegister, FaRegClock,
   FaChevronRight, FaTimes, FaFileExport, FaCopy, FaSpinner,
   FaExclamationTriangle
 } from 'react-icons/fa';
 import { transactionsAPI } from '../../services/api';
+
+// ─── TYPE DEFINITIONS ────────────────────────────────────────────────────────
 
 interface Transaction {
   id: string;
@@ -17,72 +19,60 @@ interface Transaction {
   category?: 'credit' | 'debit' | 'subscription' | 'refund';
 }
 
-const Transactions: React.FC = () => {
-  // API state management
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<any>(null);
+// ─── COMPONENT ───────────────────────────────────────────────────────────────
 
+const Transactions: React.FC = () => {
+
+  // ── API State ──────────────────────────────────────────────────────────────
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [stats, setStats]               = useState<any>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'deposit' | 'withdrawal'>('all');
-  const [filterCategory, setFilterCategory] = useState<'all' | 'credit' | 'debit' | 'subscription' | 'refund'>('all');
+  // ── UI / Filter State ──────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery]           = useState('');
+  const [filterType, setFilterType]             = useState<'all' | 'deposit' | 'withdrawal'>('all');
+  const [filterCategory, setFilterCategory]     = useState<'all' | 'credit' | 'debit' | 'subscription' | 'refund'>('all');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'pdf'>('csv');
-  const [exportDateRange, setExportDateRange] = useState<'all' | 'current-month' | 'last-3-months' | 'last-6-months' | 'custom'>('all');
-  const [exportStatus, setExportStatus] = useState<'idle' | 'exporting' | 'completed'>('idle');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(8);
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [showAddModal, setShowAddModal]         = useState(false);
+  const [showExportModal, setShowExportModal]   = useState(false);
+  const [exportFormat, setExportFormat]         = useState<'csv' | 'json' | 'pdf'>('csv');
+  const [exportDateRange, setExportDateRange]   = useState<'all' | 'current-month' | 'last-3-months' | 'last-6-months' | 'custom'>('all');
+  const [exportStatus, setExportStatus]         = useState<'idle' | 'exporting' | 'completed'>('idle');
+  const [currentPage, setCurrentPage]           = useState(1);
+  const [itemsPerPage]                          = useState(8);
+  const [sortOrder, setSortOrder]               = useState<'newest' | 'oldest'>('newest');
 
-  // Fetch transactions from API
-  useEffect(() => {
-    fetchTransactions();
-  }, [filterType, filterCategory, sortOrder, currentPage]);
+  // ── Effects ────────────────────────────────────────────────────────────────
+  useEffect(() => { fetchTransactions(); }, [filterType, filterCategory, sortOrder, currentPage]);
+  useEffect(() => { fetchStats(); },       []);
 
-  // Fetch stats from API
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
+  // ── API Calls ──────────────────────────────────────────────────────────────
   const fetchTransactions = async () => {
     try {
       setLoading(true);
       setError(null);
 
       const params: any = {
-        page: currentPage,
+        page:  currentPage,
         limit: itemsPerPage,
-        sort: sortOrder === 'newest' ? '-date' : 'date'
+        sort:  sortOrder === 'newest' ? '-date' : 'date',
       };
 
-      if (filterType !== 'all') {
-        params.type = filterType;
-      }
-
-      if (filterCategory !== 'all') {
-        params.category = filterCategory;
-      }
-
-      if (searchQuery) {
-        params.search = searchQuery;
-      }
+      if (filterType     !== 'all') params.type     = filterType;
+      if (filterCategory !== 'all') params.category = filterCategory;
+      if (searchQuery)               params.search   = searchQuery;
 
       const response = await transactionsAPI.getTransactions(params);
-      
-      // Map API response to component Transaction interface
-      if (response.data.success && response.data.data && response.data.data.transactions) {
-        const mappedTransactions = response.data.data.transactions.map((txn: any) => ({
-          id: txn._id,
-          date: txn.date,
-          amount: txn.amount,
-          description: txn.description,
-          category: txn.category
-        }));
 
+      if (response.data.success && response.data.data?.transactions) {
+        const mappedTransactions = response.data.data.transactions.map((txn: any) => ({
+          id:          txn._id,
+          date:        txn.date,
+          amount:      txn.amount,
+          description: txn.description,
+          category:    txn.category,
+        }));
         setTransactions(mappedTransactions);
       } else {
         setTransactions([]);
@@ -104,185 +94,198 @@ const Transactions: React.FC = () => {
     }
   };
 
-  const depositTotal = stats?.totalCredits || transactions.filter(txn => txn.amount > 0).reduce((sum, txn) => sum + txn.amount, 0);
-  const withdrawalTotal = stats?.totalDebits || transactions.filter(txn => txn.amount < 0).reduce((sum, txn) => sum + txn.amount, 0);
-  const totalAmount = stats?.netTotal || transactions.reduce((sum, txn) => sum + txn.amount, 0);
+  // ── Derived Values ─────────────────────────────────────────────────────────
+  const depositTotal    = stats?.totalCredits || transactions.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+  const withdrawalTotal = stats?.totalDebits  || transactions.filter(t => t.amount < 0).reduce((s, t) => s + t.amount, 0);
+  const totalAmount     = stats?.netTotal     || transactions.reduce((s, t) => s + t.amount, 0);
 
   const filteredTransactions = transactions.filter(txn => {
-    const matchesSearch = txn.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType =
-      filterType === 'all' ||
-      (filterType === 'deposit' && txn.amount > 0) ||
-      (filterType === 'withdrawal' && txn.amount < 0);
-    const matchesCategory = 
-      filterCategory === 'all' ||
-      txn.category === filterCategory;
+    const matchesSearch    = txn.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType      = filterType === 'all' || (filterType === 'deposit' && txn.amount > 0) || (filterType === 'withdrawal' && txn.amount < 0);
+    const matchesCategory  = filterCategory === 'all' || txn.category === filterCategory;
     return matchesSearch && matchesType && matchesCategory;
   });
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
-
-  const getCategoryIcon = (category?: string) => {
-    switch(category) {
-      case 'credit':
-        return <span className="flex items-center gap-1.5 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-medium">
-          <FaArrowUp size={10} /> Credit
-        </span>;
-      case 'debit':
-        return <span className="flex items-center gap-1.5 bg-red-50 text-red-700 px-2.5 py-1 rounded-full text-xs font-medium">
-          <FaArrowDown size={10} /> Debit
-        </span>;
-      case 'subscription':
-        return <span className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs font-medium">
-          <FaRegClock size={10} /> Subscription
-        </span>;
-      case 'refund':
-        return <span className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium">
-          <FaCashRegister size={10} /> Refund
-        </span>;
-      default:
-        return <span className="flex items-center gap-1.5 bg-gray-50 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">
-          <FaReceipt size={10} /> Other
-        </span>;
-    }
-  };
-
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    const dA = new Date(a.date).getTime(), dB = new Date(b.date).getTime();
+    return sortOrder === 'newest' ? dB - dA : dA - dB;
   });
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const indexOfLastItem     = currentPage * itemsPerPage;
+  const indexOfFirstItem    = indexOfLastItem - itemsPerPage;
   const currentTransactions = sortedTransactions.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+  const totalPages          = Math.ceil(sortedTransactions.length / itemsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
+  // ── Utilities ──────────────────────────────────────────────────────────────
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  // Newsprint-style category badge — sharp corners, monospace, uppercase
+  const getCategoryIcon = (category?: string) => {
+    const base = 'inline-flex items-center gap-1.5 border font-bold uppercase tracking-widest text-[0.6rem] px-2 py-1';
+    switch (category) {
+      case 'credit':
+        return (
+          <span className={`${base} border-[#111111] bg-[#111111] text-[#F9F9F7]`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaArrowUp size={8} /> CREDIT
+          </span>
+        );
+      case 'debit':
+        return (
+          <span className={`${base} border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaArrowDown size={8} /> DEBIT
+          </span>
+        );
+      case 'subscription':
+        return (
+          <span className={`${base} border-[#111111] text-[#111111]`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaRegClock size={8} /> SUBSCR.
+          </span>
+        );
+      case 'refund':
+        return (
+          <span className={`${base} border-[#111111] text-[#111111] bg-[#E5E5E0]`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaCashRegister size={8} /> REFUND
+          </span>
+        );
+      default:
+        return (
+          <span className={`${base} border-[#A3A3A3] text-[#525252]`} style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <FaReceipt size={8} /> OTHER
+          </span>
+        );
+    }
+  };
+
+  // ── Export Handler (logic untouched) ───────────────────────────────────────
   const handleExportData = async () => {
     setExportStatus('exporting');
-    
+
     try {
-      // For CSV export, use the API
       if (exportFormat === 'csv') {
         const filters: any = {};
-        
-        // Apply date range filter
+
         if (exportDateRange !== 'all') {
           const now = new Date();
           let startDate = new Date();
-          
-          if (exportDateRange === 'current-month') {
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          } else if (exportDateRange === 'last-3-months') {
-            startDate.setMonth(now.getMonth() - 3);
-          } else if (exportDateRange === 'last-6-months') {
-            startDate.setMonth(now.getMonth() - 6);
-          }
-          
+
+          if      (exportDateRange === 'current-month')  startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          else if (exportDateRange === 'last-3-months')  startDate.setMonth(now.getMonth() - 3);
+          else if (exportDateRange === 'last-6-months')  startDate.setMonth(now.getMonth() - 6);
+
           filters.startDate = startDate.toISOString().split('T')[0];
-          filters.endDate = now.toISOString().split('T')[0];
+          filters.endDate   = now.toISOString().split('T')[0];
         }
 
-        // Use the API to export CSV
         const response = await transactionsAPI.exportCSV(filters);
-        
-        // Create blob from response and download
         const blob = new Blob([response.data], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        const url  = window.URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
         a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
       } else {
-        // For JSON and PDF, use local data
         let dataToExport = sortedTransactions;
-        
-        // Apply date range filter
+
         if (exportDateRange !== 'all') {
           const now = new Date();
           let cutoffDate = new Date();
-          
-          if (exportDateRange === 'current-month') {
-            cutoffDate = new Date(now.getFullYear(), now.getMonth(), 1);
-          } else if (exportDateRange === 'last-3-months') {
-            cutoffDate.setMonth(now.getMonth() - 3);
-          } else if (exportDateRange === 'last-6-months') {
-            cutoffDate.setMonth(now.getMonth() - 6);
-          }
-          
+
+          if      (exportDateRange === 'current-month') cutoffDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          else if (exportDateRange === 'last-3-months') cutoffDate.setMonth(now.getMonth() - 3);
+          else if (exportDateRange === 'last-6-months') cutoffDate.setMonth(now.getMonth() - 6);
+
           dataToExport = dataToExport.filter(txn => new Date(txn.date) >= cutoffDate);
         }
 
         if (exportFormat === 'json') {
-          // Create JSON
           const jsonContent = JSON.stringify(dataToExport, null, 2);
           const blob = new Blob([jsonContent], { type: 'application/json' });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
+          const url  = window.URL.createObjectURL(blob);
+          const a    = document.createElement('a');
+          a.href     = url;
           a.download = `transactions-${new Date().toISOString().split('T')[0]}.json`;
           a.click();
           window.URL.revokeObjectURL(url);
         } else if (exportFormat === 'pdf') {
-          // For PDF, we'll just show a message (actual PDF generation would need a library)
           console.log('PDF export would be generated here with a library like jsPDF');
         }
       }
-      
+
       setExportStatus('completed');
-      
-      // Reset after 2 seconds
-      setTimeout(() => {
-        setExportStatus('idle');
-        setShowExportModal(false);
-      }, 2000);
+      setTimeout(() => { setExportStatus('idle'); setShowExportModal(false); }, 2000);
     } catch (err: any) {
       console.error('Error exporting transactions:', err);
       setExportStatus('idle');
       alert('Failed to export transactions. Please try again.');
     }
-  };  const exportTransactions = () => {
-    setShowExportModal(true);
-    setExportStatus('idle');
   };
 
-  // Show loading state
+  const exportTransactions = () => { setShowExportModal(true); setExportStatus('idle'); };
+
+  // ── Loading State ──────────────────────────────────────────────────────────
   if (loading && transactions.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="text-center">
-          <FaSpinner className="w-16 h-16 animate-spin text-purple-500 mx-auto mb-4" />
-          <p className="text-xl text-gray-300">Loading transactions...</p>
-          <p className="text-sm text-gray-500 mt-2">Fetching your transaction data</p>
+      <div
+        className="min-h-screen bg-[#F9F9F7] flex items-center justify-center"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+        }}
+      >
+        <div className="text-center border-4 border-[#111111] p-16 bg-[#F9F9F7] relative overflow-hidden max-w-sm w-full mx-4">
+          <div className="absolute inset-0 opacity-5 pointer-events-none"
+            style={{ backgroundImage: 'linear-gradient(0deg, transparent 98%, rgba(0,0,0,0.08) 100%), linear-gradient(90deg, transparent 98%, rgba(0,0,0,0.08) 100%)', backgroundSize: '3px 3px' }}
+          />
+          <div className="relative z-10">
+            <FaSpinner className="animate-spin text-[#111111] mx-auto mb-6" style={{ fontSize: '2.5rem' }} />
+            <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-4" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              [RETRIEVING LEDGER]
+            </div>
+            <h2 className="text-3xl font-black text-[#111111] uppercase leading-tight tracking-tighter mb-3" style={{ fontFamily: "'Playfair Display', serif" }}>
+              LOADING<br />RECORDS
+            </h2>
+            <p className="text-[#525252] text-sm leading-relaxed" style={{ fontFamily: "'Lora', serif" }}>
+              Fetching your financial transaction data…
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Show error state
+  // ── Error State ────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="text-center max-w-md">
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-8">
-            <FaExclamationTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-2xl font-semibold text-red-400 mb-3">Error Loading Data</h3>
-            <p className="text-gray-400 mb-6">{error}</p>
+      <div
+        className="min-h-screen bg-[#F9F9F7] flex items-center justify-center"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+        }}
+      >
+        <div className="max-w-lg w-full mx-4 border-4 border-[#CC0000] bg-[#F9F9F7]">
+          <div className="bg-[#CC0000] p-8 flex items-center gap-6">
+            <div className="p-4 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#CC0000]">
+              <FaExclamationTriangle className="text-2xl" />
+            </div>
+            <h2 className="text-3xl font-black uppercase tracking-tighter text-[#F9F9F7]" style={{ fontFamily: "'Playfair Display', serif" }}>
+              DATA ERROR
+            </h2>
+          </div>
+          <div className="p-10">
+            <p className="text-[#111111] font-bold mb-8 border-l-4 border-[#CC0000] pl-4" style={{ fontFamily: "'Inter', sans-serif" }}>
+              {error}
+            </p>
             <button
               onClick={fetchTransactions}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors font-medium"
+              className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
-              Try Again
+              RETRY OPERATION
             </button>
           </div>
         </div>
@@ -290,917 +293,1027 @@ const Transactions: React.FC = () => {
     );
   }
 
+  // ── MAIN RENDER ────────────────────────────────────────────────────────────
   return (
-    <div className="border-4 border-[#111111] bg-[#F9F9F7] p-6 space-y-8">
-      <div className="relative overflow-hidden bg-[#111111]">
-        <div className="relative z-10 p-7">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <>
+      {/* Inline Style Definitions ─ Newsprint Font & Utility Classes */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=block');
+
+        .newsprint-texture { position: relative; }
+        .newsprint-texture::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(0deg, transparent 98%, rgba(0,0,0,0.02) 100%),
+            linear-gradient(90deg, transparent 98%, rgba(0,0,0,0.02) 100%);
+          background-size: 3px 3px;
+          pointer-events: none;
+          opacity: 0.5;
+        }
+        .hard-shadow-hover {
+          transition: box-shadow 0.15s ease-out, transform 0.15s ease-out;
+        }
+        .hard-shadow-hover:hover {
+          box-shadow: 4px 4px 0px 0px #111111;
+          transform: translate(-2px, -2px);
+        }
+        .txn-row:hover { background-color: #E5E5E0; }
+      `}</style>
+
+      <div
+        className="bg-[#F9F9F7]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E")`
+        }}
+      >
+
+        {/* ── HEADER ──────────────────────────────────────────────────────── */}
+        <div className="border-b-4 border-[#111111] bg-[#F9F9F7] p-8 md:p-12 relative overflow-hidden newsprint-texture">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
+
+            {/* Headline block */}
             <div>
-              <div className="inline-flex items-center gap-3 mb-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                <FaCreditCard className="text-teal-200" />
-                <span className="text-xs font-medium text-teal-50">Financial Overview</span>
+              <div
+                className="inline-block border border-[#111111] px-3 py-1 mb-6 text-[0.65rem] font-black uppercase tracking-widest text-[#111111]"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                FINANCIAL LEDGER &bull; TRANSACTIONS
               </div>
-              
-              <h2 className="text-3xl font-black text-[#F9F9F7] flex flex-wrap items-center gap-3" style={{ fontFamily: "'Playfair Display', serif" }}>
-                <FaMoneyBillWave className="text-teal-200" /> 
-                <span>Financial Transactions</span>
+              <h2
+                className="text-5xl md:text-7xl font-black leading-[0.85] tracking-tighter text-[#111111]"
+                style={{ fontFamily: "'Playfair Display', serif" }}
+              >
+                FINANCIAL<br />
+                <span className="italic" style={{ color: "#CC0000" }}>RECORDS</span>
               </h2>
-              
-              <p className="text-teal-100 mt-1.5 max-w-lg">
-                Track, manage and analyze all your financial activities in one place
+              <p
+                className="mt-6 text-lg text-[#525252] max-w-2xl leading-relaxed border-l-4 border-[#CC0000] pl-4"
+                style={{ fontFamily: "'Lora', serif" }}
+              >
+                Track, manage, and analyze all your financial activities. Every rupee accounted for.
               </p>
             </div>
-            
-            <div className="flex items-center gap-3 self-end">
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full md:w-auto mt-8 md:mt-0">
+              <button
                 onClick={exportTransactions}
-                className="px-4 py-2.5 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black transition-all flex items-center gap-2"
+                className="px-6 py-4 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] hard-shadow-hover flex items-center justify-center gap-2"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                <FaFileExport className="text-teal-200" /> Export Data
-              </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                <FaFileExport /> EXPORT DATA
+              </button>
+              <button
                 onClick={() => setShowAddModal(true)}
-                className="px-4 py-2.5 bg-white text-teal-700 font-medium rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+                className="px-8 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center justify-center gap-2"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
-                <FaPlus /> Add Transaction
-              </motion.button>
+                <FaPlus /> ADD TRANSACTION
+              </button>
             </div>
           </div>
-          
-          <div className="mt-6 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaArrowUp className="text-green-300" size={12} />
-              <span className="text-xs text-teal-50">Income: ₹{depositTotal.toFixed(2)}</span>
+
+          {/* Stats Strip ── collapsed-border grid like BackUp.tsx */}
+          <div className="mt-12 pt-6 border-t-4 border-[#111111] grid grid-cols-2 md:grid-cols-5 gap-0 bg-[#111111]">
+            <div className="col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+              <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[NET BALANCE]</div>
+              <div className={`font-black text-2xl flex items-center gap-1 ${totalAmount >= 0 ? 'text-[#111111]' : 'text-[#CC0000]'}`} style={{ fontFamily: "'Playfair Display', serif" }}>
+                <FaRupeeSign className="text-lg" />{totalAmount.toFixed(0)}
+              </div>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
-              <FaArrowDown className="text-red-300" size={12} />
-              <span className="text-xs text-teal-50">Expenses: ₹{Math.abs(withdrawalTotal).toFixed(2)}</span>
+            <div className="col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+              <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[TOTAL INCOME]</div>
+              <div className="font-black text-2xl text-[#111111] flex items-center gap-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <FaArrowUp className="text-lg" />₹{depositTotal.toFixed(0)}
+              </div>
+            </div>
+            <div className="col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+              <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[EXPENSES]</div>
+              <div className="font-black text-2xl text-[#CC0000] flex items-center gap-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <FaArrowDown className="text-lg" />₹{Math.abs(withdrawalTotal).toFixed(0)}
+              </div>
+            </div>
+            <div className="col-span-1 bg-[#F9F9F7] border-r border-b md:border-b-0 border-[#111111] p-4 hover:bg-[#E5E5E0] transition-colors">
+              <div className="text-[0.6rem] text-[#CC0000] font-bold uppercase tracking-widest mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>[TRANSACTIONS]</div>
+              <div className="font-black text-2xl text-[#111111] flex items-center gap-1" style={{ fontFamily: "'Playfair Display', serif" }}>
+                <FaReceipt className="text-lg" /> {transactions.length}
+              </div>
+            </div>
+            <div className="col-span-2 md:col-span-1 bg-[#111111]">
+              <button
+                onClick={() => { setFilterType('all'); setFilterCategory('all'); setSearchQuery(''); }}
+                className="w-full h-full flex items-center justify-center gap-2 bg-[#111111] text-[#F9F9F7] font-black text-xs uppercase tracking-widest p-4 hover:bg-[#CC0000] transition-colors min-h-[64px]"
+                style={{ fontFamily: "'Inter', sans-serif" }}
+              >
+                <FaTimes /> CLEAR FILTERS
+              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <motion.div
-          whileHover={{ y: -5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-          className="bg-[#F9F9F7] border-2 border-[#111111] overflow-hidden"
-        >
-          <div className="p-4 border-b-2 border-[#111111]">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Net Balance</h3>
-              <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
-                <FaRupeeSign className="text-indigo-600" />
+        {/* ── SUMMARY CARDS ───────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 border-b-4 border-[#111111]">
+
+          {/* Net Balance Card */}
+          <div className="border-r border-[#111111] bg-[#F9F9F7] p-8 hover:bg-[#E5E5E0] transition-colors">
+            <div className="flex items-center justify-between mb-8 border-b-2 border-[#111111] pb-4">
+              <h3 className="text-2xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>NET BALANCE</h3>
+              <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+                <FaRupeeSign className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="p-6">
-            <div className="flex items-baseline">
-              <p className={`text-3xl font-bold ${totalAmount >= 0 ? 'text-indigo-600' : 'text-red-600'}`}>
+            <div className="mb-4">
+              <p className="text-[0.65rem] text-[#CC0000] uppercase tracking-widest font-bold mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>CURRENT BALANCE</p>
+              <p className={`text-4xl font-black tracking-tighter border-l-2 border-[#111111] pl-3 py-1 ${totalAmount >= 0 ? 'text-[#111111]' : 'text-[#CC0000]'}`} style={{ fontFamily: "'Playfair Display', serif" }}>
                 ₹{totalAmount.toFixed(2)}
               </p>
-              <span className="ml-2 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                {transactions.length} transactions
+            </div>
+            <div className="pt-4 border-t border-[#111111] flex justify-between items-center text-xs font-bold uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              <span className="text-[#525252]">{transactions.length} TOTAL ENTRIES</span>
+              <span className={`${totalAmount >= 0 ? 'text-[#111111]' : 'text-[#CC0000]'}`}>
+                {totalAmount >= 0 ? '▲ SURPLUS' : '▼ DEFICIT'}
               </span>
             </div>
-            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between text-sm">
-              <span className="text-gray-500">Current Period</span>
-              <span className="text-indigo-600 font-medium">December 2023</span>
-            </div>
           </div>
-        </motion.div>
 
-        <motion.div
-          whileHover={{ y: -5 }}
-          transition={{ type: "spring", stiffness: 300 }}
-          className="bg-[#F9F9F7] border-2 border-[#111111] overflow-hidden"
-        >
-          <div className="p-4 border-b-2 border-[#111111]">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Total Income</h3>
-              <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
-                <FaArrowUp className="text-green-600" />
+          {/* Income Card */}
+          <div className="border-r border-[#111111] bg-[#F9F9F7] p-8 hover:bg-[#E5E5E0] transition-colors">
+            <div className="flex items-center justify-between mb-8 border-b-2 border-[#111111] pb-4">
+              <h3 className="text-2xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>INCOME</h3>
+              <div className="p-2 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+                <FaArrowUp className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="p-6">
-            <div className="flex items-baseline">
-              <p className="text-3xl font-bold text-green-600">₹{depositTotal.toFixed(2)}</p>
-              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                {transactions.filter(txn => txn.amount > 0).length} deposits
+            <div className="flex items-baseline gap-3 mb-4">
+              <p className="text-4xl font-black text-[#111111] tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>₹{depositTotal.toFixed(2)}</p>
+              <span className="text-[0.65rem] border border-[#111111] text-[#111111] px-2 py-0.5 uppercase tracking-widest font-bold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                {transactions.filter(t => t.amount > 0).length} DEP.
               </span>
             </div>
             <div className="mt-4">
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full" style={{ width: `${(depositTotal / (depositTotal - withdrawalTotal)) * 100}%` }}></div>
+              <div className="h-2 w-full border border-[#111111] bg-white">
+                <div
+                  className="h-full bg-[#111111]"
+                  style={{ width: `${depositTotal + Math.abs(withdrawalTotal) > 0 ? (depositTotal / (depositTotal + Math.abs(withdrawalTotal))) * 100 : 0}%` }}
+                />
               </div>
-              <div className="mt-1 text-xs text-gray-500">
-                {Math.round((depositTotal / (depositTotal - withdrawalTotal)) * 100)}% of total flow
+              <div className="mt-2 flex justify-between text-[0.6rem] text-[#525252] font-bold tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                <span>₹0</span>
+                <span>{depositTotal + Math.abs(withdrawalTotal) > 0 ? Math.round((depositTotal / (depositTotal + Math.abs(withdrawalTotal))) * 100) : 0}% OF FLOW</span>
               </div>
             </div>
           </div>
-        </motion.div>
 
-        <motion.div
-          whileHover={{ y: -5, boxShadow: "0 15px 30px rgba(0,0,0,0.05)" }}
-          transition={{ type: "spring", stiffness: 300 }}
-          className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
-        >
-          <div className="bg-gradient-to-r from-red-50 via-rose-50 to-red-100 p-4 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Total Expenses</h3>
-              <div className="p-3 rounded-xl bg-white shadow-sm flex items-center justify-center">
-                <FaArrowDown className="text-red-600" />
+          {/* Expenses Card */}
+          <div className="bg-[#F9F9F7] p-8 hover:bg-[#E5E5E0] transition-colors">
+            <div className="flex items-center justify-between mb-8 border-b-2 border-[#111111] pb-4">
+              <h3 className="text-2xl font-black text-[#111111]" style={{ fontFamily: "'Playfair Display', serif" }}>EXPENSES</h3>
+              <div className="p-2 border-2 border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]">
+                <FaArrowDown className="h-5 w-5" />
               </div>
             </div>
-          </div>
-          <div className="p-6">
-            <div className="flex items-baseline">
-              <p className="text-3xl font-bold text-red-600">₹{Math.abs(withdrawalTotal).toFixed(2)}</p>
-              <span className="ml-2 text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
-                {transactions.filter(txn => txn.amount < 0).length} withdrawals
+            <div className="flex items-baseline gap-3 mb-4">
+              <p className="text-4xl font-black text-[#CC0000] tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>₹{Math.abs(withdrawalTotal).toFixed(2)}</p>
+              <span className="text-[0.65rem] border border-[#CC0000] text-[#CC0000] px-2 py-0.5 uppercase tracking-widest font-bold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                {transactions.filter(t => t.amount < 0).length} WITH.
               </span>
             </div>
             <div className="mt-4">
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-red-500 rounded-full" style={{ width: `${(Math.abs(withdrawalTotal) / (depositTotal - withdrawalTotal)) * 100}%` }}></div>
+              <div className="h-2 w-full border border-[#111111] bg-white">
+                <div
+                  className="h-full bg-[#CC0000]"
+                  style={{ width: `${depositTotal + Math.abs(withdrawalTotal) > 0 ? (Math.abs(withdrawalTotal) / (depositTotal + Math.abs(withdrawalTotal))) * 100 : 0}%` }}
+                />
               </div>
-              <div className="mt-1 text-xs text-gray-500">
-                {Math.round((Math.abs(withdrawalTotal) / (depositTotal - withdrawalTotal)) * 100)}% of total flow
+              <div className="mt-2 flex justify-between text-[0.6rem] text-[#525252] font-bold tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                <span>₹0</span>
+                <span>{depositTotal + Math.abs(withdrawalTotal) > 0 ? Math.round((Math.abs(withdrawalTotal) / (depositTotal + Math.abs(withdrawalTotal))) * 100) : 0}% OF FLOW</span>
               </div>
             </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-5">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        {/* ── SEARCH & FILTERS ─────────────────────────────────────────────── */}
+        <div className="border-b-4 border-[#111111] bg-[#F9F9F7] p-6 md:p-8">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+
+            {/* Search box */}
             <div className="relative flex-1 w-full">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <FaSearch className="text-gray-400" />
+                <FaSearch className="text-[#111111]" />
               </div>
               <input
                 type="text"
-                placeholder="Search transactions by description..."
+                placeholder="SEARCH TRANSACTIONS BY DESCRIPTION..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-teal-300 focus:ring-2 focus:ring-teal-200 focus:ring-opacity-50 transition-all"
+                className="w-full pl-12 pr-4 py-4 border-2 border-[#111111] bg-[#F9F9F7] text-[#111111] font-bold text-xs tracking-widest uppercase placeholder-[#A3A3A3] focus:outline-none focus:ring-2 focus:ring-[#111111] focus:ring-offset-0 transition-all"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
               />
             </div>
-            
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
-                <FaFilter className="text-gray-500" />
+
+            {/* Filter dropdowns */}
+            <div className="flex flex-wrap items-center gap-0 border-2 border-[#111111] divide-x-2 divide-[#111111] w-full md:w-auto">
+
+              <div className="flex items-center gap-2 px-4 py-4 hover:bg-[#E5E5E0] transition-colors">
+                <FaFilter className="text-[#111111] flex-shrink-0" />
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value as any)}
-                  className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
+                  className="bg-transparent border-none text-[0.65rem] uppercase tracking-widest font-bold text-[#111111] focus:ring-0 focus:outline-none cursor-pointer"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  <option value="all">All Types</option>
-                  <option value="deposit">Deposits</option>
-                  <option value="withdrawal">Withdrawals</option>
+                  <option value="all">ALL TYPES</option>
+                  <option value="deposit">DEPOSITS</option>
+                  <option value="withdrawal">WITHDRAWALS</option>
                 </select>
               </div>
-              
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
-                <FaTags className="text-gray-500" />
+
+              <div className="flex items-center gap-2 px-4 py-4 hover:bg-[#E5E5E0] transition-colors">
+                <FaTags className="text-[#111111] flex-shrink-0" />
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value as any)}
-                  className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
+                  className="bg-transparent border-none text-[0.65rem] uppercase tracking-widest font-bold text-[#111111] focus:ring-0 focus:outline-none cursor-pointer"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  <option value="all">All Categories</option>
-                  <option value="credit">Credit</option>
-                  <option value="debit">Debit</option>
-                  <option value="subscription">Subscription</option>
-                  <option value="refund">Refund</option>
+                  <option value="all">ALL CATEGORIES</option>
+                  <option value="credit">CREDIT</option>
+                  <option value="debit">DEBIT</option>
+                  <option value="subscription">SUBSCRIPTION</option>
+                  <option value="refund">REFUND</option>
                 </select>
               </div>
-              
-              <div className="flex items-center gap-2 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
-                <FaRegCalendarAlt className="text-gray-500" />
+
+              <div className="flex items-center gap-2 px-4 py-4 hover:bg-[#E5E5E0] transition-colors">
+                <FaRegCalendarAlt className="text-[#111111] flex-shrink-0" />
                 <select
                   value={sortOrder}
                   onChange={(e) => setSortOrder(e.target.value as any)}
-                  className="bg-transparent border-none text-sm focus:ring-0 text-gray-700 font-medium"
+                  className="bg-transparent border-none text-[0.65rem] uppercase tracking-widest font-bold text-[#111111] focus:ring-0 focus:outline-none cursor-pointer"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
                 >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
+                  <option value="newest">NEWEST FIRST</option>
+                  <option value="oldest">OLDEST FIRST</option>
                 </select>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-        <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-6 border-b border-gray-100">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white rounded-xl shadow-sm">
-                <FaReceipt className="text-teal-600" />
+        {/* ── TRANSACTION HISTORY TABLE ─────────────────────────────────────── */}
+        <div className="bg-[#F9F9F7]">
+
+          {/* Section header */}
+          <div className="bg-[#111111] text-[#F9F9F7] p-8 md:p-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b-4 border-[#111111]">
+            <div className="flex items-center gap-6">
+              <div className="p-3 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111]">
+                <FaReceipt className="h-6 w-6" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-800">Transaction History</h3>
-                <p className="text-sm text-gray-500">Complete record of your financial activities</p>
+                <h3 className="text-3xl font-black tracking-tighter uppercase" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  TRANSACTION HISTORY
+                </h3>
+                <p className="text-[#A3A3A3] mt-1 max-w-md" style={{ fontFamily: "'Lora', serif" }}>
+                  Complete record of your financial activities.
+                </p>
               </div>
             </div>
-            <div className="text-sm text-gray-500 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-100">
-              Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, sortedTransactions.length)} of {sortedTransactions.length}
+            <div
+              className="text-[0.65rem] font-bold text-[#F9F9F7] uppercase tracking-widest border border-[#A3A3A3] px-4 py-2 flex-shrink-0"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              SHOWING {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, sortedTransactions.length)} OF {sortedTransactions.length}
             </div>
           </div>
-        </div>
-        
-        <div className="p-6">
-          {sortedTransactions.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-16"
-            >
-              <div className="relative mx-auto w-20 h-20 mb-6">
-                <div className="absolute inset-0 bg-teal-100 rounded-full animate-ping opacity-50"></div>
-                <div className="relative bg-teal-50 rounded-full w-full h-full flex items-center justify-center">
-                  <FaReceipt className="text-teal-400 text-2xl" />
+
+          {/* Table body */}
+          <div className="p-6 md:p-8">
+            {sortedTransactions.length === 0 ? (
+
+              // ── Empty State ──
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-20 border-4 border-dashed border-[#111111]"
+              >
+                <div className="mx-auto w-16 h-16 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] flex items-center justify-center mb-8">
+                  <FaReceipt className="text-2xl" />
                 </div>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">No transactions found</h3>
-              <p className="text-gray-500 max-w-md mx-auto mb-6">
-                No transactions match your current search or filters. Try adjusting your criteria or add a new transaction.
-              </p>
-              <div className="flex justify-center gap-3">
-                <button onClick={() => {setFilterType('all'); setFilterCategory('all'); setSearchQuery('');}} className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                  Clear filters
-                </button>
-                <button 
-                  onClick={() => setShowAddModal(true)}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-2"
+                <h3
+                  className="text-3xl font-black text-[#111111] mb-3 uppercase tracking-tight"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
                 >
-                  <FaPlus size={12} /> Add transaction
-                </button>
-              </div>
-            </motion.div>
-          ) : (
-            <>
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
-                  <thead>
-                    <tr>
-                      <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg bg-gray-50">Date</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Description</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Category</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Amount</th>
-                      <th className="px-6 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tr-lg bg-gray-50"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {currentTransactions.map((txn, index) => (
-                      <motion.tr 
-                        key={txn.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ 
-                          opacity: 1, 
-                          y: 0,
-                          transition: { delay: index * 0.05 }
-                        }}
-                        whileHover={{ backgroundColor: "#f9fafb" }}
-                        onClick={() => setSelectedTransaction(txn)}
-                        className="cursor-pointer transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className={`p-2.5 rounded-xl mr-3 ${
-                              txn.amount > 0 ? 'bg-green-50' : 'bg-red-50'
-                            }`}>
-                              {txn.amount > 0 ? 
-                                <FaArrowUp className="text-green-600 w-4 h-4" /> : 
-                                <FaArrowDown className="text-red-600 w-4 h-4" />}
+                  NO RECORDS FOUND
+                </h3>
+                <p className="text-[#525252] max-w-md mx-auto mb-10" style={{ fontFamily: "'Lora', serif" }}>
+                  No transactions match your current search or filters. Try adjusting your criteria or add a new transaction.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={() => { setFilterType('all'); setFilterCategory('all'); setSearchQuery(''); }}
+                    className="px-6 py-3 border-2 border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    CLEAR FILTERS
+                  </button>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="px-6 py-3 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center gap-2"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    <FaPlus /> ADD TRANSACTION
+                  </button>
+                </div>
+              </motion.div>
+
+            ) : (
+              <>
+                {/* ── Table ── */}
+                <div className="overflow-x-auto border-2 border-[#111111]">
+                  <table className="min-w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#E5E5E0] border-b-2 border-[#111111]">
+                        {['DATE', 'DESCRIPTION', 'CATEGORY', 'AMOUNT', ''].map((col, i) => (
+                          <th
+                            key={i}
+                            className={`px-6 py-4 text-left text-[0.6rem] font-bold uppercase tracking-widest text-[#111111] ${i < 4 ? 'border-r border-[#111111]' : ''}`}
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          >
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E5E5E0]">
+                      {currentTransactions.map((txn, index) => (
+                        <motion.tr
+                          key={txn.id}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0, transition: { delay: index * 0.04 } }}
+                          onClick={() => setSelectedTransaction(txn)}
+                          className="txn-row cursor-pointer transition-colors bg-white border-b border-[#E5E5E0]"
+                        >
+                          {/* Date */}
+                          <td className="px-6 py-5 whitespace-nowrap border-r border-[#E5E5E0]">
+                            <div className="flex items-center gap-3">
+                              <div className={`p-2 border-2 flex-shrink-0 ${txn.amount > 0 ? 'border-[#111111] bg-[#111111] text-[#F9F9F7]' : 'border-[#CC0000] bg-[#CC0000] text-[#F9F9F7]'}`}>
+                                {txn.amount > 0
+                                  ? <FaArrowUp className="w-3 h-3" />
+                                  : <FaArrowDown className="w-3 h-3" />
+                                }
+                              </div>
+                              <span className="text-xs font-bold text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                                {formatDate(txn.date)}
+                              </span>
                             </div>
-                            <div className="text-sm font-medium text-gray-900">{formatDate(txn.date)}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-800 font-semibold">{txn.description}</div>
-                          <div className="text-xs text-gray-500 mt-0.5">ID: {txn.id}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {getCategoryIcon(txn.category)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm font-bold ${txn.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {txn.amount >= 0 ? '+' : ''}{txn.amount.toFixed(2)} ₹
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button className="p-2 text-teal-600 hover:text-teal-900 hover:bg-teal-50 rounded-full transition-colors">
-                            <FaChevronRight />
-                          </button>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-gray-200 px-4 py-4 sm:px-6 mt-4">
-                  <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                          </td>
+
+                          {/* Description */}
+                          <td className="px-6 py-5 border-r border-[#E5E5E0]">
+                            <div className="font-bold text-[#111111] text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+                              {txn.description}
+                            </div>
+                            <div className="text-[0.6rem] text-[#A3A3A3] mt-0.5 uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                              ID: {txn.id}
+                            </div>
+                          </td>
+
+                          {/* Category */}
+                          <td className="px-6 py-5 whitespace-nowrap border-r border-[#E5E5E0]">
+                            {getCategoryIcon(txn.category)}
+                          </td>
+
+                          {/* Amount */}
+                          <td className="px-6 py-5 whitespace-nowrap border-r border-[#E5E5E0]">
+                            <span
+                              className={`font-black text-lg tracking-tight ${txn.amount >= 0 ? 'text-[#111111]' : 'text-[#CC0000]'}`}
+                              style={{ fontFamily: "'Playfair Display', serif" }}
+                            >
+                              {txn.amount >= 0 ? '+' : ''}₹{txn.amount.toFixed(2)}
+                            </span>
+                          </td>
+
+                          {/* Action chevron */}
+                          <td className="px-6 py-5 whitespace-nowrap text-right">
+                            <button
+                              className="p-2 border border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors"
+                              aria-label="View details"
+                            >
+                              <FaChevronRight size={12} />
+                            </button>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* ── Pagination ── */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between border-t-2 border-[#111111] pt-6 mt-6">
+                    <p className="text-xs font-bold text-[#525252] uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                      {indexOfFirstItem + 1}–{Math.min(indexOfLastItem, sortedTransactions.length)} of {sortedTransactions.length} records
+                    </p>
+                    <nav className="flex items-center gap-0 border-2 border-[#111111] divide-x-2 divide-[#111111]" aria-label="Pagination">
+                      <button
+                        onClick={() => paginate(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="px-4 py-3 text-xs font-bold uppercase tracking-widest text-[#111111] hover:bg-[#E5E5E0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        &larr; PREV
+                      </button>
+
+                      {[...Array(totalPages)].map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => paginate(idx + 1)}
+                          className={`px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${
+                            currentPage === idx + 1
+                              ? 'bg-[#111111] text-[#F9F9F7]'
+                              : 'text-[#111111] hover:bg-[#E5E5E0]'
+                          }`}
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          {idx + 1}
+                        </button>
+                      ))}
+
+                      <button
+                        onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-3 text-xs font-bold uppercase tracking-widest text-[#111111] hover:bg-[#E5E5E0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        NEXT &rarr;
+                      </button>
+                    </nav>
+                  </div>
+                )}
+
+                {/* Load older link */}
+                {sortedTransactions.length > 0 && (
+                  <div className="text-center pt-8">
+                    <button
+                      className="text-xs font-black text-[#111111] uppercase tracking-widest border-b-2 border-[#111111] hover:text-[#CC0000] hover:border-[#CC0000] pb-1 transition-colors"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      VIEW FULL HISTORY &darr;
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* ── MODALS ───────────────────────────────────────────────────────── */}
+        <AnimatePresence>
+
+          {/* ── Transaction Detail Modal ── */}
+          {selectedTransaction && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#111111]/70 z-50 flex items-center justify-center p-4"
+              onClick={() => setSelectedTransaction(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.97, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.97, opacity: 0, y: 10 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="bg-[#F9F9F7] border-4 border-[#111111] max-w-md w-full overflow-hidden"
+                style={{ boxShadow: '8px 8px 0px 0px #111111' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Modal header */}
+                <div className={`p-6 border-b-4 border-[#111111] flex justify-between items-center ${selectedTransaction.amount >= 0 ? 'bg-[#111111]' : 'bg-[#CC0000]'} text-[#F9F9F7]`}>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111]">
+                      {selectedTransaction.amount >= 0 ? <FaArrowUp className="h-5 w-5" /> : <FaArrowDown className="h-5 w-5" />}
+                    </div>
                     <div>
-                      <p className="text-sm text-gray-700">
-                        Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
-                        <span className="font-medium">{Math.min(indexOfLastItem, sortedTransactions.length)}</span> of{" "}
-                        <span className="font-medium">{sortedTransactions.length}</span> results
+                      <h3 className="text-2xl font-black uppercase tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        {selectedTransaction.amount >= 0 ? 'INCOME ENTRY' : 'EXPENSE ENTRY'}
+                      </h3>
+                      <p className="text-[0.65rem] uppercase tracking-widest mt-1 opacity-70" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        TRANSACTION DETAILS
                       </p>
                     </div>
-                    <div>
-                      <nav className="isolate inline-flex -space-x-px rounded-lg shadow-sm" aria-label="Pagination">
-                        <button
-                          onClick={() => paginate(Math.max(1, currentPage - 1))}
-                          disabled={currentPage === 1}
-                          className={`relative inline-flex items-center rounded-l-lg px-3 py-2 text-gray-500 ring-1 ring-inset ring-gray-300 
-                                    ${currentPage === 1 ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50 focus:z-20 focus:outline-offset-0'}`}
-                        >
-                          <span className="sr-only">Previous</span>
-                          <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        
-                        {[...Array(totalPages)].map((_, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => paginate(idx + 1)}
-                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold 
-                                      ${currentPage === idx + 1 
-                                        ? 'z-10 bg-teal-600 text-white'
-                                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'}`}
-                          >
-                            {idx + 1}
-                          </button>
-                        ))}
-                        
-                        <button
-                          onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                          disabled={currentPage === totalPages}
-                          className={`relative inline-flex items-center rounded-r-lg px-3 py-2 text-gray-500 ring-1 ring-inset ring-gray-300 
-                                    ${currentPage === totalPages ? 'bg-gray-100 cursor-not-allowed' : 'hover:bg-gray-50 focus:z-20 focus:outline-offset-0'}`}
-                        >
-                          <span className="sr-only">Next</span>
-                          <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                      </nav>
-                    </div>
                   </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {selectedTransaction && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedTransaction(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className={`p-5 ${
-                selectedTransaction.amount >= 0 ? 'bg-gradient-to-r from-green-600 to-emerald-700' : 'bg-gradient-to-r from-red-600 to-rose-700'
-              } text-white`}>
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    {selectedTransaction.amount >= 0 ? 
-                      <><FaArrowUp /> Income Transaction</> : 
-                      <><FaArrowDown /> Expense Transaction</>
-                    }
-                  </h3>
-                  <button 
+                  <button
                     onClick={() => setSelectedTransaction(null)}
-                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                    className="p-2 border-2 border-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
                   >
                     <FaTimes />
                   </button>
                 </div>
-              </div>
-              
-              <div className="p-6">
-                <div className="flex flex-col gap-6">
-                  <div className="flex items-center justify-center">
-                    <div className={`px-6 py-5 ${
-                      selectedTransaction.amount >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-                    } rounded-xl`}>
-                      <div className="text-sm font-medium mb-1 text-center">Transaction Amount</div>
-                      <div className="text-3xl font-bold text-center">
-                        {selectedTransaction.amount >= 0 ? '+' : ''}₹{selectedTransaction.amount.toFixed(2)}
-                      </div>
+
+                {/* Modal body */}
+                <div className="p-8 space-y-6">
+
+                  {/* Amount block */}
+                  <div className="border-2 border-[#111111] p-6 text-center">
+                    <div className="text-[0.6rem] text-[#CC0000] uppercase tracking-widest font-bold mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                      [TRANSACTION AMOUNT]
+                    </div>
+                    <div
+                      className={`text-5xl font-black tracking-tighter ${selectedTransaction.amount >= 0 ? 'text-[#111111]' : 'text-[#CC0000]'}`}
+                      style={{ fontFamily: "'Playfair Display', serif" }}
+                    >
+                      {selectedTransaction.amount >= 0 ? '+' : ''}₹{selectedTransaction.amount.toFixed(2)}
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <div className="text-xs text-gray-500 mb-1">Date</div>
-                      <div className="font-medium flex items-center gap-2">
-                        <FaRegCalendarAlt className="text-gray-400" size={14} />
+
+                  {/* Meta grid */}
+                  <div className="grid grid-cols-2 gap-0 border-2 border-[#111111] divide-x-2 divide-[#111111]">
+                    <div className="p-4">
+                      <div className="text-[0.6rem] text-[#CC0000] uppercase tracking-widest font-bold mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>DATE</div>
+                      <div className="font-bold text-[#111111] flex items-center gap-2 text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+                        <FaRegCalendarAlt className="text-[#525252]" size={12} />
                         {formatDate(selectedTransaction.date)}
                       </div>
                     </div>
-                    
-                    <div className="p-4 bg-gray-50 rounded-xl">
-                      <div className="text-xs text-gray-500 mb-1">Category</div>
+                    <div className="p-4">
+                      <div className="text-[0.6rem] text-[#CC0000] uppercase tracking-widest font-bold mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>CATEGORY</div>
                       <div>{getCategoryIcon(selectedTransaction.category)}</div>
                     </div>
                   </div>
-                  
-                  <div className="p-4 bg-gray-50 rounded-xl">
-                    <div className="text-xs text-gray-500 mb-1">Description</div>
-                    <div className="font-medium text-gray-800">{selectedTransaction.description}</div>
+
+                  {/* Description */}
+                  <div className="border-2 border-[#111111] p-4">
+                    <div className="text-[0.6rem] text-[#CC0000] uppercase tracking-widest font-bold mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>DESCRIPTION</div>
+                    <p className="font-bold text-[#111111]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                      {selectedTransaction.description}
+                    </p>
                   </div>
-                  
-                  <div className="p-4 bg-gray-50 rounded-xl">
-                    <div className="text-xs text-gray-500 mb-1">Transaction ID</div>
-                    <div className="font-mono text-sm bg-white p-3 rounded-lg border border-gray-200 flex items-center justify-between">
-                      <span>{selectedTransaction.id}</span>
-                      <button className="p-1 hover:bg-gray-100 rounded text-gray-600">
-                        <FaCopy size={14} />
+
+                  {/* Transaction ID */}
+                  <div className="border-2 border-[#111111] p-4">
+                    <div className="text-[0.6rem] text-[#CC0000] uppercase tracking-widest font-bold mb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>TRANSACTION ID</div>
+                    <div className="flex items-center justify-between bg-[#E5E5E0] p-3 border border-[#111111]">
+                      <span className="text-xs text-[#525252] font-mono break-all">{selectedTransaction.id}</span>
+                      <button
+                        className="p-1.5 border border-[#111111] bg-[#F9F9F7] hover:bg-[#111111] hover:text-[#F9F9F7] transition-colors ml-3 flex-shrink-0"
+                        onClick={() => navigator.clipboard?.writeText(selectedTransaction.id)}
+                        aria-label="Copy transaction ID"
+                      >
+                        <FaCopy size={12} />
                       </button>
                     </div>
                   </div>
-                  
-                  <div className="flex justify-end gap-3 pt-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+
+                  {/* Footer buttons */}
+                  <div className="flex gap-4 pt-2">
+                    <button
                       onClick={() => setSelectedTransaction(null)}
-                      className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                      className="flex-1 px-6 py-4 border-2 border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
                     >
-                      Close
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 shadow-sm font-medium"
+                      CLOSE
+                    </button>
+                    <button
+                      className="flex-1 px-6 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
                     >
-                      Edit Transaction
-                    </motion.button>
+                      EDIT ENTRY
+                    </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-        
-        {showAddModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowAddModal(false)}
-          >
+          )}
+
+          {/* ── Add Transaction Modal ── */}
+          {showAddModal && (
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
-              onClick={e => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#111111]/70 z-50 flex items-center justify-center p-4"
+              onClick={() => setShowAddModal(false)}
             >
-              <div className="bg-gradient-to-r from-teal-600 to-cyan-700 p-5 text-white">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <FaPlus /> Add New Transaction
-                  </h3>
-                  <button 
+              <motion.div
+                initial={{ scale: 0.97, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.97, opacity: 0, y: 10 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="bg-[#F9F9F7] border-4 border-[#111111] max-w-md w-full overflow-hidden"
+                style={{ boxShadow: '8px 8px 0px 0px #111111' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Modal header */}
+                <div className="bg-[#111111] text-[#F9F9F7] p-6 border-b-4 border-[#111111] flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111]">
+                      <FaPlus className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black uppercase tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        NEW TRANSACTION
+                      </h3>
+                      <p className="text-[0.65rem] uppercase tracking-widest mt-1 text-[#A3A3A3]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        LOG A FINANCIAL ENTRY
+                      </p>
+                    </div>
+                  </div>
+                  <button
                     onClick={() => setShowAddModal(false)}
-                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                    className="p-2 border-2 border-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors"
                   >
                     <FaTimes />
                   </button>
                 </div>
-              </div>
-              
-              <div className="p-6">
-                <form className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Amount</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                        <FaRupeeSign className="text-gray-500" size={16} />
-                      </div>
-                      <input 
-                        type="number"
-                        step="0.01"
-                        className="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 focus:border-teal-300 focus:ring focus:ring-teal-200 focus:ring-opacity-50 text-lg font-medium"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="flex justify-between mt-2">
-                      <span 
-                        className="text-xs px-3 py-1.5 rounded-full bg-green-50 text-green-700 cursor-pointer hover:bg-green-100"
-                      >
-                        Income (+)
-                      </span>
-                      <span 
-                        className="text-xs px-3 py-1.5 rounded-full bg-red-50 text-red-700 cursor-pointer hover:bg-red-100"
-                      >
-                        Expense (-)
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <input 
-                      type="text"
-                      className="block w-full px-4 py-3 rounded-lg border-gray-300 focus:border-teal-300 focus:ring focus:ring-teal-200 focus:ring-opacity-50"
-                      placeholder="What's this transaction for?"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+
+                {/* Form */}
+                <div className="p-8">
+                  <form className="space-y-6">
+
+                    {/* Amount */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Transaction Date</label>
+                      <label
+                        className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-3"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        TRANSACTION AMOUNT
+                      </label>
                       <div className="relative">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
-                          <FaRegCalendarAlt className="text-gray-500" size={14} />
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                          <FaRupeeSign className="text-[#525252]" size={14} />
                         </div>
-                        <input 
-                          type="date"
-                          className="block w-full pl-10 pr-4 py-3 rounded-lg border-gray-300 focus:border-teal-300 focus:ring focus:ring-teal-200 focus:ring-opacity-50"
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="block w-full pl-10 pr-4 py-4 border-2 border-[#111111] bg-white text-[#111111] font-bold text-xl focus:outline-none focus:ring-2 focus:ring-[#111111] transition-all"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                          placeholder="0.00"
                         />
                       </div>
+                      <div className="flex gap-3 mt-3">
+                        <span className="text-[0.6rem] px-3 py-2 border border-[#111111] bg-[#111111] text-[#F9F9F7] font-bold uppercase tracking-widest cursor-pointer hover:bg-[#333] transition-colors" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          INCOME (+)
+                        </span>
+                        <span className="text-[0.6rem] px-3 py-2 border border-[#CC0000] text-[#CC0000] font-bold uppercase tracking-widest cursor-pointer hover:bg-[#CC0000] hover:text-[#F9F9F7] transition-colors" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          EXPENSE (-)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label
+                        className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-3"
+                        style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                      >
+                        DESCRIPTION
+                      </label>
+                      <input
+                        type="text"
+                        className="block w-full px-4 py-4 border-2 border-[#111111] bg-white text-[#111111] font-bold focus:outline-none focus:ring-2 focus:ring-[#111111] transition-all"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                        placeholder="What is this transaction for?"
+                      />
+                    </div>
+
+                    {/* Date + Category */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-3"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          DATE
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <FaRegCalendarAlt className="text-[#525252]" size={12} />
+                          </div>
+                          <input
+                            type="date"
+                            className="block w-full pl-9 pr-3 py-4 border-2 border-[#111111] bg-white text-[#111111] font-bold text-xs focus:outline-none focus:ring-2 focus:ring-[#111111] transition-all"
+                            style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label
+                          className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-3"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          CATEGORY
+                        </label>
+                        <select
+                          className="block w-full px-4 py-4 border-2 border-[#111111] bg-white text-[#111111] font-bold text-xs uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-[#111111] appearance-none transition-all"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          <option value="credit">CREDIT</option>
+                          <option value="debit">DEBIT</option>
+                          <option value="subscription">SUBSCRIPTION</option>
+                          <option value="refund">REFUND</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Footer buttons */}
+                    <div className="pt-4 border-t-2 border-[#111111] flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddModal(false)}
+                        className="flex-1 px-6 py-4 border-2 border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        CANCEL
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 px-6 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center justify-center gap-2"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        <FaPlus /> LOG TRANSACTION
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* ── Export Modal ── */}
+          {showExportModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#111111]/70 z-50 flex items-center justify-center p-4"
+              onClick={() => exportStatus === 'idle' && setShowExportModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.97, opacity: 0, y: 10 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.97, opacity: 0, y: 10 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="bg-[#F9F9F7] border-4 border-[#111111] max-w-md w-full max-h-[92vh] overflow-y-auto"
+                style={{ boxShadow: '8px 8px 0px 0px #111111' }}
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Modal header */}
+                <div className="bg-[#111111] text-[#F9F9F7] p-6 border-b-4 border-[#111111] flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 border-2 border-[#F9F9F7] bg-[#F9F9F7] text-[#111111]">
+                      <FaFileExport className="h-5 w-5" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                      <select 
-                        className="block w-full px-4 py-3 rounded-lg border-gray-300 focus:border-teal-300 focus:ring focus:ring-teal-200 focus:ring-opacity-50 bg-white"
-                      >
-                        <option value="credit">Credit</option>
-                        <option value="debit">Debit</option>
-                        <option value="subscription">Subscription</option>
-                        <option value="refund">Refund</option>
-                      </select>
+                      <h3 className="text-2xl font-black uppercase tracking-tighter" style={{ fontFamily: "'Playfair Display', serif" }}>
+                        EXPORT LEDGER
+                      </h3>
+                      <p className="text-[0.65rem] uppercase tracking-widest mt-1 text-[#A3A3A3]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                        DOWNLOAD TRANSACTION DATA
+                      </p>
                     </div>
                   </div>
-                  
-                  <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowAddModal(false)}
-                      className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
-                      type="submit"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 font-medium shadow-sm"
-                    >
-                      Add Transaction
-                    </motion.button>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-        
-        {showExportModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => exportStatus === 'idle' && setShowExportModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="bg-gradient-to-r from-teal-600 to-cyan-700 p-5 text-white">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold flex items-center gap-2">
-                    <FaFileExport /> Export Transaction Data
-                  </h3>
-                  <button 
+                  <button
                     onClick={() => exportStatus === 'idle' && setShowExportModal(false)}
-                    className="p-2 hover:bg-white/20 rounded-full transition-colors disabled:opacity-50"
                     disabled={exportStatus !== 'idle'}
+                    className="p-2 border-2 border-[#F9F9F7] hover:bg-[#F9F9F7] hover:text-[#111111] transition-colors disabled:opacity-30"
                   >
                     <FaTimes />
                   </button>
                 </div>
-              </div>
-              
-              <div className="p-6">
-                {exportStatus === 'idle' ? (
-                  <div className="space-y-5">
-                    <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3">
-                        <FaFileDownload className="text-teal-600 text-lg mt-0.5" />
+
+                {/* Modal body */}
+                <div className="p-8">
+                  {exportStatus === 'idle' ? (
+                    <div className="space-y-8">
+
+                      {/* Info block */}
+                      <div className="border-2 border-[#111111] p-6 bg-white flex items-start gap-4">
+                        <div className="p-3 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7] flex-shrink-0">
+                          <FaFileDownload />
+                        </div>
                         <div>
-                          <h4 className="font-semibold text-gray-800 mb-1">Export Your Data</h4>
-                          <p className="text-sm text-gray-600">
-                            Choose your preferred format and date range to export your transaction history.
+                          <h4 className="font-black text-[#111111] uppercase tracking-wide mb-1" style={{ fontFamily: "'Inter', sans-serif" }}>
+                            EXPORT YOUR DATA
+                          </h4>
+                          <p className="text-sm text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
+                            Choose your preferred format and date range to export your complete transaction history.
                           </p>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Export Format Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">Export Format</label>
-                      <div className="grid grid-cols-3 gap-3">
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => setExportFormat('csv')}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            exportFormat === 'csv'
-                              ? 'border-teal-500 bg-teal-50 shadow-sm'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex flex-col items-center gap-2">
-                            <div className={`p-2 rounded-lg ${
-                              exportFormat === 'csv' ? 'bg-teal-100' : 'bg-gray-100'
-                            }`}>
-                              <FaFileDownload className={exportFormat === 'csv' ? 'text-teal-600' : 'text-gray-600'} />
-                            </div>
-                            <span className={`text-sm font-medium ${
-                              exportFormat === 'csv' ? 'text-teal-700' : 'text-gray-700'
-                            }`}>
-                              CSV
-                            </span>
-                            <span className="text-xs text-gray-500">Excel compatible</span>
-                          </div>
-                        </motion.button>
+                      {/* Format selection */}
+                      <div>
+                        <label className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-4 border-b-2 border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          EXPORT FORMAT
+                        </label>
+                        <div className="grid grid-cols-3 gap-0 border-2 border-[#111111] divide-x-2 divide-[#111111]">
+                          {(['csv', 'json', 'pdf'] as const).map((fmt) => (
+                            <button
+                              key={fmt}
+                              type="button"
+                              onClick={() => setExportFormat(fmt)}
+                              className={`flex flex-col items-center gap-3 p-5 transition-all ${
+                                exportFormat === fmt
+                                  ? 'bg-[#111111] text-[#F9F9F7]'
+                                  : 'bg-white text-[#111111] hover:bg-[#E5E5E0]'
+                              }`}
+                            >
+                              <div className={`p-2 border-2 ${exportFormat === fmt ? 'border-[#F9F9F7]' : 'border-[#111111]'}`}>
+                                <FaFileDownload size={16} />
+                              </div>
+                              <div className="text-center">
+                                <span className="block font-black text-xs uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                                  {fmt.toUpperCase()}
+                                </span>
+                                <span className={`block text-[0.6rem] mt-0.5 ${exportFormat === fmt ? 'text-[#A3A3A3]' : 'text-[#525252]'}`} style={{ fontFamily: "'Lora', serif" }}>
+                                  {fmt === 'csv' ? 'Excel ready' : fmt === 'json' ? 'Dev format' : 'Print ready'}
+                                </span>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => setExportFormat('json')}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            exportFormat === 'json'
-                              ? 'border-teal-500 bg-teal-50 shadow-sm'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex flex-col items-center gap-2">
-                            <div className={`p-2 rounded-lg ${
-                              exportFormat === 'json' ? 'bg-teal-100' : 'bg-gray-100'
-                            }`}>
-                              <FaFileDownload className={exportFormat === 'json' ? 'text-teal-600' : 'text-gray-600'} />
-                            </div>
-                            <span className={`text-sm font-medium ${
-                              exportFormat === 'json' ? 'text-teal-700' : 'text-gray-700'
-                            }`}>
-                              JSON
-                            </span>
-                            <span className="text-xs text-gray-500">Developer format</span>
-                          </div>
-                        </motion.button>
+                      {/* Date range selection */}
+                      <div>
+                        <label className="block text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-4 border-b-2 border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          DATE RANGE
+                        </label>
+                        <div className="space-y-0 border-2 border-[#111111] divide-y-2 divide-[#111111]">
+                          {[
+                            { value: 'all',            label: 'ALL TIME',      desc: `${transactions.length} transactions` },
+                            { value: 'current-month',  label: 'CURRENT MONTH', desc: 'This month only' },
+                            { value: 'last-3-months',  label: 'LAST 3 MONTHS', desc: 'Recent quarter' },
+                            { value: 'last-6-months',  label: 'LAST 6 MONTHS', desc: 'Recent half year' },
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => setExportDateRange(opt.value as any)}
+                              className={`w-full flex items-center justify-between p-4 transition-all text-left ${
+                                exportDateRange === opt.value
+                                  ? 'bg-[#111111] text-[#F9F9F7]'
+                                  : 'bg-white text-[#111111] hover:bg-[#E5E5E0]'
+                              }`}
+                            >
+                              <div>
+                                <div className="font-black text-xs uppercase tracking-widest" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                                  {opt.label}
+                                </div>
+                                <div className={`text-[0.6rem] mt-0.5 ${exportDateRange === opt.value ? 'text-[#A3A3A3]' : 'text-[#525252]'}`} style={{ fontFamily: "'Lora', serif" }}>
+                                  {opt.desc}
+                                </div>
+                              </div>
+                              {exportDateRange === opt.value && (
+                                <div className="w-3 h-3 border-2 border-[#F9F9F7] bg-[#CC0000] flex-shrink-0" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                        <motion.button
-                          type="button"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => setExportFormat('pdf')}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            exportFormat === 'pdf'
-                              ? 'border-teal-500 bg-teal-50 shadow-sm'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                        >
-                          <div className="flex flex-col items-center gap-2">
-                            <div className={`p-2 rounded-lg ${
-                              exportFormat === 'pdf' ? 'bg-teal-100' : 'bg-gray-100'
-                            }`}>
-                              <FaFileDownload className={exportFormat === 'pdf' ? 'text-teal-600' : 'text-gray-600'} />
+                      {/* Export summary */}
+                      <div className="border-2 border-[#111111] p-5 bg-[#E5E5E0]">
+                        <div className="text-[0.65rem] font-bold text-[#111111] uppercase tracking-widest mb-4 border-b border-[#111111] pb-2" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                          EXPORT SUMMARY
+                        </div>
+                        <div className="space-y-2">
+                          {[
+                            { label: 'FORMAT',            value: exportFormat.toUpperCase() },
+                            { label: 'DATE RANGE',        value: exportDateRange === 'all' ? 'ALL TIME' : exportDateRange.toUpperCase().replace(/-/g, ' ') },
+                            { label: 'TOTAL RECORDS',     value: sortedTransactions.length.toString() },
+                          ].map((row) => (
+                            <div key={row.label} className="flex justify-between items-center">
+                              <span className="text-[0.6rem] text-[#525252] uppercase tracking-widest font-bold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{row.label}:</span>
+                              <span className="text-[0.65rem] font-black text-[#111111] uppercase" style={{ fontFamily: "'JetBrains Mono', monospace" }}>{row.value}</span>
                             </div>
-                            <span className={`text-sm font-medium ${
-                              exportFormat === 'pdf' ? 'text-teal-700' : 'text-gray-700'
-                            }`}>
-                              PDF
-                            </span>
-                            <span className="text-xs text-gray-500">Print ready</span>
-                          </div>
-                        </motion.button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Footer buttons */}
+                      <div className="flex gap-4 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowExportModal(false)}
+                          className="flex-1 px-6 py-4 border-2 border-[#111111] text-[#111111] font-black uppercase text-xs tracking-widest hover:bg-[#E5E5E0] transition-colors"
+                          style={{ fontFamily: "'Inter', sans-serif" }}
+                        >
+                          CANCEL
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleExportData}
+                          className="flex-1 px-6 py-4 bg-[#CC0000] text-[#F9F9F7] font-black uppercase text-xs tracking-widest hover:bg-[#990000] transition-colors flex items-center justify-center gap-2"
+                          style={{ fontFamily: "'Inter', sans-serif" }}
+                        >
+                          <FaFileExport /> EXPORT NOW
+                        </button>
                       </div>
                     </div>
 
-                    {/* Date Range Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">Date Range</label>
-                      <div className="space-y-2">
+                  ) : exportStatus === 'exporting' ? (
+
+                    // ── Exporting State ──
+                    <div className="py-10 space-y-8">
+                      <div className="bg-[#111111] text-[#F9F9F7] p-8 border-b-4 border-[#CC0000]">
+                        <div className="flex items-center gap-6 mb-8">
+                          <div className="p-4 border-2 border-[#F9F9F7]">
+                            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}>
+                              <FaFileDownload className="h-8 w-8" />
+                            </motion.div>
+                          </div>
+                          <div>
+                            <h3 className="text-2xl font-black uppercase tracking-widest" style={{ fontFamily: "'Playfair Display', serif" }}>
+                              GENERATING FILE
+                            </h3>
+                            <p className="text-[#A3A3A3] mt-1 text-sm" style={{ fontFamily: "'Lora', serif" }}>
+                              Please keep the application open
+                            </p>
+                          </div>
+                        </div>
+                        {/* Progress bar */}
+                        <div className="w-full h-4 border-2 border-[#F9F9F7] bg-[#111111]">
+                          <motion.div
+                            className="h-full bg-[#CC0000]"
+                            initial={{ width: '0%' }}
+                            animate={{ width: '100%' }}
+                            transition={{ duration: 1.5, ease: 'easeInOut' }}
+                          />
+                        </div>
+                      </div>
+                      {/* Steps */}
+                      <div className="space-y-3">
                         {[
-                          { value: 'all', label: 'All Time', desc: `${transactions.length} transactions` },
-                          { value: 'current-month', label: 'Current Month', desc: 'This month only' },
-                          { value: 'last-3-months', label: 'Last 3 Months', desc: 'Recent quarter' },
-                          { value: 'last-6-months', label: 'Last 6 Months', desc: 'Recent half year' }
-                        ].map((option) => (
-                          <motion.button
-                            key={option.value}
-                            type="button"
-                            whileHover={{ scale: 1.01 }}
-                            whileTap={{ scale: 0.99 }}
-                            onClick={() => setExportDateRange(option.value as any)}
-                            className={`w-full p-3 rounded-lg border-2 transition-all text-left ${
-                              exportDateRange === option.value
-                                ? 'border-teal-500 bg-teal-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
+                          { delay: 0.2,  label: 'COLLECTING TRANSACTION DATA…' },
+                          { delay: 0.6,  label: 'FORMATTING RECORDS…' },
+                          { delay: 1.0,  label: `GENERATING ${exportFormat.toUpperCase()} FILE…` },
+                        ].map((step, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: step.delay }}
+                            className="flex items-center gap-3 border border-[#111111] p-3 bg-white"
                           >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className={`font-medium ${
-                                  exportDateRange === option.value ? 'text-teal-700' : 'text-gray-800'
-                                }`}>
-                                  {option.label}
-                                </div>
-                                <div className="text-xs text-gray-500">{option.desc}</div>
-                              </div>
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                exportDateRange === option.value
-                                  ? 'border-teal-500 bg-teal-500'
-                                  : 'border-gray-300'
-                              }`}>
-                                {exportDateRange === option.value && (
-                                  <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    className="w-2 h-2 bg-white rounded-full"
-                                  />
-                                )}
-                              </div>
-                            </div>
-                          </motion.button>
+                            <div className="w-2 h-2 bg-[#CC0000] flex-shrink-0" />
+                            <span className="text-[0.65rem] font-bold uppercase tracking-widest text-[#111111]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                              {step.label}
+                            </span>
+                          </motion.div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Export Summary */}
-                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                      <h5 className="text-sm font-medium text-gray-700 mb-3">Export Summary</h5>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Format:</span>
-                          <span className="font-medium text-gray-800 uppercase">{exportFormat}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Date Range:</span>
-                          <span className="font-medium text-gray-800">
-                            {exportDateRange === 'all' ? 'All Time' :
-                             exportDateRange === 'current-month' ? 'Current Month' :
-                             exportDateRange === 'last-3-months' ? 'Last 3 Months' :
-                             'Last 6 Months'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between pt-2 border-t border-gray-200">
-                          <span className="text-gray-600">Total Transactions:</span>
-                          <span className="font-bold text-teal-600">{sortedTransactions.length}</span>
-                        </div>
-                      </div>
-                    </div>
+                  ) : (
 
-                    {/* Action Buttons */}
-                    <div className="pt-2 flex justify-end gap-3">
-                      <motion.button
-                        type="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setShowExportModal(false)}
-                        className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
-                      >
-                        Cancel
-                      </motion.button>
-                      <motion.button
-                        type="button"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleExportData}
-                        className="px-5 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:from-teal-700 hover:to-cyan-700 font-medium shadow-sm flex items-center gap-2"
-                      >
-                        <FaFileExport /> Export Now
-                      </motion.button>
-                    </div>
-                  </div>
-                ) : exportStatus === 'exporting' ? (
-                  <div className="py-8 space-y-6">
-                    <div className="text-center">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        className="inline-flex items-center justify-center w-20 h-20 bg-teal-100 rounded-full mb-4"
-                      >
-                        <FaFileDownload className="text-3xl text-teal-600" />
-                      </motion.div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-2">Preparing Your Export...</h4>
-                      <p className="text-gray-600">Please wait while we generate your file.</p>
-                    </div>
-
-                    {/* Progress Animation */}
-                    <div className="max-w-sm mx-auto">
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    // ── Completed State ──
+                    <div className="py-10 space-y-8">
+                      <div className="text-center">
                         <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: '100%' }}
-                          transition={{ duration: 1.5, ease: "easeInOut" }}
-                          className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"
-                        />
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                          className="mx-auto w-20 h-20 border-4 border-[#111111] bg-[#111111] text-[#F9F9F7] flex items-center justify-center mb-8"
+                        >
+                          <FaFileDownload className="text-3xl" />
+                        </motion.div>
+                        <h4
+                          className="text-3xl font-black text-[#111111] uppercase tracking-tighter mb-3"
+                          style={{ fontFamily: "'Playfair Display', serif" }}
+                        >
+                          EXPORT COMPLETE
+                        </h4>
+                        <p className="text-[#525252]" style={{ fontFamily: "'Lora', serif" }}>
+                          Your transaction data has been downloaded.
+                        </p>
                       </div>
-                    </div>
-
-                    {/* Processing Steps */}
-                    <div className="space-y-2 max-w-sm mx-auto">
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex items-center gap-2 text-sm text-gray-600"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                        <span>Collecting transaction data...</span>
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 }}
-                        className="flex items-center gap-2 text-sm text-gray-600"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                        <span>Formatting data...</span>
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1 }}
-                        className="flex items-center gap-2 text-sm text-gray-600"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                        <span>Generating {exportFormat.toUpperCase()} file...</span>
-                      </motion.div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-8 space-y-6">
-                    <div className="text-center">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                        className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4"
-                      >
-                        <FaFileDownload className="text-3xl text-green-600" />
-                      </motion.div>
-                      <h4 className="text-lg font-semibold text-gray-800 mb-2">Export Successful!</h4>
-                      <p className="text-gray-600">Your transaction data has been downloaded.</p>
-                    </div>
-
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-sm mx-auto">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                          <FaFileDownload className="text-green-600" />
+                      <div className="border-2 border-[#111111] p-5 flex items-center gap-4 bg-white">
+                        <div className="p-3 border-2 border-[#111111] bg-[#111111] text-[#F9F9F7]">
+                          <FaFileDownload />
                         </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-800">transactions-{new Date().toISOString().split('T')[0]}.{exportFormat}</div>
-                          <div className="text-xs text-gray-600">{sortedTransactions.length} transactions exported</div>
+                        <div>
+                          <div className="font-black text-[#111111] text-sm" style={{ fontFamily: "'Inter', sans-serif" }}>
+                            transactions-{new Date().toISOString().split('T')[0]}.{exportFormat}
+                          </div>
+                          <div className="text-[0.6rem] text-[#525252] uppercase tracking-widest mt-1" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                            {sortedTransactions.length} TRANSACTIONS EXPORTED
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 };
 
