@@ -37,12 +37,12 @@ const Ticker = () => {
 /* ─── Home Page ─────────────────────────────────────────────────────────── */
 const Home = () => {
   const features = [
-    { icon: <Shield className="h-6 w-6" />,    title: 'Secure Storage',  description: 'Military-grade AES-256 encryption for your peace of mind. Zero-knowledge architecture ensures only you can access your data.' },
-    { icon: <Smartphone className="h-6 w-6" />, title: 'Multi-Device',   description: 'Access your passes across all devices seamlessly. Changes sync instantly across mobile, tablet, and desktop.' },
-    { icon: <QrCode className="h-6 w-6" />,    title: 'QR Scanning',    description: 'Instant pass capture using your device camera. Our intelligent parser supports multiple QR formats out of the box.' },
-    { icon: <Clock className="h-6 w-6" />,     title: 'Smart Alerts',   description: 'Never miss a pass expiration. Configurable reminders keep you ahead of critical deadlines automatically.' },
-    { icon: <RefreshCw className="h-6 w-6" />, title: 'Auto-Sync',      description: 'Changes propagate in real time. Your vault stays consistent across every device without any manual effort.' },
-    { icon: <Users className="h-6 w-6" />,     title: 'Share Safely',   description: 'Securely share passes with family or team members. Granular permissions let you control access precisely.' },
+    { num: '01', icon: <Shield className="h-6 w-6" />,    title: 'Secure Storage',  description: 'Military-grade AES-256 encryption for your peace of mind. Zero-knowledge architecture ensures only you can access your data.' },
+    { num: '02', icon: <Smartphone className="h-6 w-6" />, title: 'Multi-Device',   description: 'Access your passes across all devices seamlessly. Changes sync instantly across mobile, tablet, and desktop.' },
+    { num: '03', icon: <QrCode className="h-6 w-6" />,    title: 'QR Scanning',    description: 'Instant pass capture using your device camera. Our intelligent parser supports multiple QR formats out of the box.' },
+    { num: '04', icon: <Clock className="h-6 w-6" />,     title: 'Smart Alerts',   description: 'Never miss a pass expiration. Configurable reminders keep you ahead of critical deadlines automatically.' },
+    { num: '05', icon: <RefreshCw className="h-6 w-6" />, title: 'Auto-Sync',      description: 'Changes propagate in real time. Your vault stays consistent across every device without any manual effort.' },
+    { num: '06', icon: <Users className="h-6 w-6" />,     title: 'Share Safely',   description: 'Securely share passes with family or team members. Granular permissions let you control access precisely.' },
   ];
 
   const testimonials = [
@@ -210,19 +210,33 @@ const Home = () => {
             {features.map((feature, idx) => (
               <div
                 key={idx}
-                className="border-r border-b border-[#111111] p-8 hover:bg-[#E5E5E0] transition-colors hard-shadow-hover group"
+                className="relative overflow-hidden border-r border-b border-[#111111] p-8 hover:bg-[#E5E5E0] transition-colors hard-shadow-hover group"
               >
+                {/* Edition number — slides in from top-right on hover */}
+                <span
+                  aria-hidden="true"
+                  className="absolute top-4 right-5 text-5xl font-black leading-none select-none pointer-events-none text-[#111111] opacity-0 -translate-y-2 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all duration-200 ease-out"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  {feature.num}
+                </span>
+
+                {/* Icon box — inverts on hover */}
                 <div className="border border-[#111111] w-14 h-14 flex items-center justify-center mb-6 group-hover:bg-[#111111] group-hover:text-[#F9F9F7] transition-all duration-200">
                   {feature.icon}
                 </div>
+
+                {/* Title — red underline slides in on hover */}
                 <h3
-                  className="text-xl font-black mb-3"
+                  className="text-xl font-black mb-3 underline decoration-transparent decoration-2 underline-offset-4 group-hover:decoration-[#CC0000] transition-all duration-200 ease-out"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   {feature.title}
                 </h3>
+
+                {/* Body — matching red underline on hover */}
                 <p
-                  className="text-sm leading-relaxed text-[#525252] text-justify-news"
+                  className="text-sm leading-relaxed text-[#525252] text-justify-news underline decoration-transparent decoration-[1.5px] underline-offset-4 group-hover:decoration-[#CC0000] transition-all duration-200 ease-out"
                   style={{ fontFamily: "'Lora', serif" }}
                 >
                   {feature.description}
