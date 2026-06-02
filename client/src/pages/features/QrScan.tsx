@@ -361,7 +361,7 @@ const ManualEntryForm: React.FC<{
                 <span className={active ? 'text-[#F9F9F7]' : 'text-[#111111]'}>
                   {meta.icon}
                 </span>
-                <span className="font-black capitalize text-xs uppercase tracking-widest np-mono leading-none">
+                <span className="font-black text-xs uppercase tracking-widest np-mono leading-none">
                   {meta.label}
                 </span>
               </button>
