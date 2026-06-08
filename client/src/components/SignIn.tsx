@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Lock, Mail, AlertCircle } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -26,13 +24,9 @@ const SignIn: React.FC = () => {
       if (!email.includes("@"))
         throw new Error("Please enter a valid email address");
 
-      const response = await axios.post(
-        `${API_URL}/auth/login`,
+      const response = await api.post(
+        "/auth/login",
         { email: email.trim().toLowerCase(), password, rememberMe: false },
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
-        },
       );
 
       if (response.data && response.data.success) {
