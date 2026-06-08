@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Lock, Mail, User, AlertCircle, Check } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const SignUp: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -77,16 +75,12 @@ const SignUp: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await axios.post(
-        `${API_URL}/auth/register`,
+      const response = await api.post(
+        "/auth/register",
         {
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
           password: formData.password,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-          withCredentials: true,
         },
       );
 
